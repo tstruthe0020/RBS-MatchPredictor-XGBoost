@@ -369,61 +369,91 @@ class MatchPredictor:
         return 0.0, 0.0
     
     async def predict_match(self, home_team, away_team, referee_name, match_date=None):
-        """Main prediction function"""
+        """Enhanced prediction function using comprehensive team stats"""
         try:
-            # Get team averages (home and away context)
+            # Get comprehensive team averages (home and away context)
             home_stats = await self.calculate_team_averages(home_team, is_home=True, exclude_opponent=away_team)
             away_stats = await self.calculate_team_averages(away_team, is_home=False, exclude_opponent=home_team)
             
-            # Get defensive stats (what teams concede when playing away/home)
+            # Get defensive stats (what teams concede when playing home/away)
             home_defensive = await self.calculate_team_averages(home_team, is_home=True)
             away_defensive = await self.calculate_team_averages(away_team, is_home=False)
             
             if not home_stats or not away_stats:
                 raise ValueError("Insufficient historical data for one or both teams")
             
-            # Calculate base expected xG for each team
-            # Formula: (team_avg_shots * team_avg_xg_per_shot + opponent_avg_shots_conceded * opponent_avg_xga_per_shot) / 2
+            # Enhanced xG calculation using multiple factors
             
-            # For home team xG
-            home_base_xg = (
-                home_stats['shots_total'] * home_stats['xg_per_shot'] +
-                away_defensive['goals_conceded'] * (away_stats['xg'] / away_stats['shots_total'] if away_stats['shots_total'] > 0 else 0)
-            ) / 2
+            # Method 1: Shot-based xG calculation
+            home_shot_xg = home_stats['shots_total'] * home_stats['xg_per_shot']
+            away_shot_xg = away_stats['shots_total'] * away_stats['xg_per_shot']
             
-            # For away team xG
-            away_base_xg = (
-                away_stats['shots_total'] * away_stats['xg_per_shot'] +
-                home_defensive['goals_conceded'] * (home_stats['xg'] / home_stats['shots_total'] if home_stats['shots_total'] > 0 else 0)
-            ) / 2
+            # Method 2: Historical xG average
+            home_hist_xg = home_stats['xg']
+            away_hist_xg = away_stats['xg']
             
-            # Get PPG for both teams
-            home_ppg = await self.calculate_ppg(home_team)
-            away_ppg = await self.calculate_ppg(away_team)
+            # Method 3: Opponent defensive consideration
+            home_vs_defense = home_stats['shots_total'] * (away_defensive['goals_conceded'] / away_defensive['shots_conceded'] if away_defensive.get('shots_conceded', 0) > 0 else 0.1)
+            away_vs_defense = away_stats['shots_total'] * (home_defensive['goals_conceded'] / home_defensive.get('shots_conceded', 10) if home_defensive.get('shots_conceded', 0) > 0 else 0.1)
             
-            # PPG adjustment (difference in quality)
+            # Combine methods with weights
+            home_base_xg = (home_shot_xg * 0.4 + home_hist_xg * 0.4 + home_vs_defense * 0.2)
+            away_base_xg = (away_shot_xg * 0.4 + away_hist_xg * 0.4 + away_vs_defense * 0.2)
+            
+            # Factor in additional team stats
+            
+            # Possession adjustment (teams with higher possession typically create more chances)
+            possession_factor_home = 1 + ((home_stats['possession_pct'] - 50) * 0.01)  # +/- 1% per percentage point above/below 50%
+            possession_factor_away = 1 + ((away_stats['possession_pct'] - 50) * 0.01)
+            
+            home_base_xg *= possession_factor_home
+            away_base_xg *= possession_factor_away
+            
+            # Fouls drawn factor (teams that draw more fouls get more set pieces and penalties)
+            fouls_factor_home = 1 + (home_stats['fouls_drawn'] - 10) * 0.02  # Baseline 10 fouls drawn per match
+            fouls_factor_away = 1 + (away_stats['fouls_drawn'] - 10) * 0.02
+            
+            home_base_xg *= max(0.8, min(1.3, fouls_factor_home))  # Cap between 0.8x and 1.3x
+            away_base_xg *= max(0.8, min(1.3, fouls_factor_away))
+            
+            # Penalties factor (teams that get more penalties score more)
+            penalty_boost_home = home_stats['penalties_awarded'] * 0.2  # Each penalty per match adds 0.2 xG
+            penalty_boost_away = away_stats['penalties_awarded'] * 0.2
+            
+            home_base_xg += penalty_boost_home
+            away_base_xg += penalty_boost_away
+            
+            # Get PPG for both teams (use calculated PPG from team averages)
+            home_ppg = home_stats['points_per_game']
+            away_ppg = away_stats['points_per_game']
+            
+            # Enhanced PPG adjustment considering home/away context
             ppg_diff = home_ppg - away_ppg
-            ppg_adjustment = ppg_diff * 0.15  # Adjustment factor
+            ppg_adjustment = ppg_diff * 0.15  # Base adjustment factor
             
             # Apply PPG adjustment
             home_adjusted_xg = home_base_xg + ppg_adjustment
             away_adjusted_xg = away_base_xg - ppg_adjustment
             
-            # Get referee bias
+            # Get referee bias with enhanced calculation
             home_rbs, home_rbs_confidence = await self.get_referee_bias(home_team, referee_name)
             away_rbs, away_rbs_confidence = await self.get_referee_bias(away_team, referee_name)
             
-            # Apply referee bias (RBS scaling: -5 RBS = -1.0 xG)
+            # Apply referee bias (enhanced scaling)
             home_ref_adjustment = home_rbs * self.rbs_scaling_factor
             away_ref_adjustment = away_rbs * self.rbs_scaling_factor
             
-            # Final xG predictions
+            # Final xG predictions with bounds
             final_home_xg = max(0.1, home_adjusted_xg + home_ref_adjustment)
             final_away_xg = max(0.1, away_adjusted_xg + away_ref_adjustment)
             
-            # Convert xG to expected goals (using team-specific conversion rates)
-            predicted_home_goals = final_home_xg * home_stats['goals_per_xg']
-            predicted_away_goals = final_away_xg * away_stats['goals_per_xg']
+            # Enhanced goal prediction using conversion rates
+            # Use team-specific conversion rates rather than just goals_per_xg
+            home_conversion = max(0.5, min(2.0, home_stats['goals_per_xg']))
+            away_conversion = max(0.5, min(2.0, away_stats['goals_per_xg']))
+            
+            predicted_home_goals = final_home_xg * home_conversion
+            predicted_away_goals = final_away_xg * away_conversion
             
             # Round to reasonable precision
             predicted_home_goals = round(predicted_home_goals, 2)
@@ -431,7 +461,7 @@ class MatchPredictor:
             final_home_xg = round(final_home_xg, 2)
             final_away_xg = round(final_away_xg, 2)
             
-            # Prepare detailed breakdown
+            # Comprehensive prediction breakdown
             prediction_breakdown = {
                 "home_base_xg": round(home_base_xg, 2),
                 "away_base_xg": round(away_base_xg, 2),
@@ -441,9 +471,20 @@ class MatchPredictor:
                 "home_shots_avg": round(home_stats['shots_total'], 1),
                 "away_shots_avg": round(away_stats['shots_total'], 1),
                 "home_xg_per_shot": round(home_stats['xg_per_shot'], 3),
-                "away_xg_per_shot": round(away_stats['xg_per_shot'], 3)
+                "away_xg_per_shot": round(away_stats['xg_per_shot'], 3),
+                "home_possession_avg": round(home_stats['possession_pct'], 1),
+                "away_possession_avg": round(away_stats['possession_pct'], 1),
+                "home_fouls_drawn_avg": round(home_stats['fouls_drawn'], 1),
+                "away_fouls_drawn_avg": round(away_stats['fouls_drawn'], 1),
+                "home_penalties_avg": round(home_stats['penalties_awarded'], 2),
+                "away_penalties_avg": round(away_stats['penalties_awarded'], 2),
+                "home_goals_avg": round(home_stats['goals'], 2),
+                "away_goals_avg": round(away_stats['goals'], 2),
+                "home_conversion_rate": round(home_conversion, 2),
+                "away_conversion_rate": round(away_conversion, 2)
             }
             
+            # Enhanced confidence factors
             confidence_factors = {
                 "home_matches_count": home_stats['matches_count'],
                 "away_matches_count": away_stats['matches_count'],
@@ -451,7 +492,15 @@ class MatchPredictor:
                 "away_rbs_confidence": away_rbs_confidence,
                 "home_ppg": round(home_ppg, 2),
                 "away_ppg": round(away_ppg, 2),
-                "overall_confidence": min(80, (home_stats['matches_count'] + away_stats['matches_count']) / 2 * 4)
+                "home_rbs_score": round(home_rbs, 3),
+                "away_rbs_score": round(away_rbs, 3),
+                "overall_confidence": min(90, max(20, (home_stats['matches_count'] + away_stats['matches_count']) / 2 * 4)),
+                "data_quality": {
+                    "home_shots_data": "good" if home_stats['shots_total'] > 0 else "estimated",
+                    "away_shots_data": "good" if away_stats['shots_total'] > 0 else "estimated",
+                    "home_xg_data": "good" if home_stats['xg'] > 0 else "limited",
+                    "away_xg_data": "good" if away_stats['xg'] > 0 else "limited"
+                }
             }
             
             return MatchPredictionResponse(
