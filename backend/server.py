@@ -475,6 +475,39 @@ async def calculate_rbs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
 
+@api_router.post("/debug/add-sample-stats")
+async def add_sample_realistic_stats():
+    """Add some realistic sample data to test the RBS table display"""
+    try:
+        # Get a few team stats records to update with realistic data
+        team_stats = await db.team_stats.find().limit(10).to_list(10)
+        
+        import random
+        updated_count = 0
+        
+        for stat in team_stats:
+            # Add realistic sample values
+            realistic_data = {
+                "fouls_drawn": random.randint(8, 16),  # Realistic fouls drawn per match
+                "penalties_awarded": random.choice([0, 0, 0, 0, 0, 1]),  # Occasional penalty
+                "xg": round(random.uniform(0.5, 3.5), 2)  # Realistic xG values
+            }
+            
+            await db.team_stats.update_one(
+                {"_id": stat["_id"]},
+                {"$set": realistic_data}
+            )
+            updated_count += 1
+        
+        return {
+            "success": True,
+            "message": f"Updated {updated_count} team stats with realistic sample data",
+            "updated_count": updated_count
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding sample data: {str(e)}")
+
 @api_router.get("/debug/team-stats-sample")
 async def get_team_stats_sample():
     """Debug endpoint to check team stats data structure"""
