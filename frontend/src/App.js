@@ -27,7 +27,7 @@ function App() {
     fetchStats();
     fetchTeams();
     fetchReferees();
-    fetchRBSResults();
+    fetchRefereeSummary();
   }, []);
 
   const fetchStats = async () => {
@@ -57,17 +57,28 @@ function App() {
     }
   };
 
-  const fetchRBSResults = async () => {
+  const fetchRefereeSummary = async () => {
     try {
-      const params = {};
-      if (selectedTeam) params.team = selectedTeam;
-      if (selectedReferee) params.referee = selectedReferee;
-      
-      const response = await axios.get(`${API}/rbs-results`, { params });
-      setRbsResults(response.data.results || []);
+      const response = await axios.get(`${API}/referee-summary`);
+      setRefereeSummary(response.data.referees || []);
     } catch (error) {
-      console.error('Error fetching RBS results:', error);
+      console.error('Error fetching referee summary:', error);
     }
+  };
+
+  const fetchRefereeDetails = async (refereeName) => {
+    try {
+      const response = await axios.get(`${API}/referee/${encodeURIComponent(refereeName)}`);
+      setSelectedRefereeDetails(response.data);
+      setViewingReferee(refereeName);
+    } catch (error) {
+      console.error('Error fetching referee details:', error);
+    }
+  };
+
+  const goBackToRefereeList = () => {
+    setViewingReferee(null);
+    setSelectedRefereeDetails(null);
   };
 
   const handleFileUpload = async (event, endpoint, type) => {
