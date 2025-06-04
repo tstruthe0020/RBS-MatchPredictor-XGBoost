@@ -475,7 +475,8 @@ function App() {
                       <p><strong>2. PPG Adjustment:</strong> Quality difference between teams (PPG difference × 0.15)</p>
                       <p><strong>3. Referee Bias:</strong> RBS score × 0.2 scaling factor (RBS -5 = -1.0 xG adjustment)</p>
                       <p><strong>4. Home/Away Context:</strong> All stats filtered by venue (home vs away performance)</p>
-                      <p><strong>5. Final Score:</strong> Adjusted xG × team-specific goal conversion rate</p>
+                      <p><strong>5. Penalty Factor:</strong> Each penalty/match adds 0.79 xG (realistic penalty value)</p>
+                      <p><strong>6. Final Score:</strong> Adjusted xG × team-specific goal conversion rate</p>
                     </div>
                   </div>
                 </div>
