@@ -7,6 +7,10 @@ const API = `${BACKEND_URL}/api`;
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Debug logging
+  console.log('Current activeTab:', activeTab);
+  console.log('RBS Results length:', rbsResults.length);
   const [stats, setStats] = useState({});
   const [rbsResults, setRbsResults] = useState([]);
   const [teams, setTeams] = useState([]);
