@@ -380,6 +380,11 @@ async def get_rbs_results(team: Optional[str] = None, referee: Optional[str] = N
         
         results = await db.rbs_results.find(filter_dict).to_list(1000)
         
+        # Convert ObjectId to string for JSON serialization
+        for result in results:
+            if '_id' in result:
+                result['_id'] = str(result['_id'])
+        
         # Sort by RBS score (most biased first)
         results.sort(key=lambda x: abs(x['rbs_score']), reverse=True)
         
