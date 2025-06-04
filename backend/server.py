@@ -324,6 +324,7 @@ class MatchPredictor:
         averages['goals_per_xg'] = averages['goals'] / averages['xg'] if averages['xg'] > 0 else 1.0
         averages['shot_accuracy'] = averages['shots_on_target'] / averages['shots_total'] if averages['shots_total'] > 0 else 0.3
         averages['conversion_rate'] = averages['goals'] / averages['shots_on_target'] if averages['shots_on_target'] > 0 else 0.1
+        averages['penalty_conversion_rate'] = averages['penalty_goals'] / averages['penalty_attempts'] if averages['penalty_attempts'] > 0 else 0.77
         
         # Defensive metrics (shots conceded, xG conceded)
         averages['shots_conceded'] = 0  # Will be calculated from opponent data
