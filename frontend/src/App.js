@@ -159,6 +159,40 @@ function App() {
     return 'bg-red-100 text-red-800';
   };
 
+  // Match prediction functions
+  const handlePredictionFormChange = (field, value) => {
+    setPredictionForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const predictMatch = async () => {
+    if (!predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setPredicting(true);
+    try {
+      const response = await axios.post(`${API}/predict-match`, predictionForm);
+      setPredictionResult(response.data);
+    } catch (error) {
+      alert(`❌ Prediction Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setPredicting(false);
+  };
+
+  const resetPrediction = () => {
+    setPredictionForm({
+      home_team: '',
+      away_team: '',
+      referee_name: '',
+      match_date: ''
+    });
+    setPredictionResult(null);
+  };
+
   // Apply filters when team/referee selection changes  
   useEffect(() => {
     if (activeTab === 'results') {
