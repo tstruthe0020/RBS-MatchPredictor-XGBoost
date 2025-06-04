@@ -146,7 +146,7 @@ function App() {
 
   // Apply filters when team/referee selection changes
   useEffect(() => {
-    fetchRBSResults();
+    fetchRefereeSummary();
   }, [selectedTeam, selectedReferee]);
 
   return (
