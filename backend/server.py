@@ -417,8 +417,8 @@ class MatchPredictor:
             away_base_xg *= max(0.8, min(1.3, fouls_factor_away))
             
             # Penalties factor (teams that get more penalties score more)
-            penalty_boost_home = home_stats['penalties_awarded'] * 0.2  # Each penalty per match adds 0.2 xG
-            penalty_boost_away = away_stats['penalties_awarded'] * 0.2
+            penalty_boost_home = home_stats['penalties_awarded'] * 0.79  # Each penalty per match adds 0.79 xG (realistic penalty xG value)
+            penalty_boost_away = away_stats['penalties_awarded'] * 0.79
             
             home_base_xg += penalty_boost_home
             away_base_xg += penalty_boost_away
