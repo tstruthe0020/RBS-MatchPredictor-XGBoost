@@ -71,6 +71,8 @@ class PlayerStats(BaseModel):
     fouls_committed: int
     fouls_drawn: int
     xg: float
+    penalty_attempts: Optional[int] = 0
+    penalty_goals: Optional[int] = 0
 
 class RBSResult(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
