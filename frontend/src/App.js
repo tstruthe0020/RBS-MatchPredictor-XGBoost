@@ -371,12 +371,8 @@ function App() {
                           {result.matches_with_ref}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            result.confidence_level === 'high' ? 'bg-green-100 text-green-800' :
-                            result.confidence_level === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {result.confidence_level}
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getConfidenceColor(result.confidence_level)}`}>
+                            {result.confidence_level}%
                           </span>
                         </td>
                       </tr>
