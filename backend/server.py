@@ -867,10 +867,14 @@ async def calculate_team_stats_from_players():
     """Calculate team-level stats by aggregating player stats for each match"""
     try:
         # Get all player stats
-        player_stats = await db.player_stats.find().to_list(10000)
+        player_stats = await db.player_stats.find().to_list(15000)
         
         # Get all team stats to update
         team_stats = await db.team_stats.find().to_list(10000)
+        
+        # Get all matches for goal verification
+        matches = await db.matches.find().to_list(10000)
+        match_dict = {match['match_id']: match for match in matches}
         
         # Group player stats by match_id and team_name
         team_aggregations = {}
@@ -907,15 +911,31 @@ async def calculate_team_stats_from_players():
             if key in team_aggregations:
                 aggregated = team_aggregations[key]
                 
-                # Calculate penalties awarded (estimate based on goals and xG)
-                # If goals > xG significantly, there might be penalties
-                goals = aggregated['goals']
-                xg = aggregated['xg']
-                penalties_awarded = 1 if goals > 0 and (goals - xg) > 0.8 else 0
+                # Get match data for goal verification
+                match = match_dict.get(team_stat['match_id'])
+                actual_goals = 0
+                if match:
+                    if team_stat['is_home']:
+                        actual_goals = match.get('home_score', 0)
+                    else:
+                        actual_goals = match.get('away_score', 0)
                 
-                # Estimate shots based on xG (typical xG per shot is around 0.1-0.15)
-                estimated_shots_total = max(1, int(xg / 0.12)) if xg > 0 else team_stat.get('shots_total', 0)
-                estimated_shots_on_target = max(1, int(xg / 0.18)) if xg > 0 else team_stat.get('shots_on_target', 0)
+                # Use actual goals from match if available, otherwise use player sum
+                final_goals = actual_goals if actual_goals >= 0 else aggregated['goals']
+                
+                # Calculate penalties awarded based on multiple factors
+                goals = final_goals
+                xg = aggregated['xg']
+                
+                # Method 1: If goals significantly exceed xG, likely penalty involved
+                penalty_from_goals_xg = 1 if goals > 0 and (goals - xg) > 0.7 else 0
+                
+                # Method 2: Random estimation based on league averages (about 10% of matches have penalties)
+                # We'll use a more conservative approach and check if it's a high-scoring situation
+                penalty_from_context = 1 if goals >= 2 and xg > 1.5 else 0
+                
+                # Take the more conservative estimate
+                penalties_awarded = max(penalty_from_goals_xg, penalty_from_context)
                 
                 # Prepare update data
                 update_data = {
@@ -923,12 +943,6 @@ async def calculate_team_stats_from_players():
                     'xg': round(aggregated['xg'], 2),
                     'penalties_awarded': penalties_awarded
                 }
-                
-                # Only update shots if they're currently 0 (don't overwrite existing data)
-                if team_stat.get('shots_total', 0) == 0 and xg > 0:
-                    update_data['shots_total'] = estimated_shots_total
-                if team_stat.get('shots_on_target', 0) == 0 and xg > 0:
-                    update_data['shots_on_target'] = estimated_shots_on_target
                 
                 # Update the team stats record
                 await db.team_stats.update_one(
