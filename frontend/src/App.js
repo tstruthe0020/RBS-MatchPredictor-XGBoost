@@ -314,95 +314,192 @@ function App() {
         {/* Results Tab */}
         {activeTab === 'results' && (
           <div className="space-y-6">
-            {/* Filters */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Filter Results</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
-                  <select
-                    value={selectedTeam}
-                    onChange={(e) => setSelectedTeam(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Teams</option>
-                    {teams.map(team => (
-                      <option key={team} value={team}>{team}</option>
+            {!viewingReferee ? (
+              /* Referee List View */
+              <>
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Referee Analysis Dashboard</h2>
+                  <p className="text-gray-600 mb-4">Click on any referee to view their detailed bias analysis and team-specific statistics.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {refereeSummary.map((referee) => (
+                      <div 
+                        key={referee._id}
+                        onClick={() => fetchRefereeDetails(referee._id)}
+                        className="bg-gray-50 p-4 rounded-lg border hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all duration-200"
+                      >
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{referee._id}</h3>
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Total Matches:</span>
+                            <span className="font-medium">{referee.total_matches}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Teams Analyzed:</span>
+                            <span className="font-medium">{referee.rbs_count || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Avg Bias Score:</span>
+                            <span className={`font-medium ${
+                              referee.avg_bias > 0.1 ? 'text-green-600' : 
+                              referee.avg_bias < -0.1 ? 'text-red-600' : 
+                              'text-gray-600'
+                            }`}>
+                              {referee.avg_bias > 0 ? '+' : ''}{referee.avg_bias}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Competitions:</span>
+                            <span className="font-medium">{referee.competitions?.length || 0}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 text-xs text-blue-600 font-medium">
+                          Click to view details →
+                        </div>
+                      </div>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Referee</label>
-                  <select
-                    value={selectedReferee}
-                    onChange={(e) => setSelectedReferee(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Referees</option>
-                    {referees.map(referee => (
-                      <option key={referee} value={referee}>{referee}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Results Table */}
-            <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-              <div className="px-6 py-4 border-b">
-                <h2 className="text-xl font-bold text-gray-900">RBS Results ({rbsResults.length})</h2>
-                <p className="text-sm text-gray-600 mt-1">Positive scores indicate referee favors the team, negative scores indicate bias against</p>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referee</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RBS Score</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interpretation</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {rbsResults.map((result, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {result.team_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {result.referee}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRBSColor(result.rbs_score)}`}>
-                            {result.rbs_score > 0 ? '+' : ''}{result.rbs_score}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {getRBSInterpretation(result.rbs_score)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {result.matches_with_ref}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getConfidenceColor(result.confidence_level)}`}>
-                            {result.confidence_level}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                {rbsResults.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No RBS results found. Upload data and calculate scores first.</p>
                   </div>
-                )}
-              </div>
-            </div>
+                  
+                  {refereeSummary.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">No referee data found. Upload data and calculate RBS scores first.</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Individual Referee Detail View */
+              <>
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">{viewingReferee}</h2>
+                      <p className="text-gray-600">Comprehensive bias analysis and statistics</p>
+                    </div>
+                    <button
+                      onClick={goBackToRefereeList}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      ← Back to All Referees
+                    </button>
+                  </div>
+
+                  {selectedRefereeDetails && (
+                    <div className="space-y-6">
+                      {/* Overview Stats */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h3 className="text-sm font-medium text-blue-800">Total Matches</h3>
+                          <p className="text-2xl font-bold text-blue-900">{selectedRefereeDetails.total_matches}</p>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <h3 className="text-sm font-medium text-green-800">Teams Analyzed</h3>
+                          <p className="text-2xl font-bold text-green-900">{selectedRefereeDetails.total_teams}</p>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <h3 className="text-sm font-medium text-purple-800">RBS Results</h3>
+                          <p className="text-2xl font-bold text-purple-900">{selectedRefereeDetails.rbs_results?.length || 0}</p>
+                        </div>
+                        <div className="bg-orange-50 p-4 rounded-lg">
+                          <h3 className="text-sm font-medium text-orange-800">Avg Cards/Match</h3>
+                          <p className="text-2xl font-bold text-orange-900">
+                            {(selectedRefereeDetails.overall_averages?.yellow_cards || 0).toFixed(1)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Overall Averages */}
+                      <div className="bg-white p-6 rounded-lg border">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Overall Match Averages</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.yellow_cards || 0).toFixed(1)}</div>
+                            <div className="text-gray-600">Yellow Cards</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.red_cards || 0).toFixed(1)}</div>
+                            <div className="text-gray-600">Red Cards</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.fouls || 0).toFixed(1)}</div>
+                            <div className="text-gray-600">Fouls</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.penalties_awarded || 0).toFixed(1)}</div>
+                            <div className="text-gray-600">Penalties</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.possession_pct || 0).toFixed(1)}%</div>
+                            <div className="text-gray-600">Avg Possession</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.xg || 0).toFixed(2)}</div>
+                            <div className="text-gray-600">Avg xG</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.shots_total || 0).toFixed(1)}</div>
+                            <div className="text-gray-600">Shots</div>
+                          </div>
+                          <div className="text-center p-3 bg-gray-50 rounded">
+                            <div className="font-medium text-gray-900">{(selectedRefereeDetails.overall_averages?.shots_on_target || 0).toFixed(1)}</div>
+                            <div className="text-gray-600">Shots on Target</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Team-Specific RBS Results */}
+                      <div className="bg-white p-6 rounded-lg border">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Team-Specific Bias Analysis</h3>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RBS Score</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interpretation</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence %</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {selectedRefereeDetails.rbs_results?.map((result, index) => (
+                                <tr key={index} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {result.team_name}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRBSColor(result.rbs_score)}`}>
+                                      {result.rbs_score > 0 ? '+' : ''}{result.rbs_score}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {getRBSInterpretation(result.rbs_score)}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {result.matches_with_ref}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getConfidenceColor(result.confidence_level)}`}>
+                                      {result.confidence_level}%
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          
+                          {(!selectedRefereeDetails.rbs_results || selectedRefereeDetails.rbs_results.length === 0) && (
+                            <div className="text-center py-8">
+                              <p className="text-gray-500">No RBS results found for this referee.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
