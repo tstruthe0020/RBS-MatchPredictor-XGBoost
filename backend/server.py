@@ -475,6 +475,80 @@ async def calculate_rbs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
 
+@api_router.post("/calculate-team-stats-from-players")
+async def calculate_team_stats_from_players():
+    """Calculate team-level stats by aggregating player stats for each match"""
+    try:
+        # Get all player stats
+        player_stats = await db.player_stats.find().to_list(10000)
+        
+        # Get all team stats to update
+        team_stats = await db.team_stats.find().to_list(10000)
+        
+        # Group player stats by match_id and team_name
+        team_aggregations = {}
+        
+        for player in player_stats:
+            key = f"{player['match_id']}_{player['team_name']}"
+            
+            if key not in team_aggregations:
+                team_aggregations[key] = {
+                    'match_id': player['match_id'],
+                    'team_name': player['team_name'],
+                    'fouls_drawn': 0,
+                    'xg': 0.0,
+                    'goals': 0,
+                    'assists': 0,
+                    'player_yellow_cards': 0,
+                    'player_fouls_committed': 0
+                }
+            
+            # Aggregate player stats to team level
+            team_aggregations[key]['fouls_drawn'] += player.get('fouls_drawn', 0)
+            team_aggregations[key]['xg'] += player.get('xg', 0)
+            team_aggregations[key]['goals'] += player.get('goals', 0)
+            team_aggregations[key]['assists'] += player.get('assists', 0)
+            team_aggregations[key]['player_yellow_cards'] += player.get('yellow_cards', 0)
+            team_aggregations[key]['player_fouls_committed'] += player.get('fouls_committed', 0)
+        
+        # Update team stats with aggregated data
+        updated_count = 0
+        
+        for team_stat in team_stats:
+            key = f"{team_stat['match_id']}_{team_stat['team_name']}"
+            
+            if key in team_aggregations:
+                aggregated = team_aggregations[key]
+                
+                # Calculate penalties awarded (rough estimation: goals from penalties)
+                # This is a simplified calculation - in real data you'd have penalty-specific data
+                penalties_awarded = min(aggregated['goals'], 1)  # Assume max 1 penalty per match
+                
+                # Prepare update data
+                update_data = {
+                    'fouls_drawn': aggregated['fouls_drawn'],
+                    'xg': round(aggregated['xg'], 2),
+                    'penalties_awarded': penalties_awarded
+                }
+                
+                # Update the team stats record
+                await db.team_stats.update_one(
+                    {'_id': team_stat['_id']},
+                    {'$set': update_data}
+                )
+                
+                updated_count += 1
+        
+        return {
+            "success": True,
+            "message": f"Updated {updated_count} team stats with player-aggregated data",
+            "team_aggregations_found": len(team_aggregations),
+            "team_stats_updated": updated_count
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating team stats from players: {str(e)}")
+
 @api_router.post("/debug/add-more-sample-stats")
 async def add_more_realistic_stats():
     """Add realistic sample data to more records for better RBS calculation"""
