@@ -1014,7 +1014,7 @@ async def calculate_shots_from_data():
 
 @api_router.post("/populate-penalty-data")
 async def populate_penalty_data():
-    """Populate penalty attempts and goals data using intelligent estimation from existing stats"""
+    """Populate penalty attempts and goals data using conservative, realistic estimation"""
     try:
         # Get all player stats and team stats
         player_stats = await db.player_stats.find().to_list(15000)
@@ -1032,14 +1032,26 @@ async def populate_penalty_data():
                 player_by_team_match[key] = []
             player_by_team_match[key].append(player)
         
-        # Estimate penalty data for players based on goals, fouls drawn, and team context
+        # Much more conservative penalty estimation
+        # In reality, penalties are rare - maybe 1 in every 8-10 matches across all teams
         player_updates = 0
         team_updates = 0
+        
+        # Group by teams to track season totals
+        team_season_penalties = {}
         
         for team_stat in team_stats:
             match_id = team_stat['match_id']
             team_name = team_stat['team_name']
             key = f"{match_id}_{team_name}"
+            
+            # Initialize team tracking
+            if team_name not in team_season_penalties:
+                team_season_penalties[team_name] = {
+                    'total_attempts': 0,
+                    'total_goals': 0,
+                    'matches_processed': 0
+                }
             
             # Get match and team players
             match = match_dict.get(match_id)
@@ -1054,45 +1066,56 @@ async def populate_penalty_data():
             else:
                 team_goals = match.get('away_score', 0)
             
-            # Estimate penalties based on team context
-            # Higher fouls drawn + goals scored suggests penalty potential
+            # Much more conservative penalty estimation
             team_fouls_drawn = sum(p.get('fouls_drawn', 0) for p in team_players)
             team_total_xg = sum(p.get('xg', 0) for p in team_players)
             
-            # Penalty estimation logic
+            # Very strict penalty criteria
             penalty_likelihood = 0
             
-            # Factor 1: If goals significantly exceed xG, likely penalty involved
-            if team_goals > 0 and team_total_xg > 0:
+            # Only award penalties in very specific circumstances
+            # Factor 1: Goals significantly exceed xG AND high fouls drawn
+            if team_goals >= 2 and team_total_xg > 0:
                 xg_diff = team_goals - team_total_xg
-                if xg_diff > 0.6:  # Goals much higher than xG
-                    penalty_likelihood += 0.7
+                if xg_diff > 1.2 and team_fouls_drawn > 15:  # Very high threshold
+                    penalty_likelihood = 0.6
+                elif xg_diff > 0.9 and team_fouls_drawn > 18:  # Exceptional circumstances
+                    penalty_likelihood = 0.4
             
-            # Factor 2: High fouls drawn suggests penalty opportunities
-            if team_fouls_drawn > 12:  # Above average fouls drawn
-                penalty_likelihood += 0.4
-            elif team_fouls_drawn > 8:
-                penalty_likelihood += 0.2
-            
-            # Factor 3: Multiple goals increases penalty chance
-            if team_goals >= 2:
+            # Factor 2: Extremely high fouls drawn (suggesting controversial match)
+            if team_fouls_drawn > 20:  # Very high fouls drawn
                 penalty_likelihood += 0.3
             
-            # Determine penalty attempts and goals
-            penalty_attempts = 1 if penalty_likelihood > 0.8 else 0
+            # Factor 3: High-scoring match with goals exceeding xG significantly
+            if team_goals >= 3 and team_total_xg > 0 and (team_goals - team_total_xg) > 1.0:
+                penalty_likelihood += 0.2
+            
+            # Determine penalty attempts (much more conservative)
+            # Only award penalty if likelihood is very high AND team hasn't had too many this season
+            penalty_attempts = 0
             penalty_goals = 0
             
-            if penalty_attempts > 0:
-                # Estimate penalty conversion (typically 75-80% in professional football)
-                # If team scored and had high penalty likelihood, assume conversion
-                if team_goals > 0 and penalty_likelihood > 0.9:
+            # Very conservative limits: max 2-3 penalties per team per season
+            max_penalties_per_season = 3
+            
+            if (penalty_likelihood > 0.7 and 
+                team_season_penalties[team_name]['total_attempts'] < max_penalties_per_season):
+                
+                penalty_attempts = 1
+                team_season_penalties[team_name]['total_attempts'] += 1
+                
+                # Conservative penalty conversion (league average ~77%)
+                if penalty_likelihood > 0.8:
                     penalty_goals = 1
+                    team_season_penalties[team_name]['total_goals'] += 1
                 else:
-                    # Use league average conversion rate ~77%
-                    penalty_goals = 1 if penalty_likelihood > 0.9 else 0
+                    # Miss the penalty
+                    penalty_goals = 0
             
             # Update team-level penalty stats
-            penalty_conversion_rate = penalty_goals / penalty_attempts if penalty_attempts > 0 else 0.77
+            penalty_conversion_rate = 0.77  # Default league average
+            if team_season_penalties[team_name]['total_attempts'] > 0:
+                penalty_conversion_rate = team_season_penalties[team_name]['total_goals'] / team_season_penalties[team_name]['total_attempts']
             
             # Update team stats
             await db.team_stats.update_one(
@@ -1101,16 +1124,16 @@ async def populate_penalty_data():
                     'penalty_attempts': penalty_attempts,
                     'penalty_goals': penalty_goals,
                     'penalty_conversion_rate': round(penalty_conversion_rate, 3),
-                    'penalties_awarded': penalty_attempts  # Update this to be attempts, not estimated
+                    'penalties_awarded': penalty_attempts
                 }}
             )
             team_updates += 1
             
-            # Distribute penalty stats to players based on their contribution
+            # Distribute penalty stats to players
             if penalty_attempts > 0 and team_players:
                 # Find the most likely penalty taker (highest goals + xG combination)
                 best_candidate = max(team_players, 
-                    key=lambda p: p.get('goals', 0) * 2 + p.get('xg', 0) + p.get('fouls_drawn', 0) * 0.1)
+                    key=lambda p: p.get('goals', 0) * 3 + p.get('xg', 0) + p.get('fouls_drawn', 0) * 0.05)
                 
                 # Update the penalty taker's stats
                 await db.player_stats.update_one(
@@ -1122,11 +1145,22 @@ async def populate_penalty_data():
                 )
                 player_updates += 1
         
+        # Summary of penalties awarded by team
+        penalty_summary = {}
+        for team, data in team_season_penalties.items():
+            if data['total_attempts'] > 0:
+                penalty_summary[team] = {
+                    'total_attempts': data['total_attempts'],
+                    'total_goals': data['total_goals'],
+                    'conversion_rate': round(data['total_goals'] / data['total_attempts'], 3) if data['total_attempts'] > 0 else 0
+                }
+        
         return {
             "success": True,
-            "message": f"Populated penalty data for {team_updates} team stats and {player_updates} player stats",
+            "message": f"Populated conservative penalty data for {team_updates} team stats and {player_updates} player stats",
             "team_updates": team_updates,
-            "player_updates": player_updates
+            "player_updates": player_updates,
+            "penalty_summary": penalty_summary
         }
         
     except Exception as e:
