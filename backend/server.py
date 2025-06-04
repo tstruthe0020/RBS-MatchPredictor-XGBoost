@@ -396,6 +396,47 @@ async def upload_player_stats(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")
 
+@api_router.post("/migrate-confidence")
+async def migrate_confidence():
+    """Migrate old text confidence values to numerical confidence values"""
+    try:
+        # Get all RBS results
+        results = await db.rbs_results.find().to_list(10000)
+        
+        updated_count = 0
+        for result in results:
+            if isinstance(result.get('confidence_level'), str):
+                # Convert old text values to numerical
+                matches_with_ref = result.get('matches_with_ref', 1)
+                
+                # Calculate numerical confidence
+                if matches_with_ref >= 10:
+                    confidence = min(95, 70 + (matches_with_ref - 10) * 2.5)
+                elif matches_with_ref >= 5:
+                    confidence = 50 + (matches_with_ref - 5) * 4
+                elif matches_with_ref >= 2:
+                    confidence = 20 + (matches_with_ref - 2) * 10
+                else:
+                    confidence = matches_with_ref * 10
+                
+                confidence = round(confidence, 1)
+                
+                # Update the document
+                await db.rbs_results.update_one(
+                    {"_id": result["_id"]},
+                    {"$set": {"confidence_level": confidence}}
+                )
+                updated_count += 1
+        
+        return {
+            "success": True,
+            "message": f"Migrated {updated_count} confidence values to numerical format",
+            "updated_count": updated_count
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error migrating confidence values: {str(e)}")
+
 @api_router.post("/calculate-rbs")
 async def calculate_rbs():
     """Calculate RBS scores for all team-referee combinations"""
