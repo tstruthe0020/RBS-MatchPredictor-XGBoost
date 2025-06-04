@@ -22,6 +22,16 @@ function App() {
   const [selectedRefereeDetails, setSelectedRefereeDetails] = useState(null);
   const [viewingReferee, setViewingReferee] = useState(null);
 
+  // Match prediction state
+  const [predictionForm, setPredictionForm] = useState({
+    home_team: '',
+    away_team: '',
+    referee_name: '',
+    match_date: ''
+  });
+  const [predictionResult, setPredictionResult] = useState(null);
+  const [predicting, setPredicting] = useState(false);
+
   // Fetch initial data
   useEffect(() => {
     fetchStats();
