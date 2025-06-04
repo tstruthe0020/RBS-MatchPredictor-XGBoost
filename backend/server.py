@@ -334,6 +334,9 @@ async def upload_player_stats(file: UploadFile = File(...)):
         # Clear existing player stats
         await db.player_stats.delete_many({})
         
+        # Replace NaN values with 0
+        df = df.fillna(0)
+        
         # Process and insert player stats in batches (for large files)
         batch_size = 1000
         total_processed = 0
@@ -343,17 +346,35 @@ async def upload_player_stats(file: UploadFile = File(...)):
             player_stats_batch = []
             
             for _, row in batch_df.iterrows():
+                # Helper function to safely convert to int
+                def safe_int(value, default=0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return int(float(value))
+                    except (ValueError, TypeError):
+                        return default
+                
+                # Helper function to safely convert to float
+                def safe_float(value, default=0.0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return float(value)
+                    except (ValueError, TypeError):
+                        return default
+                
                 stats = PlayerStats(
                     match_id=str(row['match_id']),
                     player_name=str(row['player_name']),
                     team_name=str(row['team_name']),
-                    is_home=bool(row['is_home']),
-                    goals=int(row.get('goals', 0)),
-                    assists=int(row.get('assists', 0)),
-                    yellow_cards=int(row.get('yellow_cards', 0)),
-                    fouls_committed=int(row.get('fouls_committed', 0)),
-                    fouls_drawn=int(row.get('fouls_drawn', 0)),
-                    xg=float(row.get('xg', 0))
+                    is_home=bool(row.get('is_home', False)),
+                    goals=safe_int(row.get('goals', 0)),
+                    assists=safe_int(row.get('assists', 0)),
+                    yellow_cards=safe_int(row.get('yellow_cards', 0)),
+                    fouls_committed=safe_int(row.get('fouls_committed', 0)),
+                    fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
+                    xg=safe_float(row.get('xg', 0))
                 )
                 player_stats_batch.append(stats.dict())
             
