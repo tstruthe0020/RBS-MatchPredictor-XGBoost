@@ -729,6 +729,69 @@ async def calculate_rbs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
 
+@api_router.post("/recalculate-all-stats")
+async def recalculate_all_stats():
+    """Comprehensive function to recalculate all stats in the correct order"""
+    try:
+        results = {}
+        
+        # Step 1: Calculate team stats from player data
+        print("Step 1: Aggregating player stats to team level...")
+        player_response = await calculate_team_stats_from_players()
+        results['player_aggregation'] = player_response
+        
+        # Step 2: Calculate shots data
+        print("Step 2: Calculating shots and shots on target...")
+        shots_response = await calculate_shots_from_data()
+        results['shots_calculation'] = shots_response
+        
+        # Step 3: Recalculate RBS scores with updated data
+        print("Step 3: Recalculating RBS scores...")
+        
+        # Get fresh data for RBS calculation
+        matches = await db.matches.find().to_list(10000)
+        team_stats = await db.team_stats.find().to_list(10000)
+        
+        # Clear existing RBS results
+        await db.rbs_results.delete_many({})
+        
+        # Get unique team-referee combinations
+        team_referee_pairs = set()
+        for match in matches:
+            team_referee_pairs.add((match['home_team'], match['referee']))
+            team_referee_pairs.add((match['away_team'], match['referee']))
+        
+        rbs_results = []
+        for team_name, referee in team_referee_pairs:
+            result = rbs_calculator.calculate_rbs_for_team_referee(
+                team_name, referee, team_stats, matches
+            )
+            if result:
+                rbs_results.append(result)
+        
+        # Insert new results
+        if rbs_results:
+            await db.rbs_results.insert_many(rbs_results)
+        
+        results['rbs_calculation'] = {
+            "success": True,
+            "message": f"Calculated RBS for {len(rbs_results)} team-referee combinations",
+            "results_count": len(rbs_results)
+        }
+        
+        # Step 4: Get final stats summary
+        final_stats = await get_stats()
+        results['final_stats'] = final_stats
+        
+        return {
+            "success": True,
+            "message": "Successfully recalculated all stats",
+            "details": results
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error recalculating all stats: {str(e)}")
+
 @api_router.post("/calculate-shots-from-data")
 async def calculate_shots_from_data():
     """Calculate and populate shots and shots on target data using multiple methods"""
