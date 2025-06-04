@@ -211,11 +211,45 @@ def main():
             print("⚠️ Referee summary endpoint is working but returned 0 referees.")
         else:
             print(f"✅ Referee summary endpoint is working correctly and returned {len(referee_summary)} referees.")
+            print(f"Expected 28 referees, found {len(referee_summary)} referees.")
     else:
         print("❌ Referee summary endpoint is not working correctly.")
     
     if first_referee and details_success:
         print(f"✅ Referee details endpoint is working correctly for referee '{first_referee}'.")
+        
+        # Check if the response has the expected structure for referee details
+        if referee_details:
+            print("\nReferee Details Structure Check:")
+            
+            # Check for required fields
+            required_fields = ['total_matches', 'total_teams', 'overall_averages', 'rbs_results', 'matches']
+            for field in required_fields:
+                if field in referee_details:
+                    print(f"✅ '{field}' field is present")
+                else:
+                    print(f"❌ '{field}' field is missing")
+            
+            # Check overall_averages structure
+            if 'overall_averages' in referee_details:
+                avg_fields = ['yellow_cards', 'red_cards', 'fouls', 'penalties_awarded', 
+                              'possession_pct', 'xg', 'shots_total', 'shots_on_target']
+                for field in avg_fields:
+                    if field in referee_details['overall_averages']:
+                        print(f"✅ 'overall_averages.{field}' is present")
+                    else:
+                        print(f"❌ 'overall_averages.{field}' is missing")
+            
+            # Check rbs_results structure if available
+            if 'rbs_results' in referee_details and referee_details['rbs_results']:
+                first_rbs = referee_details['rbs_results'][0]
+                rbs_fields = ['team_name', 'referee', 'rbs_score', 'matches_with_ref', 
+                              'confidence_level', 'stats_breakdown']
+                for field in rbs_fields:
+                    if field in first_rbs:
+                        print(f"✅ 'rbs_results.{field}' is present")
+                    else:
+                        print(f"❌ 'rbs_results.{field}' is missing")
     else:
         print("❌ Referee details endpoint is not working correctly.")
     
