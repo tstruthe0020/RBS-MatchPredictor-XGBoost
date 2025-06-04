@@ -113,12 +113,11 @@ function App() {
     return 'text-gray-600 bg-gray-50';
   };
 
-  const getRBSInterpretation = (score) => {
-    if (score > 0.2) return 'Strongly Favorable';
-    if (score > 0.1) return 'Moderately Favorable';
-    if (score < -0.2) return 'Strongly Unfavorable';
-    if (score < -0.1) return 'Moderately Unfavorable';
-    return 'Neutral';
+  const getConfidenceColor = (confidence) => {
+    if (confidence >= 70) return 'bg-green-100 text-green-800';
+    if (confidence >= 50) return 'bg-yellow-100 text-yellow-800';
+    if (confidence >= 30) return 'bg-orange-100 text-orange-800';
+    return 'bg-red-100 text-red-800';
   };
 
   // Apply filters when team/referee selection changes
