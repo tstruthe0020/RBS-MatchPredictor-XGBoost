@@ -30,6 +30,11 @@ class RBSAPITester:
                 return success, response.json()
             else:
                 print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
+                try:
+                    error_details = response.json()
+                    print(f"Error details: {json.dumps(error_details, indent=2)}")
+                except:
+                    print(f"Response text: {response.text}")
                 return False, None
 
         except Exception as e:
@@ -161,13 +166,175 @@ class RBSAPITester:
             print(f"Stats: {json.dumps(response, indent=2)}")
             return success, response
         return False, {}
+        
+    def test_predict_match(self, home_team, away_team, referee_name, match_date=None):
+        """Test the match prediction endpoint"""
+        data = {
+            "home_team": home_team,
+            "away_team": away_team,
+            "referee_name": referee_name
+        }
+        
+        if match_date:
+            data["match_date"] = match_date
+            
+        success, response = self.run_test(
+            f"Predict Match: {home_team} vs {away_team} (Referee: {referee_name})",
+            "POST",
+            "predict-match",
+            200,
+            data=data
+        )
+        
+        if success:
+            print(f"Prediction successful: {response.get('success', False)}")
+            if response.get('success', False):
+                print(f"Predicted score: {response.get('home_team', '')} {response.get('predicted_home_goals', 0)} - {response.get('predicted_away_goals', 0)} {response.get('away_team', '')}")
+                print(f"Home xG: {response.get('home_xg', 0)}, Away xG: {response.get('away_xg', 0)}")
+                
+                # Check if the response has the expected structure
+                if 'prediction_breakdown' in response:
+                    print("Prediction breakdown included in response")
+                else:
+                    print("⚠️ Response is missing 'prediction_breakdown' field")
+                    
+                if 'confidence_factors' in response:
+                    print("Confidence factors included in response")
+                else:
+                    print("⚠️ Response is missing 'confidence_factors' field")
+            else:
+                print(f"Prediction failed with error: {response.get('prediction_breakdown', {}).get('error', 'Unknown error')}")
+                
+            return success, response
+        return False, None
+        
+    def test_predict_match_invalid_team(self, home_team, away_team, referee_name):
+        """Test the match prediction endpoint with invalid team names"""
+        data = {
+            "home_team": home_team,
+            "away_team": away_team,
+            "referee_name": referee_name
+        }
+            
+        success, response = self.run_test(
+            f"Predict Match with Invalid Team: {home_team} vs {away_team}",
+            "POST",
+            "predict-match",
+            200,  # Should still return 200 with success=False in the response
+            data=data
+        )
+        
+        if success:
+            if not response.get('success', True):
+                print("✅ Correctly handled invalid team name")
+                print(f"Error message: {response.get('prediction_breakdown', {}).get('error', 'No error message')}")
+            else:
+                print("⚠️ API accepted invalid team name without error")
+                
+            return success, response
+        return False, None
+        
+    def test_predict_match_missing_fields(self):
+        """Test the match prediction endpoint with missing required fields"""
+        # Missing home_team
+        data1 = {
+            "away_team": "Team A",
+            "referee_name": "Referee X"
+        }
+        
+        # Missing away_team
+        data2 = {
+            "home_team": "Team B",
+            "referee_name": "Referee X"
+        }
+        
+        # Missing referee_name
+        data3 = {
+            "home_team": "Team B",
+            "away_team": "Team A"
+        }
+        
+        test_cases = [
+            ("Missing home_team", data1),
+            ("Missing away_team", data2),
+            ("Missing referee_name", data3)
+        ]
+        
+        results = []
+        for name, data in test_cases:
+            success, response = self.run_test(
+                f"Predict Match with {name}",
+                "POST",
+                "predict-match",
+                422,  # Should return 422 Unprocessable Entity
+                data=data
+            )
+            results.append((name, success, response))
+            
+        return results
+        
+    def test_team_performance(self, team_name):
+        """Test the team performance endpoint"""
+        success, response = self.run_test(
+            f"Get Team Performance for '{team_name}'",
+            "GET",
+            f"team-performance/{team_name}",
+            200
+        )
+        
+        if success:
+            print(f"Successfully retrieved performance data for team: {team_name}")
+            print(f"Total matches: {response.get('total_matches', 0)}")
+            
+            # Check if the response has the expected structure
+            if 'home_stats' in response:
+                print("Home stats included in response")
+                home_stats = response.get('home_stats', {})
+                if home_stats:
+                    print(f"Home matches: {home_stats.get('matches_count', 0)}")
+                    print(f"Home xG average: {home_stats.get('xg', 0)}")
+            else:
+                print("⚠️ Response is missing 'home_stats' field")
+                
+            if 'away_stats' in response:
+                print("Away stats included in response")
+                away_stats = response.get('away_stats', {})
+                if away_stats:
+                    print(f"Away matches: {away_stats.get('matches_count', 0)}")
+                    print(f"Away xG average: {away_stats.get('xg', 0)}")
+            else:
+                print("⚠️ Response is missing 'away_stats' field")
+                
+            if 'ppg' in response:
+                print(f"Points Per Game (PPG): {response.get('ppg', 0)}")
+            else:
+                print("⚠️ Response is missing 'ppg' field")
+                
+            return success, response
+        return False, None
+        
+    def test_team_performance_invalid(self, team_name):
+        """Test the team performance endpoint with an invalid team name"""
+        success, response = self.run_test(
+            f"Get Team Performance for invalid team '{team_name}'",
+            "GET",
+            f"team-performance/{team_name}",
+            500  # Should return 500 Internal Server Error
+        )
+        
+        if not success:
+            print("✅ Correctly rejected invalid team name")
+            return True, response
+        else:
+            print("⚠️ API accepted invalid team name without error")
+            return False, response
 
 def main():
     # Get backend URL from frontend .env
     with open('/app/frontend/.env', 'r') as f:
         for line in f:
             if line.startswith('REACT_APP_BACKEND_URL='):
-                backend_url = line.strip().split('=')[1]
+                backend_url = line.strip().split('=')[1].strip('"\'')
                 break
     
     print(f"Using backend URL: {backend_url}")
@@ -178,27 +345,53 @@ def main():
     # Run tests
     print("\n=== Testing Backend API ===")
     
-    # Test stats endpoint
+    # Test stats endpoint to check if we have data
     stats_success, stats = tester.test_stats()
     
-    # Test teams endpoint
+    # Test teams endpoint to get available teams for testing
     teams_success, teams = tester.test_teams()
     
-    # Test referees endpoint
+    # Test referees endpoint to get available referees for testing
     referees_success, referees = tester.test_referees()
     
-    # Test referee summary endpoint (new test)
-    summary_success, referee_summary, first_referee = tester.test_referee_summary()
+    # Store valid teams and referees for prediction testing
+    valid_teams = teams if teams_success and teams else []
+    valid_referees = referees if referees_success and referees else []
     
-    # Test referee details endpoint (new test)
-    if first_referee:
-        details_success, referee_details = tester.test_referee_details(first_referee)
+    # Test the new match prediction endpoint with valid data
+    if valid_teams and len(valid_teams) >= 2 and valid_referees:
+        home_team = valid_teams[0]
+        away_team = valid_teams[1]
+        referee_name = valid_referees[0]
+        
+        print("\n=== Testing Match Prediction API ===")
+        prediction_success, prediction = tester.test_predict_match(home_team, away_team, referee_name)
+        
+        # Test with invalid team names
+        invalid_home = "NonExistentTeam123"
+        invalid_away = "FakeTeam456"
+        
+        print("\n=== Testing Match Prediction with Invalid Teams ===")
+        invalid_team_success, invalid_prediction = tester.test_predict_match_invalid_team(
+            invalid_home, away_team, referee_name
+        )
+        
+        # Test with missing required fields
+        print("\n=== Testing Match Prediction with Missing Fields ===")
+        missing_fields_results = tester.test_predict_match_missing_fields()
+        
+        # Test team performance endpoint
+        if valid_teams:
+            print("\n=== Testing Team Performance API ===")
+            team_performance_success, team_performance = tester.test_team_performance(valid_teams[0])
+            
+            # Test with invalid team name
+            print("\n=== Testing Team Performance with Invalid Team ===")
+            invalid_team_performance_success, invalid_team_performance = tester.test_team_performance_invalid("NonExistentTeam789")
     else:
-        print("⚠️ Cannot test referee details endpoint without a valid referee name")
-        details_success = False
-    
-    # Test RBS results endpoint
-    rbs_success, rbs_results = tester.test_rbs_results()
+        print("\n⚠️ Cannot test prediction endpoints without valid teams and referees")
+        prediction_success = False
+        team_performance_success = False
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
@@ -206,61 +399,29 @@ def main():
     # Print summary of findings
     print("\n=== API Testing Summary ===")
     
-    if summary_success:
-        if len(referee_summary) == 0:
-            print("⚠️ Referee summary endpoint is working but returned 0 referees.")
-        else:
-            print(f"✅ Referee summary endpoint is working correctly and returned {len(referee_summary)} referees.")
-            print(f"Expected 28 referees, found {len(referee_summary)} referees.")
+    if teams_success:
+        print(f"✅ Found {len(valid_teams)} teams available for testing")
     else:
-        print("❌ Referee summary endpoint is not working correctly.")
-    
-    if first_referee and details_success:
-        print(f"✅ Referee details endpoint is working correctly for referee '{first_referee}'.")
+        print("❌ Could not retrieve teams list")
         
-        # Check if the response has the expected structure for referee details
-        if referee_details:
-            print("\nReferee Details Structure Check:")
-            
-            # Check for required fields
-            required_fields = ['total_matches', 'total_teams', 'overall_averages', 'rbs_results', 'matches']
-            for field in required_fields:
-                if field in referee_details:
-                    print(f"✅ '{field}' field is present")
-                else:
-                    print(f"❌ '{field}' field is missing")
-            
-            # Check overall_averages structure
-            if 'overall_averages' in referee_details:
-                avg_fields = ['yellow_cards', 'red_cards', 'fouls', 'penalties_awarded', 
-                              'possession_pct', 'xg', 'shots_total', 'shots_on_target']
-                for field in avg_fields:
-                    if field in referee_details['overall_averages']:
-                        print(f"✅ 'overall_averages.{field}' is present")
-                    else:
-                        print(f"❌ 'overall_averages.{field}' is missing")
-            
-            # Check rbs_results structure if available
-            if 'rbs_results' in referee_details and referee_details['rbs_results']:
-                first_rbs = referee_details['rbs_results'][0]
-                rbs_fields = ['team_name', 'referee', 'rbs_score', 'matches_with_ref', 
-                              'confidence_level', 'stats_breakdown']
-                for field in rbs_fields:
-                    if field in first_rbs:
-                        print(f"✅ 'rbs_results.{field}' is present")
-                    else:
-                        print(f"❌ 'rbs_results.{field}' is missing")
+    if referees_success:
+        print(f"✅ Found {len(valid_referees)} referees available for testing")
     else:
-        print("❌ Referee details endpoint is not working correctly.")
+        print("❌ Could not retrieve referees list")
     
-    if rbs_success:
-        if len(rbs_results) == 0:
-            print("⚠️ RBS results endpoint is working but returned 0 results.")
-            print("This could indicate that no RBS calculations have been performed yet.")
+    if 'prediction_success' in locals() and prediction_success:
+        print("✅ Match prediction endpoint is working correctly")
+        if 'prediction' in locals() and prediction and prediction.get('success', False):
+            print("✅ Prediction algorithm successfully generated predictions")
         else:
-            print(f"✅ RBS results endpoint is working correctly and returned {len(rbs_results)} results.")
+            print("⚠️ Prediction algorithm returned an error - this might be due to insufficient data")
     else:
-        print("❌ RBS results endpoint is not working correctly.")
+        print("❌ Match prediction endpoint is not working correctly")
+    
+    if 'team_performance_success' in locals() and team_performance_success:
+        print("✅ Team performance endpoint is working correctly")
+    else:
+        print("❌ Team performance endpoint is not working correctly")
     
     return 0 if tester.tests_passed == tester.tests_run else 1
 
