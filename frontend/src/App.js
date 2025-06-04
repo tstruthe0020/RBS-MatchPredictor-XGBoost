@@ -335,6 +335,7 @@ function App() {
                   <p className="text-gray-600 mb-4">Click on any referee to view their detailed bias analysis and team-specific statistics.</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {console.log('Rendering referee cards, refereeSummary length:', refereeSummary.length)}
                     {refereeSummary.map((referee) => (
                       <div 
                         key={referee._id}
