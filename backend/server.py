@@ -1012,6 +1012,96 @@ async def calculate_shots_from_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating shots data: {str(e)}")
 
+@api_router.post("/set-team-penalty-data")
+async def set_team_penalty_data(team_data: dict):
+    """Manually set penalty data for specific teams where we have accurate information"""
+    try:
+        # Expected format: {"Arsenal": {"match_id": "some-id", "attempts": 2, "goals": 2}}
+        updates_made = 0
+        
+        for team_name, penalty_info in team_data.items():
+            match_id = penalty_info.get('match_id')
+            attempts = penalty_info.get('attempts', 0)
+            goals = penalty_info.get('goals', 0)
+            
+            if not match_id:
+                continue
+            
+            # Update the specific match team stats
+            result = await db.team_stats.update_one(
+                {"team_name": team_name, "match_id": match_id},
+                {"$set": {
+                    "penalty_attempts": attempts,
+                    "penalty_goals": goals,
+                    "penalties_awarded": attempts,
+                    "penalty_conversion_rate": goals / attempts if attempts > 0 else 0.77
+                }}
+            )
+            
+            if result.modified_count > 0:
+                updates_made += 1
+                
+                # Also update a player from that team/match
+                players = await db.player_stats.find({"team_name": team_name, "match_id": match_id}).to_list(100)
+                if players:
+                    # Find the best candidate for penalty taker
+                    best_candidate = max(players, key=lambda p: p.get('goals', 0) * 3 + p.get('xg', 0))
+                    
+                    await db.player_stats.update_one(
+                        {"_id": best_candidate["_id"]},
+                        {"$set": {
+                            "penalty_attempts": attempts,
+                            "penalty_goals": goals
+                        }}
+                    )
+        
+        return {
+            "success": True,
+            "message": f"Updated penalty data for {updates_made} team-match combinations",
+            "updates_made": updates_made
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error setting penalty data: {str(e)}")
+
+@api_router.get("/find-high-scoring-matches/{team_name}")
+async def find_high_scoring_matches(team_name: str):
+    """Find matches where a team scored multiple goals - likely penalty candidates"""
+    try:
+        # Get all matches for this team
+        matches = await db.matches.find({
+            "$or": [
+                {"home_team": team_name},
+                {"away_team": team_name}
+            ]
+        }).to_list(1000)
+        
+        # Find high-scoring matches
+        high_scoring = []
+        for match in matches:
+            team_goals = match['home_score'] if match['home_team'] == team_name else match['away_score']
+            if team_goals >= 2:  # Matches where team scored 2+ goals
+                high_scoring.append({
+                    "match_id": match['match_id'],
+                    "date": match.get('match_date', 'Unknown'),
+                    "opponent": match['away_team'] if match['home_team'] == team_name else match['home_team'],
+                    "venue": "Home" if match['home_team'] == team_name else "Away",
+                    "score": f"{match['home_score']}-{match['away_score']}",
+                    "team_goals": team_goals
+                })
+        
+        # Sort by team goals descending
+        high_scoring.sort(key=lambda x: x['team_goals'], reverse=True)
+        
+        return {
+            "success": True,
+            "team_name": team_name,
+            "high_scoring_matches": high_scoring[:10]  # Top 10
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error finding high-scoring matches: {str(e)}")
+
 @api_router.post("/reset-penalty-data")
 async def reset_penalty_data():
     """Reset all penalty data to zero before repopulating"""
