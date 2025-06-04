@@ -180,13 +180,18 @@ class RBSCalculator:
         # Sum all components
         total_rbs = sum(rbs_components.values())
         
-        # Determine confidence level
-        if matches_with_ref >= 5:
-            confidence = "high"
+        # Calculate numerical confidence based on sample size
+        # Higher number of matches = higher confidence (0-100 scale)
+        if matches_with_ref >= 10:
+            confidence = min(95, 70 + (matches_with_ref - 10) * 2.5)  # 70-95%
+        elif matches_with_ref >= 5:
+            confidence = 50 + (matches_with_ref - 5) * 4  # 50-70%
         elif matches_with_ref >= 2:
-            confidence = "medium"
+            confidence = 20 + (matches_with_ref - 2) * 10  # 20-50%
         else:
-            confidence = "low"
+            confidence = matches_with_ref * 10  # 0-20%
+        
+        confidence = round(confidence, 1)
         
         return {
             'team_name': team_name,
