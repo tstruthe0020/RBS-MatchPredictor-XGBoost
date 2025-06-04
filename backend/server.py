@@ -486,12 +486,12 @@ class MatchPredictor:
                 "away_possession_avg": round(away_stats['possession_pct'], 1),
                 "home_fouls_drawn_avg": round(home_stats['fouls_drawn'], 1),
                 "away_fouls_drawn_avg": round(away_stats['fouls_drawn'], 1),
-                "home_penalties_avg": round(home_stats['penalty_attempts'], 2),
-                "away_penalties_avg": round(away_stats['penalty_attempts'], 2),
+                "home_penalties_avg": round(home_stats['penalties_awarded'], 3),  # Average penalty attempts per match
+                "away_penalties_avg": round(away_stats['penalties_awarded'], 3),  # Average penalty attempts per match
                 "home_penalty_conversion": round(home_stats['penalty_conversion_rate'], 3),
                 "away_penalty_conversion": round(away_stats['penalty_conversion_rate'], 3),
-                "home_penalty_goals_avg": round(home_stats['penalty_goals'], 2),
-                "away_penalty_goals_avg": round(away_stats['penalty_goals'], 2),
+                "home_penalty_goals_avg": round(home_stats['penalty_goals'], 3),  # Average penalty goals per match
+                "away_penalty_goals_avg": round(away_stats['penalty_goals'], 3),  # Average penalty goals per match
                 "home_goals_avg": round(home_stats['goals'], 2),
                 "away_goals_avg": round(away_stats['goals'], 2),
                 "home_conversion_rate": round(home_conversion, 2),
