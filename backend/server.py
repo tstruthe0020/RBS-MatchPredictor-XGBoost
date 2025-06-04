@@ -482,9 +482,19 @@ async def get_referee_details(referee_name: str):
         # Get all matches for this referee
         matches = await db.matches.find({"referee": referee_name}).to_list(1000)
         
+        # Convert ObjectId to string for matches
+        for match in matches:
+            if '_id' in match:
+                match['_id'] = str(match['_id'])
+        
         # Get all team stats for matches with this referee
         match_ids = [match['match_id'] for match in matches]
         team_stats = await db.team_stats.find({"match_id": {"$in": match_ids}}).to_list(1000)
+        
+        # Convert ObjectId to string for team stats
+        for stat in team_stats:
+            if '_id' in stat:
+                stat['_id'] = str(stat['_id'])
         
         # Get RBS results for this referee
         rbs_results = await db.rbs_results.find({"referee": referee_name}).to_list(1000)
