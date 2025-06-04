@@ -101,15 +101,17 @@ class RBSCalculator:
             'possession_pct': 0.2
         }
     
-    def calculate_team_avg_stats(self, team_stats_list, with_referee=None):
+    def calculate_team_avg_stats(self, team_stats_list, with_referee=None, exclude_referee=None):
         """Calculate average stats for a team, optionally filtered by referee"""
         if with_referee:
             filtered_stats = [s for s in team_stats_list if s.get('referee') == with_referee]
+        elif exclude_referee:
+            filtered_stats = [s for s in team_stats_list if s.get('referee') != exclude_referee]
         else:
-            filtered_stats = [s for s in team_stats_list if s.get('referee') != with_referee]
+            filtered_stats = team_stats_list
         
         if not filtered_stats:
-            return None
+            return None, 0
         
         avg_stats = {}
         stat_fields = ['yellow_cards', 'red_cards', 'fouls', 'fouls_drawn', 'penalties_awarded', 'xg', 'possession_pct']
