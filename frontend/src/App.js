@@ -16,6 +16,11 @@ function App() {
   const [uploading, setUploading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [uploadMessages, setUploadMessages] = useState({});
+  
+  // New state for referee-based navigation
+  const [refereeSummary, setRefereeSummary] = useState([]);
+  const [selectedRefereeDetails, setSelectedRefereeDetails] = useState(null);
+  const [viewingReferee, setViewingReferee] = useState(null);
 
   // Fetch initial data
   useEffect(() => {
