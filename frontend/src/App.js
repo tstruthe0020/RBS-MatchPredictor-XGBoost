@@ -157,7 +157,10 @@ function App() {
             {['dashboard', 'upload', 'results'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  console.log('Clicking tab:', tab);
+                  setActiveTab(tab);
+                }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                   activeTab === tab
                     ? 'border-blue-500 text-blue-600'
