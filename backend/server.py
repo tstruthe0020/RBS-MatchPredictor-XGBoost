@@ -720,7 +720,9 @@ async def upload_player_stats(file: UploadFile = File(...)):
                     yellow_cards=safe_int(row.get('yellow_cards', 0)),
                     fouls_committed=safe_int(row.get('fouls_committed', 0)),
                     fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
-                    xg=safe_float(row.get('xg', 0))
+                    xg=safe_float(row.get('xg', 0)),
+                    penalty_attempts=safe_int(row.get('penalty_attempts', 0)),
+                    penalty_goals=safe_int(row.get('penalty_goals', 0))
                 )
                 player_stats_batch.append(stats.dict())
             
@@ -730,7 +732,7 @@ async def upload_player_stats(file: UploadFile = File(...)):
         
         return UploadResponse(
             success=True,
-            message=f"Successfully uploaded {total_processed} player stat records",
+            message=f"Successfully uploaded {total_processed} player stat records with penalty data",
             records_processed=total_processed
         )
     
