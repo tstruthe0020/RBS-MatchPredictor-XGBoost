@@ -107,32 +107,38 @@ user_problem_statement: "I have implemented a new match prediction algorithm for
 backend:
   - task: "Match Prediction Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented match prediction endpoint at POST /api/predict-match that uses team averages, PPG calculations, referee bias scores, and xG-based predictions."
+      - working: true
+        agent: "testing"
+        comment: "Endpoint is working correctly. Successfully tested with valid teams (Arsenal vs Aston Villa) and referee (Andrew Kitchen). The endpoint correctly returns predicted scoreline with detailed breakdown including home/away xG, PPG adjustment, and referee bias factors. Also properly handles invalid team names by returning a descriptive error message, and validates required fields (home_team, away_team, referee_name) with appropriate 422 status code when missing."
 
   - task: "Team Performance Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented team performance endpoint at GET /api/team-performance/{team_name} that returns team stats used for predictions."
+      - working: true
+        agent: "testing"
+        comment: "Endpoint is working correctly. Successfully tested with valid team (Arsenal) and received comprehensive team stats including home/away context, PPG, and match counts. Minor issue: The endpoint doesn't return an error for non-existent teams but instead returns empty stats with success=true. This is acceptable behavior as it doesn't break functionality, but could be improved for better error handling."
 
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 0
+  test_sequence: 1
   run_ui: false
 
 test_plan:
@@ -146,3 +152,5 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "I will test the new match prediction algorithm endpoints. First, I'll check what teams and referees are available in the database, then test both the prediction endpoint and team performance endpoint with valid and invalid data."
+  - agent: "testing"
+    message: "Testing completed. Both endpoints are working correctly. The Match Prediction endpoint properly handles valid and invalid inputs, returning detailed prediction breakdowns. The Team Performance endpoint returns comprehensive team stats. Minor improvement suggestion: The Team Performance endpoint could return a more explicit error for non-existent teams rather than empty stats with success=true."
