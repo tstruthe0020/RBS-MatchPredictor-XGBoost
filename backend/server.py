@@ -87,6 +87,24 @@ class UploadResponse(BaseModel):
     message: str
     records_processed: int
 
+class MatchPredictionRequest(BaseModel):
+    home_team: str
+    away_team: str
+    referee_name: str
+    match_date: Optional[str] = None
+
+class MatchPredictionResponse(BaseModel):
+    success: bool
+    home_team: str
+    away_team: str
+    referee: str
+    predicted_home_goals: float
+    predicted_away_goals: float
+    home_xg: float
+    away_xg: float
+    prediction_breakdown: Dict
+    confidence_factors: Dict
+
 # RBS Calculation Engine
 class RBSCalculator:
     def __init__(self):
