@@ -368,6 +368,271 @@ function App() {
           </div>
         )}
 
+        {/* Match Prediction Tab */}
+        {activeTab === 'predict' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">⚽ Match Prediction Algorithm</h2>
+              <p className="text-gray-600 mb-6">
+                Predict expected scorelines using advanced xG-based calculations, referee bias analysis, and team performance data.
+              </p>
+
+              {!predictionResult ? (
+                /* Prediction Form */
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Home Team */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Home Team *
+                      </label>
+                      <select
+                        value={predictionForm.home_team}
+                        onChange={(e) => handlePredictionFormChange('home_team', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Home Team</option>
+                        {teams.map(team => (
+                          <option key={team} value={team}>{team}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Away Team */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Away Team *
+                      </label>
+                      <select
+                        value={predictionForm.away_team}
+                        onChange={(e) => handlePredictionFormChange('away_team', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Away Team</option>
+                        {teams.filter(team => team !== predictionForm.home_team).map(team => (
+                          <option key={team} value={team}>{team}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Referee */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Referee *
+                      </label>
+                      <select
+                        value={predictionForm.referee_name}
+                        onChange={(e) => handlePredictionFormChange('referee_name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Referee</option>
+                        {referees.map(referee => (
+                          <option key={referee} value={referee}>{referee}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Match Date (Optional) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Match Date (Optional)
+                      </label>
+                      <input
+                        type="date"
+                        value={predictionForm.match_date}
+                        onChange={(e) => handlePredictionFormChange('match_date', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Prediction Button */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={predictMatch}
+                      disabled={predicting || !predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name}
+                      className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {predicting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Calculating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🔮</span>
+                          <span>Predict Match</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Algorithm Explanation */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-md font-semibold text-gray-900 mb-2">Algorithm Overview</h3>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p><strong>1. Base xG Calculation:</strong> Team avg shots × xG per shot + opponent defensive stats</p>
+                      <p><strong>2. PPG Adjustment:</strong> Quality difference between teams (PPG difference × 0.15)</p>
+                      <p><strong>3. Referee Bias:</strong> RBS score × 0.2 scaling factor (RBS -5 = -1.0 xG adjustment)</p>
+                      <p><strong>4. Home/Away Context:</strong> All stats filtered by venue (home vs away performance)</p>
+                      <p><strong>5. Final Score:</strong> Adjusted xG × team-specific goal conversion rate</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Prediction Results */
+                <div className="space-y-6">
+                  {predictionResult.success ? (
+                    <>
+                      {/* Header with predicted score */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">Predicted Match Result</h3>
+                          <div className="text-4xl font-bold text-gray-900 mb-2">
+                            {predictionResult.home_team} {predictionResult.predicted_home_goals} - {predictionResult.predicted_away_goals} {predictionResult.away_team}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Expected xG: {predictionResult.home_xg} - {predictionResult.away_xg}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Referee: {predictionResult.referee}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Breakdown */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Prediction Components */}
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="text-md font-semibold text-gray-900 mb-3">Prediction Breakdown</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Base xG (Home):</span>
+                              <span className="font-medium">{predictionResult.prediction_breakdown?.home_base_xg}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Base xG (Away):</span>
+                              <span className="font-medium">{predictionResult.prediction_breakdown?.away_base_xg}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">PPG Adjustment:</span>
+                              <span className={`font-medium ${predictionResult.prediction_breakdown?.ppg_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.ppg_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                {predictionResult.prediction_breakdown?.ppg_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.ppg_adjustment}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Referee Bias (Home):</span>
+                              <span className={`font-medium ${predictionResult.prediction_breakdown?.home_ref_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.home_ref_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                {predictionResult.prediction_breakdown?.home_ref_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.home_ref_adjustment}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Referee Bias (Away):</span>
+                              <span className={`font-medium ${predictionResult.prediction_breakdown?.away_ref_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.away_ref_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                {predictionResult.prediction_breakdown?.away_ref_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.away_ref_adjustment}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Confidence Factors */}
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="text-md font-semibold text-gray-900 mb-3">Confidence Factors</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Overall Confidence:</span>
+                              <span className="font-medium">{Math.round(predictionResult.confidence_factors?.overall_confidence || 0)}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Home Matches:</span>
+                              <span className="font-medium">{predictionResult.confidence_factors?.home_matches_count}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Away Matches:</span>
+                              <span className="font-medium">{predictionResult.confidence_factors?.away_matches_count}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Home PPG:</span>
+                              <span className="font-medium">{predictionResult.confidence_factors?.home_ppg}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Away PPG:</span>
+                              <span className="font-medium">{predictionResult.confidence_factors?.away_ppg}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">RBS Confidence (Home):</span>
+                              <span className="font-medium">{predictionResult.confidence_factors?.home_rbs_confidence}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">RBS Confidence (Away):</span>
+                              <span className="font-medium">{predictionResult.confidence_factors?.away_rbs_confidence}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Team Stats Used */}
+                      <div className="bg-white p-4 rounded-lg border">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3">Historical Performance (Used in Prediction)</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <h5 className="font-medium text-gray-800 mb-2">{predictionResult.home_team} (Home)</h5>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Avg Shots/Game:</span>
+                                <span>{predictionResult.prediction_breakdown?.home_shots_avg}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">xG per Shot:</span>
+                                <span>{predictionResult.prediction_breakdown?.home_xg_per_shot}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-gray-800 mb-2">{predictionResult.away_team} (Away)</h5>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Avg Shots/Game:</span>
+                                <span>{predictionResult.prediction_breakdown?.away_shots_avg}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">xG per Shot:</span>
+                                <span>{predictionResult.prediction_breakdown?.away_xg_per_shot}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={resetPrediction}
+                          className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                        >
+                          Predict Another Match
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* Error State */
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h3 className="text-lg font-semibold text-red-800 mb-2">Prediction Failed</h3>
+                      <p className="text-red-700">{predictionResult.prediction_breakdown?.error || 'Unknown error occurred'}</p>
+                      <button
+                        onClick={resetPrediction}
+                        className="mt-4 px-4 py-2 bg-red-100 text-red-800 font-medium rounded-lg hover:bg-red-200"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Results Tab */}
         {activeTab === 'results' && (
           <div className="space-y-6">
