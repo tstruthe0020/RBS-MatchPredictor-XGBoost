@@ -1452,6 +1452,32 @@ async def add_sample_realistic_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error adding sample data: {str(e)}")
 
+@api_router.get("/debug/penalty-players-sample")
+async def get_penalty_players_sample():
+    """Get sample of players who have penalty attempts or goals"""
+    try:
+        # Find players with penalty attempts
+        penalty_players = await db.player_stats.find({
+            "$or": [
+                {"penalty_attempts": {"$gt": 0}},
+                {"penalty_goals": {"$gt": 0}}
+            ]
+        }).limit(20).to_list(20)
+        
+        # Convert ObjectId to string
+        for player in penalty_players:
+            if '_id' in player:
+                player['_id'] = str(player['_id'])
+        
+        return {
+            "success": True,
+            "penalty_players_found": len(penalty_players),
+            "sample_data": penalty_players
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching penalty players: {str(e)}")
+
 @api_router.get("/debug/team-stats/{team_name}")
 async def get_team_specific_stats(team_name: str):
     """Get all team stats for a specific team"""
