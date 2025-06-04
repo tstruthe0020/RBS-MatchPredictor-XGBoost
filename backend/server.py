@@ -426,8 +426,9 @@ class MatchPredictor:
             
             # Enhanced penalties factor using conversion rates
             # Each penalty attempt adds potential xG, weighted by team's conversion rate
-            home_penalty_xg = home_stats['penalty_attempts'] * 0.79 * home_stats['penalty_conversion_rate']
-            away_penalty_xg = away_stats['penalty_attempts'] * 0.79 * away_stats['penalty_conversion_rate']
+            # Using penalties_awarded (average penalty attempts per match)
+            home_penalty_xg = home_stats['penalties_awarded'] * 0.79 * home_stats['penalty_conversion_rate']
+            away_penalty_xg = away_stats['penalties_awarded'] * 0.79 * away_stats['penalty_conversion_rate']
             
             home_base_xg += home_penalty_xg
             away_base_xg += away_penalty_xg
