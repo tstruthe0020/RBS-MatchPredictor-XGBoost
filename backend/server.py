@@ -1152,7 +1152,9 @@ async def calculate_team_stats_from_players():
                     'goals': 0,
                     'assists': 0,
                     'player_yellow_cards': 0,
-                    'player_fouls_committed': 0
+                    'player_fouls_committed': 0,
+                    'penalty_attempts': 0,
+                    'penalty_goals': 0
                 }
             
             # Aggregate player stats to team level
@@ -1162,6 +1164,8 @@ async def calculate_team_stats_from_players():
             team_aggregations[key]['assists'] += player.get('assists', 0)
             team_aggregations[key]['player_yellow_cards'] += player.get('yellow_cards', 0)
             team_aggregations[key]['player_fouls_committed'] += player.get('fouls_committed', 0)
+            team_aggregations[key]['penalty_attempts'] += player.get('penalty_attempts', 0)
+            team_aggregations[key]['penalty_goals'] += player.get('penalty_goals', 0)
         
         # Update team stats with aggregated data
         updated_count = 0
@@ -1184,25 +1188,19 @@ async def calculate_team_stats_from_players():
                 # Use actual goals from match if available, otherwise use player sum
                 final_goals = actual_goals if actual_goals >= 0 else aggregated['goals']
                 
-                # Calculate penalties awarded based on multiple factors
-                goals = final_goals
-                xg = aggregated['xg']
-                
-                # Method 1: If goals significantly exceed xG, likely penalty involved
-                penalty_from_goals_xg = 1 if goals > 0 and (goals - xg) > 0.7 else 0
-                
-                # Method 2: Random estimation based on league averages (about 10% of matches have penalties)
-                # We'll use a more conservative approach and check if it's a high-scoring situation
-                penalty_from_context = 1 if goals >= 2 and xg > 1.5 else 0
-                
-                # Take the more conservative estimate
-                penalties_awarded = max(penalty_from_goals_xg, penalty_from_context)
+                # Calculate penalty conversion rate
+                penalty_attempts = aggregated['penalty_attempts']
+                penalty_goals = aggregated['penalty_goals']
+                penalty_conversion_rate = penalty_goals / penalty_attempts if penalty_attempts > 0 else 0.77  # League average
                 
                 # Prepare update data
                 update_data = {
                     'fouls_drawn': aggregated['fouls_drawn'],
                     'xg': round(aggregated['xg'], 2),
-                    'penalties_awarded': penalties_awarded
+                    'penalties_awarded': penalty_attempts,  # Now using actual attempts instead of estimation
+                    'penalty_attempts': penalty_attempts,
+                    'penalty_goals': penalty_goals,
+                    'penalty_conversion_rate': round(penalty_conversion_rate, 3)
                 }
                 
                 # Update the team stats record
@@ -1215,7 +1213,7 @@ async def calculate_team_stats_from_players():
         
         return {
             "success": True,
-            "message": f"Updated {updated_count} team stats with player-aggregated data",
+            "message": f"Updated {updated_count} team stats with player-aggregated data including penalty stats",
             "team_aggregations_found": len(team_aggregations),
             "team_stats_updated": updated_count
         }
