@@ -278,6 +278,9 @@ class MatchPredictor:
             'fouls': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
             'fouls_drawn': sum(stat.get('fouls_drawn', 0) for stat in team_stats) / total_matches,
             'penalties_awarded': sum(stat.get('penalties_awarded', 0) for stat in team_stats) / total_matches,
+            'penalty_attempts': sum(stat.get('penalty_attempts', 0) for stat in team_stats) / total_matches,
+            'penalty_goals': sum(stat.get('penalty_goals', 0) for stat in team_stats) / total_matches,
+            'penalty_conversion_rate': 0,  # Will calculate below
             'yellow_cards': sum(stat.get('yellow_cards', 0) for stat in team_stats) / total_matches,
             'red_cards': sum(stat.get('red_cards', 0) for stat in team_stats) / total_matches,
             'possession_pct': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,
