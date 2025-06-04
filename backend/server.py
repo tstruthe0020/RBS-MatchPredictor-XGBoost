@@ -1296,6 +1296,60 @@ async def add_sample_realistic_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error adding sample data: {str(e)}")
 
+@api_router.get("/debug/team-penalty-analysis/{team_name}")
+async def get_team_penalty_analysis(team_name: str):
+    """Debug endpoint to analyze penalty data for a specific team"""
+    try:
+        # Get all team stats for this team
+        home_stats = await db.team_stats.find({"team_name": team_name, "is_home": True}).to_list(1000)
+        away_stats = await db.team_stats.find({"team_name": team_name, "is_home": False}).to_list(1000)
+        
+        # Calculate totals and averages
+        home_total_penalty_attempts = sum(stat.get('penalty_attempts', 0) for stat in home_stats)
+        home_total_penalty_goals = sum(stat.get('penalty_goals', 0) for stat in home_stats)
+        home_matches = len(home_stats)
+        
+        away_total_penalty_attempts = sum(stat.get('penalty_attempts', 0) for stat in away_stats)
+        away_total_penalty_goals = sum(stat.get('penalty_goals', 0) for stat in away_stats)
+        away_matches = len(away_stats)
+        
+        # Calculate averages
+        home_penalties_per_match = home_total_penalty_attempts / home_matches if home_matches > 0 else 0
+        away_penalties_per_match = away_total_penalty_attempts / away_matches if away_matches > 0 else 0
+        
+        # Conversion rates
+        home_conversion = home_total_penalty_goals / home_total_penalty_attempts if home_total_penalty_attempts > 0 else 0
+        away_conversion = away_total_penalty_goals / away_total_penalty_attempts if away_total_penalty_attempts > 0 else 0
+        
+        return {
+            "success": True,
+            "team_name": team_name,
+            "home_performance": {
+                "matches": home_matches,
+                "total_penalty_attempts": home_total_penalty_attempts,
+                "total_penalty_goals": home_total_penalty_goals,
+                "penalties_per_match": round(home_penalties_per_match, 3),
+                "conversion_rate": round(home_conversion, 3)
+            },
+            "away_performance": {
+                "matches": away_matches,
+                "total_penalty_attempts": away_total_penalty_attempts,
+                "total_penalty_goals": away_total_penalty_goals,
+                "penalties_per_match": round(away_penalties_per_match, 3),
+                "conversion_rate": round(away_conversion, 3)
+            },
+            "overall": {
+                "total_matches": home_matches + away_matches,
+                "total_penalty_attempts": home_total_penalty_attempts + away_total_penalty_attempts,
+                "total_penalty_goals": home_total_penalty_goals + away_total_penalty_goals,
+                "overall_penalties_per_match": round((home_total_penalty_attempts + away_total_penalty_attempts) / (home_matches + away_matches) if (home_matches + away_matches) > 0 else 0, 3),
+                "overall_conversion_rate": round((home_total_penalty_goals + away_total_penalty_goals) / (home_total_penalty_attempts + away_total_penalty_attempts) if (home_total_penalty_attempts + away_total_penalty_attempts) > 0 else 0, 3)
+            }
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing penalty data: {str(e)}")
+
 @api_router.get("/debug/player-stats-sample")
 async def get_player_stats_sample():
     """Debug endpoint to check player stats data structure"""
