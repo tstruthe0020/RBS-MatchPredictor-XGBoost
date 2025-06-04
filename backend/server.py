@@ -254,22 +254,43 @@ async def upload_team_stats(file: UploadFile = File(...)):
         # Clear existing team stats
         await db.team_stats.delete_many({})
         
+        # Replace NaN values with 0
+        df = df.fillna(0)
+        
         # Process and insert team stats
         team_stats = []
         for _, row in df.iterrows():
+            # Helper function to safely convert to int
+            def safe_int(value, default=0):
+                try:
+                    if pd.isna(value) or value == '' or value is None:
+                        return default
+                    return int(float(value))
+                except (ValueError, TypeError):
+                    return default
+            
+            # Helper function to safely convert to float
+            def safe_float(value, default=0.0):
+                try:
+                    if pd.isna(value) or value == '' or value is None:
+                        return default
+                    return float(value)
+                except (ValueError, TypeError):
+                    return default
+            
             stats = TeamStats(
                 match_id=str(row['match_id']),
                 team_name=str(row['team_name']),
-                is_home=bool(row['is_home']),
-                yellow_cards=int(row.get('yellow_cards', 0)),
-                red_cards=int(row.get('red_cards', 0)),
-                fouls=int(row.get('fouls', 0)),
-                possession_pct=float(row.get('possession_pct', 0)),
-                shots_total=int(row.get('shots_total', 0)),
-                shots_on_target=int(row.get('shots_on_target', 0)),
-                fouls_drawn=int(row.get('fouls_drawn', 0)),
-                penalties_awarded=int(row.get('penalties_awarded', 0)),
-                xg=float(row.get('xg', 0))
+                is_home=bool(row.get('is_home', False)),
+                yellow_cards=safe_int(row.get('yellow_cards', 0)),
+                red_cards=safe_int(row.get('red_cards', 0)),
+                fouls=safe_int(row.get('fouls', 0)),
+                possession_pct=safe_float(row.get('possession_pct', 0)),
+                shots_total=safe_int(row.get('shots_total', 0)),
+                shots_on_target=safe_int(row.get('shots_on_target', 0)),
+                fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
+                penalties_awarded=safe_int(row.get('penalties_awarded', 0)),
+                xg=safe_float(row.get('xg', 0))
             )
             team_stats.append(stats.dict())
         
