@@ -224,6 +224,242 @@ class RBSCalculator:
 # Initialize RBS Calculator
 rbs_calculator = RBSCalculator()
 
+# Match Prediction Engine
+class MatchPredictor:
+    def __init__(self):
+        self.rbs_scaling_factor = 0.2  # RBS of -5 gives -1.0 xG adjustment
+    
+    async def calculate_team_averages(self, team_name, is_home, exclude_opponent=None, season_filter=None):
+        """Calculate team averages with home/away context"""
+        # Build query for team stats
+        query = {
+            "team_name": team_name,
+            "is_home": is_home
+        }
+        
+        # Get team stats
+        team_stats = await db.team_stats.find(query).to_list(1000)
+        
+        # Get corresponding matches to filter by season/opponent if needed
+        if exclude_opponent or season_filter:
+            match_ids = [stat['match_id'] for stat in team_stats]
+            match_query = {"match_id": {"$in": match_ids}}
+            if season_filter:
+                match_query["season"] = season_filter
+            
+            matches = await db.matches.find(match_query).to_list(1000)
+            valid_match_ids = set()
+            
+            for match in matches:
+                # Exclude specific opponent if requested
+                if exclude_opponent:
+                    opponent = match['away_team'] if match['home_team'] == team_name else match['home_team']
+                    if opponent == exclude_opponent:
+                        continue
+                valid_match_ids.add(match['match_id'])
+            
+            # Filter team stats by valid matches
+            team_stats = [stat for stat in team_stats if stat['match_id'] in valid_match_ids]
+        
+        if not team_stats:
+            return None
+        
+        # Calculate averages
+        total_matches = len(team_stats)
+        averages = {
+            'shots_total': sum(stat.get('shots_total', 0) for stat in team_stats) / total_matches,
+            'shots_on_target': sum(stat.get('shots_on_target', 0) for stat in team_stats) / total_matches,
+            'xg': sum(stat.get('xg', 0) for stat in team_stats) / total_matches,
+            'goals': 0,  # Will calculate from matches
+            'matches_count': total_matches,
+            'shots_conceded': 0,  # Will calculate from opponent data
+            'xg_conceded': 0  # Will calculate from opponent data
+        }
+        
+        # Calculate actual goals scored from matches
+        match_ids = [stat['match_id'] for stat in team_stats]
+        matches = await db.matches.find({"match_id": {"$in": match_ids}}).to_list(1000)
+        
+        total_goals = 0
+        total_goals_conceded = 0
+        for match in matches:
+            if match['home_team'] == team_name and is_home:
+                total_goals += match['home_score']
+                total_goals_conceded += match['away_score']
+            elif match['away_team'] == team_name and not is_home:
+                total_goals += match['away_score']
+                total_goals_conceded += match['home_score']
+        
+        averages['goals'] = total_goals / total_matches if total_matches > 0 else 0
+        averages['goals_conceded'] = total_goals_conceded / total_matches if total_matches > 0 else 0
+        
+        # Calculate shots per goal and xG per shot ratios
+        averages['xg_per_shot'] = averages['xg'] / averages['shots_total'] if averages['shots_total'] > 0 else 0
+        averages['goals_per_xg'] = averages['goals'] / averages['xg'] if averages['xg'] > 0 else 1.0
+        
+        return averages
+    
+    async def calculate_ppg(self, team_name, season_filter=None):
+        """Calculate Points Per Game for a team"""
+        # Get all matches for this team
+        query = {
+            "$or": [
+                {"home_team": team_name},
+                {"away_team": team_name}
+            ]
+        }
+        if season_filter:
+            query["season"] = season_filter
+        
+        matches = await db.matches.find(query).to_list(1000)
+        
+        if not matches:
+            return 0
+        
+        total_points = 0
+        for match in matches:
+            if match['home_team'] == team_name:
+                if match['home_score'] > match['away_score']:
+                    total_points += 3  # Win
+                elif match['home_score'] == match['away_score']:
+                    total_points += 1  # Draw
+                # Loss = 0 points
+            else:  # Away team
+                if match['away_score'] > match['home_score']:
+                    total_points += 3  # Win
+                elif match['away_score'] == match['home_score']:
+                    total_points += 1  # Draw
+                # Loss = 0 points
+        
+        return total_points / len(matches)
+    
+    async def get_referee_bias(self, team_name, referee_name):
+        """Get referee bias score for team-referee combination"""
+        rbs_result = await db.rbs_results.find_one({
+            "team_name": team_name,
+            "referee": referee_name
+        })
+        
+        if rbs_result:
+            return rbs_result['rbs_score'], rbs_result['confidence_level']
+        return 0.0, 0.0
+    
+    async def predict_match(self, home_team, away_team, referee_name, match_date=None):
+        """Main prediction function"""
+        try:
+            # Get team averages (home and away context)
+            home_stats = await self.calculate_team_averages(home_team, is_home=True, exclude_opponent=away_team)
+            away_stats = await self.calculate_team_averages(away_team, is_home=False, exclude_opponent=home_team)
+            
+            # Get defensive stats (what teams concede when playing away/home)
+            home_defensive = await self.calculate_team_averages(home_team, is_home=True)
+            away_defensive = await self.calculate_team_averages(away_team, is_home=False)
+            
+            if not home_stats or not away_stats:
+                raise ValueError("Insufficient historical data for one or both teams")
+            
+            # Calculate base expected xG for each team
+            # Formula: (team_avg_shots * team_avg_xg_per_shot + opponent_avg_shots_conceded * opponent_avg_xga_per_shot) / 2
+            
+            # For home team xG
+            home_base_xg = (
+                home_stats['shots_total'] * home_stats['xg_per_shot'] +
+                away_defensive['goals_conceded'] * (away_stats['xg'] / away_stats['shots_total'] if away_stats['shots_total'] > 0 else 0)
+            ) / 2
+            
+            # For away team xG
+            away_base_xg = (
+                away_stats['shots_total'] * away_stats['xg_per_shot'] +
+                home_defensive['goals_conceded'] * (home_stats['xg'] / home_stats['shots_total'] if home_stats['shots_total'] > 0 else 0)
+            ) / 2
+            
+            # Get PPG for both teams
+            home_ppg = await self.calculate_ppg(home_team)
+            away_ppg = await self.calculate_ppg(away_team)
+            
+            # PPG adjustment (difference in quality)
+            ppg_diff = home_ppg - away_ppg
+            ppg_adjustment = ppg_diff * 0.15  # Adjustment factor
+            
+            # Apply PPG adjustment
+            home_adjusted_xg = home_base_xg + ppg_adjustment
+            away_adjusted_xg = away_base_xg - ppg_adjustment
+            
+            # Get referee bias
+            home_rbs, home_rbs_confidence = await self.get_referee_bias(home_team, referee_name)
+            away_rbs, away_rbs_confidence = await self.get_referee_bias(away_team, referee_name)
+            
+            # Apply referee bias (RBS scaling: -5 RBS = -1.0 xG)
+            home_ref_adjustment = home_rbs * self.rbs_scaling_factor
+            away_ref_adjustment = away_rbs * self.rbs_scaling_factor
+            
+            # Final xG predictions
+            final_home_xg = max(0.1, home_adjusted_xg + home_ref_adjustment)
+            final_away_xg = max(0.1, away_adjusted_xg + away_ref_adjustment)
+            
+            # Convert xG to expected goals (using team-specific conversion rates)
+            predicted_home_goals = final_home_xg * home_stats['goals_per_xg']
+            predicted_away_goals = final_away_xg * away_stats['goals_per_xg']
+            
+            # Round to reasonable precision
+            predicted_home_goals = round(predicted_home_goals, 2)
+            predicted_away_goals = round(predicted_away_goals, 2)
+            final_home_xg = round(final_home_xg, 2)
+            final_away_xg = round(final_away_xg, 2)
+            
+            # Prepare detailed breakdown
+            prediction_breakdown = {
+                "home_base_xg": round(home_base_xg, 2),
+                "away_base_xg": round(away_base_xg, 2),
+                "ppg_adjustment": round(ppg_adjustment, 2),
+                "home_ref_adjustment": round(home_ref_adjustment, 2),
+                "away_ref_adjustment": round(away_ref_adjustment, 2),
+                "home_shots_avg": round(home_stats['shots_total'], 1),
+                "away_shots_avg": round(away_stats['shots_total'], 1),
+                "home_xg_per_shot": round(home_stats['xg_per_shot'], 3),
+                "away_xg_per_shot": round(away_stats['xg_per_shot'], 3)
+            }
+            
+            confidence_factors = {
+                "home_matches_count": home_stats['matches_count'],
+                "away_matches_count": away_stats['matches_count'],
+                "home_rbs_confidence": home_rbs_confidence,
+                "away_rbs_confidence": away_rbs_confidence,
+                "home_ppg": round(home_ppg, 2),
+                "away_ppg": round(away_ppg, 2),
+                "overall_confidence": min(80, (home_stats['matches_count'] + away_stats['matches_count']) / 2 * 4)
+            }
+            
+            return MatchPredictionResponse(
+                success=True,
+                home_team=home_team,
+                away_team=away_team,
+                referee=referee_name,
+                predicted_home_goals=predicted_home_goals,
+                predicted_away_goals=predicted_away_goals,
+                home_xg=final_home_xg,
+                away_xg=final_away_xg,
+                prediction_breakdown=prediction_breakdown,
+                confidence_factors=confidence_factors
+            )
+            
+        except Exception as e:
+            return MatchPredictionResponse(
+                success=False,
+                home_team=home_team,
+                away_team=away_team,
+                referee=referee_name,
+                predicted_home_goals=0.0,
+                predicted_away_goals=0.0,
+                home_xg=0.0,
+                away_xg=0.0,
+                prediction_breakdown={"error": str(e)},
+                confidence_factors={"error": "Insufficient data"}
+            )
+
+# Initialize Match Predictor
+match_predictor = MatchPredictor()
+
 # API Routes
 @api_router.get("/")
 async def root():
