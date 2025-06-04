@@ -1056,6 +1056,52 @@ async def get_teams():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching teams: {str(e)}")
 
+@api_router.post("/predict-match", response_model=MatchPredictionResponse)
+async def predict_match(request: MatchPredictionRequest):
+    """Predict match outcome using xG-based algorithm"""
+    try:
+        prediction = await match_predictor.predict_match(
+            home_team=request.home_team,
+            away_team=request.away_team,
+            referee_name=request.referee_name,
+            match_date=request.match_date
+        )
+        return prediction
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
+
+@api_router.get("/team-performance/{team_name}")
+async def get_team_performance(team_name: str):
+    """Get team performance stats for prediction insights"""
+    try:
+        # Get home and away stats
+        home_stats = await match_predictor.calculate_team_averages(team_name, is_home=True)
+        away_stats = await match_predictor.calculate_team_averages(team_name, is_home=False)
+        
+        # Get PPG
+        ppg = await match_predictor.calculate_ppg(team_name)
+        
+        # Get recent form (last 5 matches)
+        recent_matches = await db.matches.find({
+            "$or": [
+                {"home_team": team_name},
+                {"away_team": team_name}
+            ]
+        }).sort([("match_date", -1)]).limit(5).to_list(5)
+        
+        return {
+            "success": True,
+            "team_name": team_name,
+            "home_stats": home_stats,
+            "away_stats": away_stats,
+            "ppg": round(ppg, 2),
+            "recent_matches": len(recent_matches),
+            "total_matches": (home_stats['matches_count'] if home_stats else 0) + 
+                           (away_stats['matches_count'] if away_stats else 0)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching team performance: {str(e)}")
+
 @api_router.get("/stats")
 async def get_stats():
     """Get platform statistics"""
