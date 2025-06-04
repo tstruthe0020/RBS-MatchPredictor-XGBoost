@@ -425,12 +425,13 @@ class MatchPredictor:
             home_base_xg *= max(0.8, min(1.3, fouls_factor_home))  # Cap between 0.8x and 1.3x
             away_base_xg *= max(0.8, min(1.3, fouls_factor_away))
             
-            # Penalties factor (teams that get more penalties score more)
-            penalty_boost_home = home_stats['penalties_awarded'] * 0.79  # Each penalty per match adds 0.79 xG (realistic penalty xG value)
-            penalty_boost_away = away_stats['penalties_awarded'] * 0.79
+            # Enhanced penalties factor using conversion rates
+            # Each penalty attempt adds potential xG, weighted by team's conversion rate
+            home_penalty_xg = home_stats['penalty_attempts'] * 0.79 * home_stats['penalty_conversion_rate']
+            away_penalty_xg = away_stats['penalty_attempts'] * 0.79 * away_stats['penalty_conversion_rate']
             
-            home_base_xg += penalty_boost_home
-            away_base_xg += penalty_boost_away
+            home_base_xg += home_penalty_xg
+            away_base_xg += away_penalty_xg
             
             # Get PPG for both teams (use calculated PPG from team averages)
             home_ppg = home_stats['points_per_game']
