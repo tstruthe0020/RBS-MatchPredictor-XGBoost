@@ -57,6 +57,9 @@ class TeamStats(BaseModel):
     shots_on_target: int
     fouls_drawn: Optional[int] = 0
     penalties_awarded: Optional[int] = 0
+    penalty_attempts: Optional[int] = 0
+    penalty_goals: Optional[int] = 0
+    penalty_conversion_rate: Optional[float] = 0.0
     xg: Optional[float] = 0.0
 
 class PlayerStats(BaseModel):
