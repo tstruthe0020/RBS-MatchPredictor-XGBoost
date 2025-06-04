@@ -116,7 +116,7 @@ function App() {
       const response = await axios.post(`${API}/calculate-rbs`);
       alert(`✅ ${response.data.message}`);
       fetchStats();
-      fetchRBSResults();
+      fetchRefereeSummary();
     } catch (error) {
       alert(`❌ Error calculating RBS: ${error.response?.data?.detail || error.message}`);
     }
