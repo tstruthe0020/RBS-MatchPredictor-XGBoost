@@ -187,18 +187,46 @@ def main():
     # Test referees endpoint
     referees_success, referees = tester.test_referees()
     
+    # Test referee summary endpoint (new test)
+    summary_success, referee_summary, first_referee = tester.test_referee_summary()
+    
+    # Test referee details endpoint (new test)
+    if first_referee:
+        details_success, referee_details = tester.test_referee_details(first_referee)
+    else:
+        print("⚠️ Cannot test referee details endpoint without a valid referee name")
+        details_success = False
+    
     # Test RBS results endpoint
     rbs_success, rbs_results = tester.test_rbs_results()
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
     
+    # Print summary of findings
+    print("\n=== API Testing Summary ===")
+    
+    if summary_success:
+        if len(referee_summary) == 0:
+            print("⚠️ Referee summary endpoint is working but returned 0 referees.")
+        else:
+            print(f"✅ Referee summary endpoint is working correctly and returned {len(referee_summary)} referees.")
+    else:
+        print("❌ Referee summary endpoint is not working correctly.")
+    
+    if first_referee and details_success:
+        print(f"✅ Referee details endpoint is working correctly for referee '{first_referee}'.")
+    else:
+        print("❌ Referee details endpoint is not working correctly.")
+    
     if rbs_success:
         if len(rbs_results) == 0:
-            print("\n⚠️ WARNING: RBS results endpoint is working but returned 0 results.")
+            print("⚠️ RBS results endpoint is working but returned 0 results.")
             print("This could indicate that no RBS calculations have been performed yet.")
         else:
-            print(f"\n✅ RBS results endpoint is working correctly and returned {len(rbs_results)} results.")
+            print(f"✅ RBS results endpoint is working correctly and returned {len(rbs_results)} results.")
+    else:
+        print("❌ RBS results endpoint is not working correctly.")
     
     return 0 if tester.tests_passed == tester.tests_run else 1
 
