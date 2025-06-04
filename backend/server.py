@@ -729,6 +729,139 @@ async def calculate_rbs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
 
+@api_router.post("/calculate-shots-from-data")
+async def calculate_shots_from_data():
+    """Calculate and populate shots and shots on target data using multiple methods"""
+    try:
+        # Get all team stats
+        team_stats = await db.team_stats.find().to_list(10000)
+        
+        # Get all matches to cross-reference
+        matches = await db.matches.find().to_list(10000)
+        match_dict = {match['match_id']: match for match in matches}
+        
+        # Get all player stats for additional context
+        player_stats = await db.player_stats.find().to_list(15000)
+        
+        # Group player stats by match and team for context
+        player_by_team_match = {}
+        for player in player_stats:
+            key = f"{player['match_id']}_{player['team_name']}"
+            if key not in player_by_team_match:
+                player_by_team_match[key] = []
+            player_by_team_match[key].append(player)
+        
+        updated_count = 0
+        
+        for team_stat in team_stats:
+            match_id = team_stat['match_id']
+            team_name = team_stat['team_name']
+            key = f"{match_id}_{team_name}"
+            
+            # Get match info
+            match = match_dict.get(match_id)
+            if not match:
+                continue
+                
+            # Get player stats for this team in this match
+            team_players = player_by_team_match.get(key, [])
+            
+            # Method 1: Use existing shots data if available and > 0
+            existing_shots = team_stat.get('shots_total', 0)
+            existing_shots_ot = team_stat.get('shots_on_target', 0)
+            
+            if existing_shots > 0 and existing_shots_ot > 0:
+                # Data already exists, skip
+                continue
+            
+            # Method 2: Calculate from player data and team context
+            team_xg = sum(player.get('xg', 0) for player in team_players)
+            team_goals = sum(player.get('goals', 0) for player in team_players)
+            
+            # Get actual goals from match data for verification
+            if team_stat['is_home']:
+                actual_goals = match.get('home_score', 0)
+            else:
+                actual_goals = match.get('away_score', 0)
+            
+            # Use actual goals from match if different from player sum
+            if actual_goals != team_goals:
+                team_goals = actual_goals
+            
+            # Method 3: Estimate shots using multiple factors
+            shots_total = 0
+            shots_on_target = 0
+            
+            if team_xg > 0:
+                # Base estimation: Average xG per shot in professional football is ~0.11
+                base_shots = max(1, int(team_xg / 0.11))
+                
+                # Adjust based on goals scored (more goals usually means more shots)
+                goal_factor = 1 + (team_goals * 0.3)  # Each goal adds 30% more shots
+                estimated_shots = int(base_shots * goal_factor)
+                
+                # Ensure reasonable bounds (3-25 shots per match)
+                shots_total = max(3, min(25, estimated_shots))
+                
+                # Shots on target estimation
+                # Typically 30-40% of shots are on target, higher for teams that score
+                if team_goals > 0:
+                    on_target_ratio = min(0.6, 0.25 + (team_goals * 0.1))  # 25% base + 10% per goal
+                else:
+                    on_target_ratio = max(0.2, team_xg * 0.3)  # At least 20%, up based on xG
+                
+                shots_on_target = max(1, min(shots_total, int(shots_total * on_target_ratio)))
+                
+                # Ensure all goals are counted as shots on target at minimum
+                shots_on_target = max(shots_on_target, team_goals)
+                shots_total = max(shots_total, shots_on_target)
+                
+            else:
+                # Fallback for teams with no xG data
+                if team_goals > 0:
+                    shots_total = max(3, team_goals * 4)  # Rough estimate: 4 shots per goal
+                    shots_on_target = max(team_goals, int(shots_total * 0.3))
+                else:
+                    # Very defensive/poor performance
+                    shots_total = 3
+                    shots_on_target = 1
+            
+            # Method 4: Cross-reference with possession and attacking intent
+            possession = team_stat.get('possession_pct', 50)
+            
+            # Teams with higher possession typically have more shots
+            if possession > 60:
+                shots_total = int(shots_total * 1.2)
+            elif possession < 35:
+                shots_total = int(shots_total * 0.8)
+            
+            # Final bounds check
+            shots_total = max(1, min(30, shots_total))
+            shots_on_target = max(1, min(shots_total, shots_on_target))
+            
+            # Update the team stats
+            update_data = {
+                'shots_total': shots_total,
+                'shots_on_target': shots_on_target
+            }
+            
+            await db.team_stats.update_one(
+                {'_id': team_stat['_id']},
+                {'$set': update_data}
+            )
+            
+            updated_count += 1
+        
+        return {
+            "success": True,
+            "message": f"Updated shots data for {updated_count} team stat records",
+            "updated_count": updated_count,
+            "total_records": len(team_stats)
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating shots data: {str(e)}")
+
 @api_router.post("/calculate-team-stats-from-players")
 async def calculate_team_stats_from_players():
     """Calculate team-level stats by aggregating player stats for each match"""
