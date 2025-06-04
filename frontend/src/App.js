@@ -144,10 +144,12 @@ function App() {
     return 'bg-red-100 text-red-800';
   };
 
-  // Apply filters when team/referee selection changes
+  // Apply filters when team/referee selection changes  
   useEffect(() => {
-    fetchRefereeSummary();
-  }, [selectedTeam, selectedReferee]);
+    if (activeTab === 'results') {
+      fetchRefereeSummary();
+    }
+  }, [selectedTeam, selectedReferee, activeTab]);
 
   return (
     <div className="min-h-screen bg-gray-50">
