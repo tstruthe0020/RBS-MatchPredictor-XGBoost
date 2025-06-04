@@ -715,7 +715,7 @@ function App() {
                           <ul className="list-disc list-inside ml-4 space-y-1">
                             <li><strong>Possession Adjustment:</strong> ±1% per percentage point above/below 50%</li>
                             <li><strong>Fouls Drawn Factor:</strong> Teams drawing more fouls get set pieces & penalties</li>
-                            <li><strong>Penalty Boost:</strong> Each penalty/match adds 0.2 xG</li>
+                            <li><strong>Penalty Boost:</strong> Each penalty/match adds 0.79 xG (realistic penalty xG value)</li>
                             <li><strong>RBS Scaling:</strong> Referee bias of -5.0 = -1.0 xG adjustment</li>
                             <li><strong>Team Quality (PPG):</strong> Points per game difference × 0.15 factor</li>
                           </ul>
