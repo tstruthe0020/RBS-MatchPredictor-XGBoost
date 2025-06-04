@@ -101,3 +101,48 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "I have implemented a new match prediction algorithm for the Soccer Referee Bias Analysis Platform. Please test the following: 1. Match Prediction Endpoint (POST /api/predict-match) with required fields (home_team, away_team, referee_name) and optional field (match_date). 2. Team Performance Endpoint (GET /api/team-performance/{team_name}) that returns team stats used for predictions."
+
+backend:
+  - task: "Match Prediction Endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented match prediction endpoint at POST /api/predict-match that uses team averages, PPG calculations, referee bias scores, and xG-based predictions."
+
+  - task: "Team Performance Endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented team performance endpoint at GET /api/team-performance/{team_name} that returns team stats used for predictions."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Match Prediction Endpoint"
+    - "Team Performance Endpoint"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "I will test the new match prediction algorithm endpoints. First, I'll check what teams and referees are available in the database, then test both the prediction endpoint and team performance endpoint with valid and invalid data."
