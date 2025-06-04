@@ -475,6 +475,27 @@ async def calculate_rbs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
 
+@api_router.get("/debug/team-stats-sample")
+async def get_team_stats_sample():
+    """Debug endpoint to check team stats data structure"""
+    try:
+        # Get a few sample team stats to see what fields we actually have
+        sample_stats = await db.team_stats.find().limit(5).to_list(5)
+        
+        # Convert ObjectId to string
+        for stat in sample_stats:
+            if '_id' in stat:
+                stat['_id'] = str(stat['_id'])
+        
+        return {
+            "success": True,
+            "sample_count": len(sample_stats),
+            "sample_data": sample_stats
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching sample team stats: {str(e)}")
+
 @api_router.get("/referee/{referee_name}")
 async def get_referee_details(referee_name: str):
     """Get detailed stats for a specific referee"""
