@@ -102,6 +102,80 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
+## user_problem_statement: 
+Add a new match prediction algorithm to the Soccer Referee Bias Analysis Platform that predicts match outcomes using detailed statistics from MongoDB. The system should implement Expected xG calculation per team, home/away context adjustments, referee bias integration (RBS scaling where -5 = -1.0 xG), and Points per Game (PPG) calculations. The algorithm should return predicted scoreline with detailed breakdown.
+
+## backend:
+  - task: "Implement Match Prediction Algorithm Models"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Added MatchPredictionRequest and MatchPredictionResponse models successfully"
+
+  - task: "Implement MatchPredictor Class with Core Algorithm"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Implemented MatchPredictor class with calculate_team_averages, calculate_ppg, get_referee_bias, and predict_match methods"
+
+  - task: "Add Match Prediction API Endpoints"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Added POST /api/predict-match and GET /api/team-performance/{team_name} endpoints"
+        - working: true
+          agent: "testing"
+          comment: "Backend testing completed successfully. Match prediction endpoint returns predicted scoreline with proper breakdown. Team performance endpoint returns comprehensive stats. Handles invalid teams and missing fields correctly."
+
+## frontend:
+  - task: "Add Match Prediction Tab to Frontend"
+    implemented: true
+    working: false  # Not tested yet
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Added new 'predict' tab with form for home_team, away_team, referee selection. Added prediction result display with detailed breakdown. Frontend not yet tested."
+
+## metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+
+## test_plan:
+  current_focus:
+    - "Frontend Match Prediction Interface Testing"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+## agent_communication:
+    - agent: "main"
+      message: "Successfully implemented match prediction algorithm with xG-based calculations, referee bias integration (RBS scaling 0.2), PPG adjustments, and home/away context. Backend APIs tested and working. Frontend interface added but needs testing."
+    - agent: "testing"
+      message: "Backend APIs tested successfully. Match prediction endpoint works with Arsenal vs Aston Villa example, returns detailed breakdown including base xG, PPG adjustment, referee bias, confidence factors. Team performance endpoint returns comprehensive stats. Ready for frontend testing."
+
 user_problem_statement: "I have implemented a new match prediction algorithm for the Soccer Referee Bias Analysis Platform. Please test the following: 1. Match Prediction Endpoint (POST /api/predict-match) with required fields (home_team, away_team, referee_name) and optional field (match_date). 2. Team Performance Endpoint (GET /api/team-performance/{team_name}) that returns team stats used for predictions."
 
 backend:
