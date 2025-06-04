@@ -1452,6 +1452,27 @@ async def add_sample_realistic_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error adding sample data: {str(e)}")
 
+@api_router.get("/debug/team-stats/{team_name}")
+async def get_team_specific_stats(team_name: str):
+    """Get all team stats for a specific team"""
+    try:
+        team_stats = await db.team_stats.find({"team_name": team_name}).limit(5).to_list(5)
+        
+        # Convert ObjectId to string
+        for stat in team_stats:
+            if '_id' in stat:
+                stat['_id'] = str(stat['_id'])
+        
+        return {
+            "success": True,
+            "team_name": team_name,
+            "sample_count": len(team_stats),
+            "sample_data": team_stats
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching team stats: {str(e)}")
+
 @api_router.get("/debug/team-penalty-analysis/{team_name}")
 async def get_team_penalty_analysis(team_name: str):
     """Debug endpoint to analyze penalty data for a specific team"""
