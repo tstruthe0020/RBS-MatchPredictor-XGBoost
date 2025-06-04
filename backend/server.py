@@ -475,6 +475,113 @@ async def calculate_rbs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
 
+@api_router.get("/referee/{referee_name}")
+async def get_referee_details(referee_name: str):
+    """Get detailed stats for a specific referee"""
+    try:
+        # Get all matches for this referee
+        matches = await db.matches.find({"referee": referee_name}).to_list(1000)
+        
+        # Get all team stats for matches with this referee
+        match_ids = [match['match_id'] for match in matches]
+        team_stats = await db.team_stats.find({"match_id": {"$in": match_ids}}).to_list(1000)
+        
+        # Get RBS results for this referee
+        rbs_results = await db.rbs_results.find({"referee": referee_name}).to_list(1000)
+        
+        # Calculate overall averages for this referee
+        if team_stats:
+            total_stats = len(team_stats)
+            overall_averages = {
+                'yellow_cards': sum(s.get('yellow_cards', 0) for s in team_stats) / total_stats,
+                'red_cards': sum(s.get('red_cards', 0) for s in team_stats) / total_stats,
+                'fouls': sum(s.get('fouls', 0) for s in team_stats) / total_stats,
+                'fouls_drawn': sum(s.get('fouls_drawn', 0) for s in team_stats) / total_stats,
+                'penalties_awarded': sum(s.get('penalties_awarded', 0) for s in team_stats) / total_stats,
+                'possession_pct': sum(s.get('possession_pct', 0) for s in team_stats) / total_stats,
+                'xg': sum(s.get('xg', 0) for s in team_stats) / total_stats,
+                'shots_total': sum(s.get('shots_total', 0) for s in team_stats) / total_stats,
+                'shots_on_target': sum(s.get('shots_on_target', 0) for s in team_stats) / total_stats,
+            }
+        else:
+            overall_averages = {}
+        
+        # Convert ObjectId to string for RBS results
+        for result in rbs_results:
+            if '_id' in result:
+                result['_id'] = str(result['_id'])
+        
+        # Sort RBS results by RBS score (most biased first)
+        rbs_results.sort(key=lambda x: abs(x['rbs_score']), reverse=True)
+        
+        return {
+            "success": True,
+            "referee": referee_name,
+            "total_matches": len(matches),
+            "total_teams": len(set(s['team_name'] for s in team_stats)),
+            "overall_averages": {k: round(v, 2) for k, v in overall_averages.items()},
+            "rbs_results": rbs_results,
+            "matches": matches[:10]  # Return first 10 matches as sample
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching referee details: {str(e)}")
+
+@api_router.get("/referee-summary")
+async def get_referee_summary():
+    """Get summary stats for all referees"""
+    try:
+        # Get all referees with their match counts
+        pipeline = [
+            {"$group": {
+                "_id": "$referee",
+                "total_matches": {"$sum": 1},
+                "competitions": {"$addToSet": "$competition"},
+                "seasons": {"$addToSet": "$season"}
+            }},
+            {"$sort": {"total_matches": -1}}
+        ]
+        
+        referee_stats = await db.matches.aggregate(pipeline).to_list(1000)
+        
+        # Get RBS results count for each referee
+        rbs_pipeline = [
+            {"$group": {
+                "_id": "$referee",
+                "rbs_count": {"$sum": 1},
+                "avg_bias": {"$avg": "$rbs_score"},
+                "max_bias": {"$max": "$rbs_score"},
+                "min_bias": {"$min": "$rbs_score"}
+            }}
+        ]
+        
+        rbs_stats = await db.rbs_results.aggregate(rbs_pipeline).to_list(1000)
+        rbs_dict = {stat['_id']: stat for stat in rbs_stats}
+        
+        # Combine the data
+        for referee in referee_stats:
+            referee_name = referee['_id']
+            if referee_name in rbs_dict:
+                referee.update(rbs_dict[referee_name])
+                referee['avg_bias'] = round(referee.get('avg_bias', 0), 3)
+                referee['max_bias'] = round(referee.get('max_bias', 0), 3)
+                referee['min_bias'] = round(referee.get('min_bias', 0), 3)
+            else:
+                referee.update({
+                    'rbs_count': 0,
+                    'avg_bias': 0,
+                    'max_bias': 0,
+                    'min_bias': 0
+                })
+        
+        return {
+            "success": True,
+            "referees": referee_stats
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching referee summary: {str(e)}")
+
 @api_router.get("/rbs-results")
 async def get_rbs_results(team: Optional[str] = None, referee: Optional[str] = None):
     """Get RBS results with optional filtering"""
