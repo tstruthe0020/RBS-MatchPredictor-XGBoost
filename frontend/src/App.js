@@ -468,31 +468,104 @@ function App() {
                           <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                               <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RBS Score</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interpretation</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence %</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RBS Score</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Yellow Cards</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Red Cards</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Fouls</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Fouls Drawn</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Penalties</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">xG Diff</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Possession</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                               {selectedRefereeDetails.rbs_results?.map((result, index) => (
                                 <tr key={index} className="hover:bg-gray-50">
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     {result.team_name}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-4 py-4 whitespace-nowrap">
                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRBSColor(result.rbs_score)}`}>
                                       {result.rbs_score > 0 ? '+' : ''}{result.rbs_score}
                                     </span>
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {getRBSInterpretation(result.rbs_score)}
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.yellow_cards > 0.05 ? 'bg-red-100 text-red-700' :
+                                      result.stats_breakdown?.yellow_cards < -0.05 ? 'bg-green-100 text-green-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.yellow_cards > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.yellow_cards || 0).toFixed(2)}
+                                    </span>
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.red_cards > 0.05 ? 'bg-red-100 text-red-700' :
+                                      result.stats_breakdown?.red_cards < -0.05 ? 'bg-green-100 text-green-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.red_cards > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.red_cards || 0).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.fouls > 0.02 ? 'bg-red-100 text-red-700' :
+                                      result.stats_breakdown?.fouls < -0.02 ? 'bg-green-100 text-green-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.fouls > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.fouls || 0).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.fouls_drawn > 0.02 ? 'bg-green-100 text-green-700' :
+                                      result.stats_breakdown?.fouls_drawn < -0.02 ? 'bg-red-100 text-red-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.fouls_drawn > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.fouls_drawn || 0).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.penalties_awarded > 0.05 ? 'bg-green-100 text-green-700' :
+                                      result.stats_breakdown?.penalties_awarded < -0.05 ? 'bg-red-100 text-red-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.penalties_awarded > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.penalties_awarded || 0).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.xg_difference > 0.1 ? 'bg-green-100 text-green-700' :
+                                      result.stats_breakdown?.xg_difference < -0.1 ? 'bg-red-100 text-red-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.xg_difference > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.xg_difference || 0).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                    <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                      result.stats_breakdown?.possession_pct > 0.5 ? 'bg-green-100 text-green-700' :
+                                      result.stats_breakdown?.possession_pct < -0.5 ? 'bg-red-100 text-red-700' :
+                                      'bg-gray-100 text-gray-600'
+                                    }`}>
+                                      {result.stats_breakdown?.possession_pct > 0 ? '+' : ''}
+                                      {(result.stats_breakdown?.possession_pct || 0).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-900">
                                     {result.matches_with_ref}
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  <td className="px-3 py-4 whitespace-nowrap text-center">
                                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getConfidenceColor(result.confidence_level)}`}>
                                       {result.confidence_level}%
                                     </span>
@@ -507,6 +580,25 @@ function App() {
                               <p className="text-gray-500">No RBS results found for this referee.</p>
                             </div>
                           )}
+                        </div>
+                        
+                        {/* Legend for the statistics */}
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">RBS Component Legend</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
+                            <div>• <strong>Yellow Cards:</strong> Weight 0.3 (negative = more cards with this ref)</div>
+                            <div>• <strong>Red Cards:</strong> Weight 0.5 (negative = more cards with this ref)</div>
+                            <div>• <strong>Fouls:</strong> Weight 0.1 (negative = more fouls committed with this ref)</div>
+                            <div>• <strong>Fouls Drawn:</strong> Weight 0.1 (positive = more fouls drawn with this ref)</div>
+                            <div>• <strong>Penalties:</strong> Weight 0.5 (positive = more penalties awarded with this ref)</div>
+                            <div>• <strong>xG Difference:</strong> Weight 0.4 (positive = higher xG with this ref)</div>
+                            <div>• <strong>Possession:</strong> Weight 0.2 (positive = higher possession with this ref)</div>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500">
+                            <span className="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>Favorable to team
+                            <span className="inline-block w-3 h-3 bg-red-100 rounded mr-1 ml-3"></span>Unfavorable to team
+                            <span className="inline-block w-3 h-3 bg-gray-100 rounded mr-1 ml-3"></span>Neutral
+                          </div>
                         </div>
                       </div>
                     </div>
