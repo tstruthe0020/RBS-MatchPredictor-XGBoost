@@ -774,9 +774,15 @@ async def calculate_team_stats_from_players():
             if key in team_aggregations:
                 aggregated = team_aggregations[key]
                 
-                # Calculate penalties awarded (rough estimation: goals from penalties)
-                # This is a simplified calculation - in real data you'd have penalty-specific data
-                penalties_awarded = min(aggregated['goals'], 1)  # Assume max 1 penalty per match
+                # Calculate penalties awarded (estimate based on goals and xG)
+                # If goals > xG significantly, there might be penalties
+                goals = aggregated['goals']
+                xg = aggregated['xg']
+                penalties_awarded = 1 if goals > 0 and (goals - xg) > 0.8 else 0
+                
+                # Estimate shots based on xG (typical xG per shot is around 0.1-0.15)
+                estimated_shots_total = max(1, int(xg / 0.12)) if xg > 0 else team_stat.get('shots_total', 0)
+                estimated_shots_on_target = max(1, int(xg / 0.18)) if xg > 0 else team_stat.get('shots_on_target', 0)
                 
                 # Prepare update data
                 update_data = {
@@ -784,6 +790,12 @@ async def calculate_team_stats_from_players():
                     'xg': round(aggregated['xg'], 2),
                     'penalties_awarded': penalties_awarded
                 }
+                
+                # Only update shots if they're currently 0 (don't overwrite existing data)
+                if team_stat.get('shots_total', 0) == 0 and xg > 0:
+                    update_data['shots_total'] = estimated_shots_total
+                if team_stat.get('shots_on_target', 0) == 0 and xg > 0:
+                    update_data['shots_on_target'] = estimated_shots_on_target
                 
                 # Update the team stats record
                 await db.team_stats.update_one(
