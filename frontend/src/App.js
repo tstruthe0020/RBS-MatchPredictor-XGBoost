@@ -9,10 +9,6 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({});
   const [rbsResults, setRbsResults] = useState([]);
-  
-  // Debug logging
-  console.log('Current activeTab:', activeTab);
-  console.log('RBS Results length:', rbsResults.length);
   const [teams, setTeams] = useState([]);
   const [referees, setReferees] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('');
