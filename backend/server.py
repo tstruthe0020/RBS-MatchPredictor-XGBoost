@@ -1012,6 +1012,38 @@ async def calculate_shots_from_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating shots data: {str(e)}")
 
+@api_router.post("/reset-penalty-data")
+async def reset_penalty_data():
+    """Reset all penalty data to zero before repopulating"""
+    try:
+        # Reset all team stats penalty fields
+        await db.team_stats.update_many(
+            {},
+            {'$set': {
+                'penalty_attempts': 0,
+                'penalty_goals': 0,
+                'penalty_conversion_rate': 0.77,
+                'penalties_awarded': 0
+            }}
+        )
+        
+        # Reset all player stats penalty fields
+        await db.player_stats.update_many(
+            {},
+            {'$set': {
+                'penalty_attempts': 0,
+                'penalty_goals': 0
+            }}
+        )
+        
+        return {
+            "success": True,
+            "message": "Reset all penalty data to zero"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error resetting penalty data: {str(e)}")
+
 @api_router.post("/populate-penalty-data")
 async def populate_penalty_data():
     """Populate penalty attempts and goals data using conservative, realistic estimation"""
