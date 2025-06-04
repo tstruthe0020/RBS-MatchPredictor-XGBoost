@@ -660,6 +660,10 @@ function App() {
                                 <span className="text-gray-600">Penalties/Game:</span>
                                 <span className="font-medium">{predictionResult.prediction_breakdown?.away_penalties_avg}</span>
                               </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Penalty Conversion:</span>
+                                <span className="font-medium">{Math.round((predictionResult.prediction_breakdown?.away_penalty_conversion || 0) * 100)}%</span>
+                              </div>
                             </div>
                           </div>
                         </div>
