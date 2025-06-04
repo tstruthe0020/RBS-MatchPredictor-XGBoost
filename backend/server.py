@@ -216,16 +216,35 @@ async def upload_matches(file: UploadFile = File(...)):
         # Clear existing matches
         await db.matches.delete_many({})
         
+        # Replace NaN values with appropriate defaults
+        df = df.fillna({
+            'home_score': 0,
+            'away_score': 0,
+            'result': 'Unknown',
+            'season': 'Unknown',
+            'competition': 'Unknown',
+            'match_date': 'Unknown'
+        })
+        
         # Process and insert matches
         matches = []
         for _, row in df.iterrows():
+            # Helper function to safely convert to int
+            def safe_int(value, default=0):
+                try:
+                    if pd.isna(value) or value == '' or value is None:
+                        return default
+                    return int(float(value))
+                except (ValueError, TypeError):
+                    return default
+            
             match = Match(
                 match_id=str(row['match_id']),
                 referee=str(row['referee']),
                 home_team=str(row['home_team']),
                 away_team=str(row['away_team']),
-                home_score=int(row['home_score']),
-                away_score=int(row['away_score']),
+                home_score=safe_int(row['home_score']),
+                away_score=safe_int(row['away_score']),
                 result=str(row['result']),
                 season=str(row['season']),
                 competition=str(row['competition']),
