@@ -59,7 +59,9 @@ function App() {
 
   const fetchRefereeSummary = async () => {
     try {
+      console.log('Fetching referee summary...');
       const response = await axios.get(`${API}/referee-summary`);
+      console.log('Referee summary response:', response.data);
       setRefereeSummary(response.data.referees || []);
     } catch (error) {
       console.error('Error fetching referee summary:', error);
@@ -68,11 +70,14 @@ function App() {
 
   const fetchRefereeDetails = async (refereeName) => {
     try {
+      console.log('Fetching referee details for:', refereeName);
       const response = await axios.get(`${API}/referee/${encodeURIComponent(refereeName)}`);
+      console.log('Referee details response:', response.data);
       setSelectedRefereeDetails(response.data);
       setViewingReferee(refereeName);
     } catch (error) {
       console.error('Error fetching referee details:', error);
+      alert(`Error loading referee details: ${error.response?.data?.detail || error.message}`);
     }
   };
 
