@@ -560,47 +560,165 @@ function App() {
                               <span className="font-medium">{predictionResult.confidence_factors?.away_ppg}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">RBS Confidence (Home):</span>
-                              <span className="font-medium">{predictionResult.confidence_factors?.home_rbs_confidence}%</span>
+                              <span className="text-gray-600">Home RBS:</span>
+                              <span className={`font-medium ${predictionResult.confidence_factors?.home_rbs_score > 0 ? 'text-green-600' : predictionResult.confidence_factors?.home_rbs_score < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                {predictionResult.confidence_factors?.home_rbs_score > 0 ? '+' : ''}{predictionResult.confidence_factors?.home_rbs_score}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">RBS Confidence (Away):</span>
-                              <span className="font-medium">{predictionResult.confidence_factors?.away_rbs_confidence}%</span>
+                              <span className="text-gray-600">Away RBS:</span>
+                              <span className={`font-medium ${predictionResult.confidence_factors?.away_rbs_score > 0 ? 'text-green-600' : predictionResult.confidence_factors?.away_rbs_score < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                {predictionResult.confidence_factors?.away_rbs_score > 0 ? '+' : ''}{predictionResult.confidence_factors?.away_rbs_score}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Team Stats Used */}
+                      {/* Comprehensive Team Stats Used */}
                       <div className="bg-white p-4 rounded-lg border">
-                        <h4 className="text-md font-semibold text-gray-900 mb-3">Historical Performance (Used in Prediction)</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3">Team Performance Analysis (Used in Prediction)</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                           <div>
-                            <h5 className="font-medium text-gray-800 mb-2">{predictionResult.home_team} (Home)</h5>
-                            <div className="space-y-1">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Avg Shots/Game:</span>
-                                <span>{predictionResult.prediction_breakdown?.home_shots_avg}</span>
+                            <h5 className="font-medium text-gray-800 mb-3">{predictionResult.home_team} (Home)</h5>
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Shots/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_shots_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">xG per Shot:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_xg_per_shot}</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Goals/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_goals_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Conversion:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_conversion_rate}</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Possession:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_possession_avg}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Fouls Drawn:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_fouls_drawn_avg}</span>
+                                </div>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-600">xG per Shot:</span>
-                                <span>{predictionResult.prediction_breakdown?.home_xg_per_shot}</span>
+                                <span className="text-gray-600">Penalties/Game:</span>
+                                <span className="font-medium">{predictionResult.prediction_breakdown?.home_penalties_avg}</span>
                               </div>
                             </div>
                           </div>
                           <div>
-                            <h5 className="font-medium text-gray-800 mb-2">{predictionResult.away_team} (Away)</h5>
-                            <div className="space-y-1">
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Avg Shots/Game:</span>
-                                <span>{predictionResult.prediction_breakdown?.away_shots_avg}</span>
+                            <h5 className="font-medium text-gray-800 mb-3">{predictionResult.away_team} (Away)</h5>
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Shots/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_shots_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">xG per Shot:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_xg_per_shot}</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Goals/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_goals_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Conversion:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_conversion_rate}</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Possession:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_possession_avg}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Fouls Drawn:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_fouls_drawn_avg}</span>
+                                </div>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-600">xG per Shot:</span>
-                                <span>{predictionResult.prediction_breakdown?.away_xg_per_shot}</span>
+                                <span className="text-gray-600">Penalties/Game:</span>
+                                <span className="font-medium">{predictionResult.prediction_breakdown?.away_penalties_avg}</span>
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Data Quality Indicators */}
+                      {predictionResult.confidence_factors?.data_quality && (
+                        <div className="bg-gray-50 p-4 rounded-lg border">
+                          <h4 className="text-md font-semibold text-gray-900 mb-3">Data Quality</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div className="text-center">
+                              <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                predictionResult.confidence_factors.data_quality.home_shots_data === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {predictionResult.confidence_factors.data_quality.home_shots_data}
+                              </div>
+                              <div className="text-gray-600 mt-1">Home Shots</div>
+                            </div>
+                            <div className="text-center">
+                              <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                predictionResult.confidence_factors.data_quality.away_shots_data === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {predictionResult.confidence_factors.data_quality.away_shots_data}
+                              </div>
+                              <div className="text-gray-600 mt-1">Away Shots</div>
+                            </div>
+                            <div className="text-center">
+                              <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                predictionResult.confidence_factors.data_quality.home_xg_data === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {predictionResult.confidence_factors.data_quality.home_xg_data}
+                              </div>
+                              <div className="text-gray-600 mt-1">Home xG</div>
+                            </div>
+                            <div className="text-center">
+                              <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                predictionResult.confidence_factors.data_quality.away_xg_data === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {predictionResult.confidence_factors.data_quality.away_xg_data}
+                              </div>
+                              <div className="text-gray-600 mt-1">Away xG</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Enhanced Algorithm Explanation */}
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h4 className="text-md font-semibold text-blue-900 mb-3">Enhanced Algorithm Explanation</h4>
+                        <div className="text-sm text-blue-800 space-y-2">
+                          <p><strong>🎯 xG Calculation Methods:</strong></p>
+                          <ul className="list-disc list-inside ml-4 space-y-1">
+                            <li>Shot-based xG (40%): Team shots × xG per shot ratio</li>
+                            <li>Historical xG average (40%): Direct team xG averages</li>
+                            <li>Opponent defense factor (20%): How teams perform vs specific opposition</li>
+                          </ul>
+                          <p><strong>📊 Additional Factors:</strong></p>
+                          <ul className="list-disc list-inside ml-4 space-y-1">
+                            <li><strong>Possession Adjustment:</strong> ±1% per percentage point above/below 50%</li>
+                            <li><strong>Fouls Drawn Factor:</strong> Teams drawing more fouls get set pieces & penalties</li>
+                            <li><strong>Penalty Boost:</strong> Each penalty/match adds 0.2 xG</li>
+                            <li><strong>RBS Scaling:</strong> Referee bias of -5.0 = -1.0 xG adjustment</li>
+                            <li><strong>Team Quality (PPG):</strong> Points per game difference × 0.15 factor</li>
+                          </ul>
                         </div>
                       </div>
 
