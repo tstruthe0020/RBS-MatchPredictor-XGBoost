@@ -230,7 +230,7 @@ class MatchPredictor:
         self.rbs_scaling_factor = 0.2  # RBS of -5 gives -1.0 xG adjustment
     
     async def calculate_team_averages(self, team_name, is_home, exclude_opponent=None, season_filter=None):
-        """Calculate team averages with home/away context"""
+        """Calculate comprehensive team averages with home/away context"""
         # Build query for team stats
         query = {
             "team_name": team_name,
@@ -264,38 +264,62 @@ class MatchPredictor:
         if not team_stats:
             return None
         
-        # Calculate averages
+        # Calculate comprehensive averages
         total_matches = len(team_stats)
         averages = {
             'shots_total': sum(stat.get('shots_total', 0) for stat in team_stats) / total_matches,
             'shots_on_target': sum(stat.get('shots_on_target', 0) for stat in team_stats) / total_matches,
             'xg': sum(stat.get('xg', 0) for stat in team_stats) / total_matches,
+            'fouls': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
+            'fouls_drawn': sum(stat.get('fouls_drawn', 0) for stat in team_stats) / total_matches,
+            'penalties_awarded': sum(stat.get('penalties_awarded', 0) for stat in team_stats) / total_matches,
+            'yellow_cards': sum(stat.get('yellow_cards', 0) for stat in team_stats) / total_matches,
+            'red_cards': sum(stat.get('red_cards', 0) for stat in team_stats) / total_matches,
+            'possession_pct': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,
             'goals': 0,  # Will calculate from matches
+            'goals_conceded': 0,  # Will calculate from matches
             'matches_count': total_matches,
-            'shots_conceded': 0,  # Will calculate from opponent data
-            'xg_conceded': 0  # Will calculate from opponent data
         }
         
-        # Calculate actual goals scored from matches
+        # Calculate actual goals scored and conceded from matches
         match_ids = [stat['match_id'] for stat in team_stats]
         matches = await db.matches.find({"match_id": {"$in": match_ids}}).to_list(1000)
         
         total_goals = 0
         total_goals_conceded = 0
+        total_points = 0
+        
         for match in matches:
             if match['home_team'] == team_name and is_home:
                 total_goals += match['home_score']
                 total_goals_conceded += match['away_score']
+                # Calculate points
+                if match['home_score'] > match['away_score']:
+                    total_points += 3
+                elif match['home_score'] == match['away_score']:
+                    total_points += 1
             elif match['away_team'] == team_name and not is_home:
                 total_goals += match['away_score']
                 total_goals_conceded += match['home_score']
+                # Calculate points
+                if match['away_score'] > match['home_score']:
+                    total_points += 3
+                elif match['away_score'] == match['home_score']:
+                    total_points += 1
         
         averages['goals'] = total_goals / total_matches if total_matches > 0 else 0
         averages['goals_conceded'] = total_goals_conceded / total_matches if total_matches > 0 else 0
+        averages['points_per_game'] = total_points / total_matches if total_matches > 0 else 0
         
-        # Calculate shots per goal and xG per shot ratios
+        # Calculate derived metrics
         averages['xg_per_shot'] = averages['xg'] / averages['shots_total'] if averages['shots_total'] > 0 else 0
         averages['goals_per_xg'] = averages['goals'] / averages['xg'] if averages['xg'] > 0 else 1.0
+        averages['shot_accuracy'] = averages['shots_on_target'] / averages['shots_total'] if averages['shots_total'] > 0 else 0.3
+        averages['conversion_rate'] = averages['goals'] / averages['shots_on_target'] if averages['shots_on_target'] > 0 else 0.1
+        
+        # Defensive metrics (shots conceded, xG conceded)
+        averages['shots_conceded'] = 0  # Will be calculated from opponent data
+        averages['xg_conceded'] = averages['goals_conceded'] * 0.9  # Rough estimate
         
         return averages
     
