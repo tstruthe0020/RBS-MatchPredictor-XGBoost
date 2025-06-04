@@ -1292,7 +1292,7 @@ async def populate_penalty_data():
 
 @api_router.post("/calculate-team-stats-from-players")
 async def calculate_team_stats_from_players():
-    """Calculate team-level stats by aggregating player stats for each match"""
+    """Calculate team-level stats by aggregating player stats for each match - ONLY USES SCRAPED DATA"""
     try:
         # Get all player stats
         player_stats = await db.player_stats.find().to_list(15000)
@@ -1324,13 +1324,15 @@ async def calculate_team_stats_from_players():
                     'penalty_goals': 0
                 }
             
-            # Aggregate player stats to team level
+            # Aggregate player stats to team level - ONLY USING SCRAPED DATA
             team_aggregations[key]['fouls_drawn'] += player.get('fouls_drawn', 0)
             team_aggregations[key]['xg'] += player.get('xg', 0)
             team_aggregations[key]['goals'] += player.get('goals', 0)
             team_aggregations[key]['assists'] += player.get('assists', 0)
             team_aggregations[key]['player_yellow_cards'] += player.get('yellow_cards', 0)
             team_aggregations[key]['player_fouls_committed'] += player.get('fouls_committed', 0)
+            
+            # Use SCRAPED penalty data from CSV - no estimation
             team_aggregations[key]['penalty_attempts'] += player.get('penalty_attempts', 0)
             team_aggregations[key]['penalty_goals'] += player.get('penalty_goals', 0)
         
@@ -1343,28 +1345,16 @@ async def calculate_team_stats_from_players():
             if key in team_aggregations:
                 aggregated = team_aggregations[key]
                 
-                # Get match data for goal verification
-                match = match_dict.get(team_stat['match_id'])
-                actual_goals = 0
-                if match:
-                    if team_stat['is_home']:
-                        actual_goals = match.get('home_score', 0)
-                    else:
-                        actual_goals = match.get('away_score', 0)
-                
-                # Use actual goals from match if available, otherwise use player sum
-                final_goals = actual_goals if actual_goals >= 0 else aggregated['goals']
-                
-                # Calculate penalty conversion rate
+                # Calculate penalty conversion rate from SCRAPED data
                 penalty_attempts = aggregated['penalty_attempts']
                 penalty_goals = aggregated['penalty_goals']
-                penalty_conversion_rate = penalty_goals / penalty_attempts if penalty_attempts > 0 else 0.77  # League average
+                penalty_conversion_rate = penalty_goals / penalty_attempts if penalty_attempts > 0 else 0.77  # League average if no data
                 
-                # Prepare update data
+                # Prepare update data - ONLY using scraped data, no estimation
                 update_data = {
                     'fouls_drawn': aggregated['fouls_drawn'],
                     'xg': round(aggregated['xg'], 2),
-                    'penalties_awarded': penalty_attempts,  # Now using actual attempts instead of estimation
+                    'penalties_awarded': penalty_attempts,  # Use actual scraped attempts
                     'penalty_attempts': penalty_attempts,
                     'penalty_goals': penalty_goals,
                     'penalty_conversion_rate': round(penalty_conversion_rate, 3)
@@ -1380,7 +1370,7 @@ async def calculate_team_stats_from_players():
         
         return {
             "success": True,
-            "message": f"Updated {updated_count} team stats with player-aggregated data including penalty stats",
+            "message": f"Updated {updated_count} team stats with scraped player penalty data (no estimation)",
             "team_aggregations_found": len(team_aggregations),
             "team_stats_updated": updated_count
         }
