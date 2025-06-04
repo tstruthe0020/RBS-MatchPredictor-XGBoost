@@ -36,6 +36,67 @@ class RBSAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False, None
 
+    def test_referee_summary(self):
+        """Test the referee-summary endpoint"""
+        success, response = self.run_test(
+            "Get Referee Summary",
+            "GET",
+            "referee-summary",
+            200
+        )
+        
+        if success:
+            referees = response.get('referees', [])
+            print(f"Found {len(referees)} referees in summary")
+            
+            if len(referees) > 0:
+                print("\nSample Referee Summary:")
+                for i, referee in enumerate(referees[:3]):  # Show first 3 referees
+                    print(f"{i+1}. Referee: {referee['_id']}, Matches: {referee.get('total_matches', 0)}, RBS Count: {referee.get('rbs_count', 0)}")
+                
+                # Return the first referee name for further testing
+                first_referee = referees[0]['_id'] if referees else None
+                return success, referees, first_referee
+            return success, referees, None
+        return False, [], None
+
+    def test_referee_details(self, referee_name):
+        """Test the referee/{referee_name} endpoint"""
+        if not referee_name:
+            print("⚠️ No referee name provided for testing referee details")
+            return False, None
+            
+        success, response = self.run_test(
+            f"Get Referee Details for '{referee_name}'",
+            "GET",
+            f"referee/{referee_name}",
+            200
+        )
+        
+        if success:
+            print(f"Successfully retrieved details for referee: {referee_name}")
+            print(f"Total matches: {response.get('total_matches', 0)}")
+            print(f"Total teams: {response.get('total_teams', 0)}")
+            
+            # Check if the response has the expected structure
+            if 'rbs_results' in response:
+                print(f"RBS results count: {len(response['rbs_results'])}")
+            else:
+                print("⚠️ Response is missing 'rbs_results' field")
+                
+            if 'overall_averages' in response:
+                print("Overall averages included in response")
+            else:
+                print("⚠️ Response is missing 'overall_averages' field")
+                
+            if 'matches' in response:
+                print(f"Sample matches included: {len(response['matches'])}")
+            else:
+                print("⚠️ Response is missing 'matches' field")
+                
+            return success, response
+        return False, None
+
     def test_rbs_results(self):
         """Test the RBS results endpoint"""
         success, response = self.run_test(
