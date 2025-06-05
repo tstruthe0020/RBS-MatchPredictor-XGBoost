@@ -3519,17 +3519,17 @@ function App() {
                             <thead className="bg-gray-50">
                               <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RBS Score</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Yellow Cards</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Red Cards</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Fouls</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Fouls Drawn</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Penalties</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">xG Diff</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Possession</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
-                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" title="Referee Bias Score: Normalized performance differential with vs without this referee (range: -1 to +1)">RBS Score</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Yellow cards differential: Average with referee - Average without referee">Yellow Cards</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Red cards differential: Average with referee - Average without referee">Red Cards</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Fouls committed differential: Average with referee - Average without referee">Fouls</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Fouls drawn differential: Average with referee - Average without referee">Fouls Drawn</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Penalties awarded differential: Average with referee - Average without referee">Penalties</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="xG difference differential: (Team xG - Opponent xG) with referee vs without referee">xG Diff</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Possession % differential: Average with referee - Average without referee">Possession</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Decision variance ratios: How consistently referee treats this team vs overall patterns (&gt;1.5 = more variable)">Variance</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Number of matches where this referee officiated this team">Matches</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" title="Statistical confidence level based on sample size (more matches = higher confidence)">Confidence</th>
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
