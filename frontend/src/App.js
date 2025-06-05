@@ -87,6 +87,13 @@ function App() {
   const [regressionResult, setRegressionResult] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
 
+  // Regression Analysis state
+  const [availableStats, setAvailableStats] = useState([]);
+  const [selectedStats, setSelectedStats] = useState([]);
+  const [regressionTarget, setRegressionTarget] = useState('points_per_game');
+  const [regressionResult, setRegressionResult] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
   // Fetch initial data
   useEffect(() => {
     fetchStats();
