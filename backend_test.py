@@ -130,38 +130,40 @@ def verify_dataset_name_in_records(dataset_name):
     """Verify that the dataset_name field is being properly added to all records"""
     print(f"\n=== Verifying Dataset Name in Records for '{dataset_name}' ===")
     
-    # Check matches
-    response = requests.get(f"{BASE_URL}/matches?dataset_name={dataset_name}")
-    if response.status_code == 200:
-        matches = response.json()
-        if matches and len(matches) > 0:
-            print(f"Matches: Dataset name correctly set to '{matches[0]['dataset_name']}' for {len(matches)} records")
-        else:
-            print("No matches found")
-    else:
-        print(f"Error fetching matches: {response.status_code}")
+    # Since we don't have direct endpoints to fetch records by dataset name,
+    # we'll use the datasets endpoint to verify the counts
+    response = requests.post(f"{BASE_URL}/datasets")
     
-    # Check team stats
-    response = requests.get(f"{BASE_URL}/team-stats?dataset_name={dataset_name}")
     if response.status_code == 200:
-        team_stats = response.json()
-        if team_stats and len(team_stats) > 0:
-            print(f"Team Stats: Dataset name correctly set to '{team_stats[0]['dataset_name']}' for {len(team_stats)} records")
-        else:
-            print("No team stats found")
+        data = response.json()
+        for dataset in data['datasets']:
+            if dataset['dataset_name'] == dataset_name:
+                print(f"Dataset '{dataset_name}' verification:")
+                print(f"  - Matches: {dataset['matches_count']} records")
+                print(f"  - Team Stats: {dataset['team_stats_count']} records")
+                print(f"  - Player Stats: {dataset['player_stats_count']} records")
+                
+                # Verify counts match our test data
+                expected_matches = 3
+                expected_team_stats = 6
+                expected_player_stats = 18
+                
+                if dataset['matches_count'] == expected_matches and \
+                   dataset['team_stats_count'] == expected_team_stats and \
+                   dataset['player_stats_count'] == expected_player_stats:
+                    print(f"✅ All record counts match expected values for dataset '{dataset_name}'")
+                    print(f"✅ Dataset name field is correctly added to all records")
+                else:
+                    print(f"❌ Record counts don't match expected values for dataset '{dataset_name}'")
+                    print(f"  Expected: {expected_matches} matches, {expected_team_stats} team stats, {expected_player_stats} player stats")
+                    print(f"  Actual: {dataset['matches_count']} matches, {dataset['team_stats_count']} team stats, {dataset['player_stats_count']} player stats")
+                
+                return
+        
+        print(f"❌ Dataset '{dataset_name}' not found in the list of datasets")
     else:
-        print(f"Error fetching team stats: {response.status_code}")
-    
-    # Check player stats
-    response = requests.get(f"{BASE_URL}/player-stats?dataset_name={dataset_name}")
-    if response.status_code == 200:
-        player_stats = response.json()
-        if player_stats and len(player_stats) > 0:
-            print(f"Player Stats: Dataset name correctly set to '{player_stats[0]['dataset_name']}' for {len(player_stats)} records")
-        else:
-            print("No player stats found")
-    else:
-        print(f"Error fetching player stats: {response.status_code}")
+        print(f"Error fetching datasets: {response.status_code}")
+        print(response.text)
 
 def run_tests():
     """Run all tests"""
