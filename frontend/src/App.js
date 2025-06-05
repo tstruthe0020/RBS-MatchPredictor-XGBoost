@@ -157,15 +157,25 @@ function App() {
       console.log('Loading enhanced RBS data for referee:', refereeName);
       const enhancedData = {};
       
+      // Show loading state
+      const loadingData = {};
+      rbsResults.forEach(result => {
+        loadingData[result.team_name] = { loading: true };
+      });
+      setEnhancedRBSData(loadingData);
+      
       // For each team in the RBS results, fetch enhanced analysis
       for (const result of rbsResults) {
         try {
           const response = await axios.get(`${API}/enhanced-rbs-analysis/${encodeURIComponent(result.team_name)}/${encodeURIComponent(refereeName)}`);
           if (response.data.success) {
             enhancedData[result.team_name] = response.data;
+          } else {
+            enhancedData[result.team_name] = { error: 'No data available' };
           }
         } catch (error) {
           console.error(`Error loading enhanced data for ${result.team_name}:`, error);
+          enhancedData[result.team_name] = { error: 'Failed to load' };
           // Continue with other teams even if one fails
         }
       }
