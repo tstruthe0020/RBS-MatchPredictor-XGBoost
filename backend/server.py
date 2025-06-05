@@ -438,6 +438,155 @@ class RBSCalculator:
             'stats_breakdown': {k: round(v, 4) for k, v in rbs_components.items()},
             'config_used': config_name
         }
+    
+    async def calculate_referee_variance_analysis(self, team_name: str, referee_name: str):
+        """
+        Calculate referee decision variance for specific team vs their overall variance
+        
+        Compares how consistently/inconsistently a referee makes decisions for a specific team
+        vs their overall decision patterns across all teams
+        """
+        try:
+            # Get all matches officiated by this referee
+            all_referee_matches = await db.matches.find({"referee": referee_name}).to_list(None)
+            
+            if len(all_referee_matches) < 10:  # Need sufficient data
+                return {
+                    'variance_ratios': {},
+                    'confidence': 'Insufficient data',
+                    'referee_total_matches': len(all_referee_matches)
+                }
+            
+            # Get team stats for this referee across ALL teams
+            all_referee_decisions = []
+            team_specific_decisions = []
+            
+            for match in all_referee_matches:
+                # Get home team stats
+                home_stats = await db.team_stats.find_one({
+                    "match_id": match['match_id'],
+                    "is_home": True
+                })
+                # Get away team stats  
+                away_stats = await db.team_stats.find_one({
+                    "match_id": match['match_id'],
+                    "is_home": False
+                })
+                
+                if home_stats:
+                    all_referee_decisions.append(home_stats)
+                    if home_stats.get('team_name') == team_name:
+                        team_specific_decisions.append(home_stats)
+                
+                if away_stats:
+                    all_referee_decisions.append(away_stats)
+                    if away_stats.get('team_name') == team_name:
+                        team_specific_decisions.append(away_stats)
+            
+            if len(team_specific_decisions) < 3:  # Need minimum team-specific data
+                return {
+                    'variance_ratios': {},
+                    'confidence': 'Insufficient team-specific data',
+                    'referee_total_matches': len(all_referee_matches),
+                    'team_matches_with_referee': len(team_specific_decisions)
+                }
+            
+            # Calculate variance ratios for key decision categories
+            decision_categories = [
+                'yellow_cards', 'red_cards', 'fouls_committed', 
+                'penalties_awarded', 'possession_pct'
+            ]
+            
+            variance_ratios = {}
+            
+            for category in decision_categories:
+                # Get values for this team with this referee
+                team_values = [
+                    stats.get(category, 0) for stats in team_specific_decisions 
+                    if stats.get(category) is not None
+                ]
+                
+                # Get values for all teams with this referee  
+                overall_values = [
+                    stats.get(category, 0) for stats in all_referee_decisions
+                    if stats.get(category) is not None
+                ]
+                
+                if len(team_values) > 1 and len(overall_values) > 5:
+                    team_variance = self._calculate_variance(team_values)
+                    overall_variance = self._calculate_variance(overall_values)
+                    
+                    if overall_variance > 0:
+                        variance_ratio = team_variance / overall_variance
+                        variance_ratios[category] = round(variance_ratio, 3)
+                    else:
+                        variance_ratios[category] = 1.0
+                else:
+                    variance_ratios[category] = None
+            
+            # Determine confidence level
+            confidence_level = self._determine_variance_confidence(
+                len(team_specific_decisions), len(all_referee_decisions)
+            )
+            
+            return {
+                'variance_ratios': variance_ratios,
+                'confidence': confidence_level,
+                'referee_total_matches': len(all_referee_matches),
+                'team_matches_with_referee': len(team_specific_decisions),
+                'interpretation': self._interpret_variance_ratios(variance_ratios)
+            }
+            
+        except Exception as e:
+            print(f"Error calculating variance analysis for {team_name} with {referee_name}: {e}")
+            return {
+                'variance_ratios': {},
+                'confidence': 'Error',
+                'referee_total_matches': 0,
+                'team_matches_with_referee': 0
+            }
+    
+    def _calculate_variance(self, values):
+        """Calculate variance for a list of values"""
+        if len(values) < 2:
+            return 0.0
+        
+        mean_val = sum(values) / len(values)
+        variance = sum((x - mean_val) ** 2 for x in values) / len(values)
+        return variance
+    
+    def _determine_variance_confidence(self, team_matches, total_matches):
+        """Determine confidence level for variance analysis"""
+        if team_matches < 3 or total_matches < 10:
+            return "Very Low"
+        elif team_matches < 5 or total_matches < 20:
+            return "Low"
+        elif team_matches < 8 or total_matches < 30:
+            return "Medium"
+        elif team_matches < 12 or total_matches < 50:
+            return "High"
+        else:
+            return "Very High"
+    
+    def _interpret_variance_ratios(self, variance_ratios):
+        """Provide interpretation of variance ratios"""
+        interpretations = {}
+        
+        for category, ratio in variance_ratios.items():
+            if ratio is None:
+                interpretations[category] = "Insufficient data"
+            elif ratio > 2.0:
+                interpretations[category] = "Much more variable than usual (inconsistent treatment)"
+            elif ratio > 1.5:
+                interpretations[category] = "More variable than usual"
+            elif ratio > 0.5:
+                interpretations[category] = "Normal variance"
+            elif ratio > 0.2:
+                interpretations[category] = "Less variable than usual"
+            else:
+                interpretations[category] = "Much less variable than usual (very consistent treatment)"
+        
+        return interpretations
 
 # Initialize RBS Calculator
 rbs_calculator = RBSCalculator()
