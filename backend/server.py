@@ -2118,6 +2118,10 @@ async def calculate_comprehensive_team_stats():
             raw_xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
             xg_per_shot = min(raw_xg_per_shot, 1.0)  # Cap at 1.0 for mathematical consistency
             
+            # Log warning if xG per shot is being capped (indicates data quality issue)
+            if raw_xg_per_shot > 1.0:
+                print(f"Warning: Capping xG per shot for {team_name} in match {match_id}: {raw_xg_per_shot:.3f} -> 1.0 (xG: {final_xg}, shots: {shots_total})")
+            
             goals_per_xg = actual_goals / final_xg if final_xg > 0 else 1.0
             shot_accuracy = shots_on_target / shots_total if shots_total > 0 else 0.3
             conversion_rate = actual_goals / shots_on_target if shots_on_target > 0 else 0.1
