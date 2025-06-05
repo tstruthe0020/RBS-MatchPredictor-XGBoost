@@ -2190,6 +2190,7 @@ async def migrate_confidence():
         raise HTTPException(status_code=500, detail=f"Error migrating confidence values: {str(e)}")
 
 @api_router.post("/calculate-rbs")
+@app.post("/api/calculate-rbs")
 async def calculate_rbs(config_name: str = "default"):
     """Calculate RBS scores for all team-referee combinations and ensure all team statistics are properly calculated"""
     try:
