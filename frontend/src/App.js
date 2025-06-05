@@ -3627,17 +3627,29 @@ function App() {
                                   </td>
                                   <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
                                     {enhancedRBSData[result.team_name] ? (
-                                      <div className="space-y-1">
-                                        {Object.entries(enhancedRBSData[result.team_name].variance_analysis.variance_ratios || {}).slice(0, 2).map(([stat, ratio]) => (
-                                          <span key={stat} className={`inline-flex px-1 py-0.5 rounded text-xs ${
-                                            ratio > 1.5 ? 'bg-orange-100 text-orange-700' :
-                                            ratio < 0.5 ? 'bg-blue-100 text-blue-700' :
-                                            'bg-gray-100 text-gray-600'
-                                          }`}>
-                                            {stat.substring(0, 3)}: {ratio?.toFixed(1)}x
-                                          </span>
-                                        ))}
-                                      </div>
+                                      enhancedRBSData[result.team_name].loading ? (
+                                        <div className="flex items-center justify-center">
+                                          <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-500"></div>
+                                          <span className="ml-1 text-xs text-gray-400">Loading...</span>
+                                        </div>
+                                      ) : enhancedRBSData[result.team_name].error ? (
+                                        <span className="text-xs text-red-400" title={enhancedRBSData[result.team_name].error}>Error</span>
+                                      ) : enhancedRBSData[result.team_name].variance_analysis?.variance_ratios ? (
+                                        <div className="space-y-1">
+                                          {Object.entries(enhancedRBSData[result.team_name].variance_analysis.variance_ratios || {}).slice(0, 2).map(([stat, ratio]) => (
+                                            <span key={stat} className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                              ratio > 1.5 ? 'bg-orange-100 text-orange-700' :
+                                              ratio < 0.5 ? 'bg-blue-100 text-blue-700' :
+                                              'bg-gray-100 text-gray-600'
+                                            }`}
+                                            title={`${stat.replace(/_/g, ' ')}: ${ratio.toFixed(2)}x variance ratio (${ratio > 1.5 ? 'more variable than usual' : ratio < 0.5 ? 'very consistent' : 'normal variance'})`}>
+                                              {stat.substring(0, 3)}: {ratio?.toFixed(1)}x
+                                            </span>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-xs text-gray-400">No data</span>
+                                      )
                                     ) : (
                                       <span className="text-xs text-gray-400">Loading...</span>
                                     )}
