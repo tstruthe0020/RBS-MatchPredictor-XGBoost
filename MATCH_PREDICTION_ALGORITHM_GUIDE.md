@@ -1,30 +1,44 @@
-# ⚽ Match Prediction Algorithm Guide
+# 🤖 ML-Based Match Prediction Algorithm Guide
 
 ## Overview
-This sophisticated algorithm predicts match outcomes using xG-based calculations, team performance metrics, referee bias analysis, and Poisson probability distributions.
+This sophisticated Machine Learning system predicts match outcomes using **Random Forest algorithms** with comprehensive feature engineering, historical data analysis, and ensemble modeling techniques.
 
-## 🧮 Algorithm Flow
+## 🧠 ML Architecture Flow
 
 ```
-Base xG → Possession → Fouls → Penalties → PPG → Referee → Final xG → Goals → Probabilities
+Historical Data → Feature Engineering → Model Training → Prediction → Probabilities
+     ↓                    ↓                  ↓            ↓           ↓
+ Match Stats        45+ Features      5 RF Models    Goals/xG    Win/Draw/Loss
 ```
 
-## 📊 Step-by-Step Algorithm
+## 🏗️ Model Architecture
 
-### Step 1: Base xG Calculation
-**Formula:**
+### 5 Trained Models Working Together
+
+1. **Classification Model**: Random Forest for Win/Draw/Loss prediction
+2. **Home Goals Regression**: Random Forest for home team goal prediction
+3. **Away Goals Regression**: Random Forest for away team goal prediction  
+4. **Home xG Regression**: Random Forest for home team xG prediction
+5. **Away xG Regression**: Random Forest for away team xG prediction
+
+### Model Specifications
 ```python
-base_xg = team_avg_shots_per_game × team_avg_xg_per_shot
-```
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
 
-**Data Sources:**
-- `shots_total`: Average shots per game (home/away context)
-- `xg_per_shot`: Historical shooting efficiency
-- Values aggregated from player stats or team stats
+# Classification for match outcomes
+classifier = RandomForestClassifier(n_estimators=100, random_state=42)
 
-**Example:**
-```
-Arsenal Home: 14.2 shots/game × 0.18 xG/shot = 2.56 base xG
+# Regression for goals and xG
+regressors = {
+    'home_goals': RandomForestRegressor(n_estimators=100),
+    'away_goals': RandomForestRegressor(n_estimators=100),
+    'home_xg': RandomForestRegressor(n_estimators=100),
+    'away_xg': RandomForestRegressor(n_estimators=100)
+}
+
+# Feature scaling for optimal performance
+scaler = StandardScaler()
 ```
 
 ### Step 2: Possession Adjustment
