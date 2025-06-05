@@ -1039,7 +1039,7 @@ function App() {
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h2 className="text-xl font-bold text-gray-900 mb-4">⚽ Match Prediction Algorithm</h2>
               <p className="text-gray-600 mb-6">
-                Predict expected scorelines using advanced xG-based calculations, referee bias analysis, and team performance data.
+                Predict expected scorelines and match outcome probabilities using advanced xG-based calculations, referee bias analysis, and team performance data.
               </p>
 
               {!predictionResult ? (
