@@ -820,6 +820,11 @@ class MatchPredictor:
                 }
             }
             
+            # Calculate match outcome probabilities using Poisson distribution
+            home_win_prob, draw_prob, away_win_prob = self.calculate_match_probabilities(
+                predicted_home_goals, predicted_away_goals
+            )
+            
             return MatchPredictionResponse(
                 success=True,
                 home_team=home_team,
@@ -829,6 +834,9 @@ class MatchPredictor:
                 predicted_away_goals=predicted_away_goals,
                 home_xg=final_home_xg,
                 away_xg=final_away_xg,
+                home_win_probability=home_win_prob,
+                draw_probability=draw_prob,
+                away_win_probability=away_win_prob,
                 prediction_breakdown=prediction_breakdown,
                 confidence_factors=confidence_factors
             )
