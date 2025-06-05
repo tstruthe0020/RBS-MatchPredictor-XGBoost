@@ -147,6 +147,7 @@ curl -X POST "http://localhost:8001/api/ml-models/reload"
    - Match Results last
 3. **Wait for processing confirmation**
 4. **Calculate comprehensive team stats** (button in Team Performance tab)
+5. **Train ML models** (Navigate to Match Prediction tab → Click "🧠 Train ML Models")
 
 ## 🔧 System Maintenance
 
@@ -154,6 +155,15 @@ curl -X POST "http://localhost:8001/api/ml-models/reload"
 After uploading new data:
 ```bash
 curl -X POST "http://localhost:8001/api/calculate-comprehensive-team-stats"
+```
+
+### Retrain ML Models (After New Data)
+When you have new match data, retrain the models:
+```bash
+# Via API
+curl -X POST "http://localhost:8001/api/train-ml-models"
+
+# Or use the frontend button in Match Prediction tab
 ```
 
 ### Reset Database (if needed)
@@ -166,7 +176,7 @@ db.dropDatabase()
 
 ### Update Dependencies
 ```bash
-# Backend
+# Backend (includes ML libraries)
 cd /app/backend
 pip install -r requirements.txt
 
@@ -179,15 +189,24 @@ yarn install
 
 ### Core Features
 1. **Referee Bias Analysis**: Calculate RBS scores for team-referee combinations
-2. **Match Prediction**: Predict match outcomes using sophisticated xG algorithms
+2. **ML Match Prediction**: Predict match outcomes using trained Random Forest models
 3. **Team Performance Analysis**: Detailed team statistics and trends
 4. **RBS Optimization**: Find optimal referee assignments to minimize bias
+5. **ML Model Management**: Train, reload, and monitor prediction models
 
 ### Key Metrics
-- **RBS (Referee Bias Score)**: Measures referee favoritism toward specific teams
+- **RBS (Referee Bias Score)**: Measures referee favoritism toward specific teams (normalized -1 to +1)
 - **xG (Expected Goals)**: Statistical measure of shot quality
 - **PPG (Points Per Game)**: Team quality indicator
-- **Conversion Rates**: Efficiency metrics for shots, penalties, xG
+- **ML Confidence**: Model prediction confidence and feature importance
+- **Feature Engineering**: 45+ features including form, h2h, referee bias, team stats
+
+### Machine Learning Models
+- **Classification Model**: Predicts Win/Draw/Loss with probability percentages
+- **Home Goals Regression**: Predicts expected goals for home team
+- **Away Goals Regression**: Predicts expected goals for away team  
+- **Home xG Regression**: Predicts expected xG for home team
+- **Away xG Regression**: Predicts expected xG for away team
 
 ## 🔍 Troubleshooting
 
