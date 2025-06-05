@@ -762,13 +762,13 @@ class MatchPredictor:
             home_ref_adjustment = home_rbs * config.rbs_scaling_factor
             away_ref_adjustment = away_rbs * config.rbs_scaling_factor
             
-            # Final xG predictions with configurable bounds
-            final_home_xg = max(config.min_xg_per_match, home_adjusted_xg + home_ref_adjustment)
-            final_away_xg = max(config.min_xg_per_match, away_adjusted_xg + away_ref_adjustment)
+            # Final xG predictions using actual calculated values
+            final_home_xg = home_adjusted_xg + home_ref_adjustment
+            final_away_xg = away_adjusted_xg + away_ref_adjustment
             
-            # Enhanced goal prediction using configurable conversion rates
-            home_conversion = max(config.min_conversion_rate, min(config.max_conversion_rate, home_stats['goals_per_xg']))
-            away_conversion = max(config.min_conversion_rate, min(config.max_conversion_rate, away_stats['goals_per_xg']))
+            # Goal prediction using actual conversion rates from database
+            home_conversion = home_stats['goals_per_xg']
+            away_conversion = away_stats['goals_per_xg']
             
             predicted_home_goals = final_home_xg * home_conversion
             predicted_away_goals = final_away_xg * away_conversion
