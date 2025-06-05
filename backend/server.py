@@ -615,7 +615,11 @@ class MatchPredictor:
             'goals_per_xg': sum(stat.get('goals_per_xg', 0) for stat in team_stats) / total_matches,
             'shot_accuracy': sum(stat.get('shot_accuracy', 0) for stat in team_stats) / total_matches,
             'conversion_rate': sum(stat.get('conversion_rate', 0) for stat in team_stats) / total_matches,
-            'penalty_conversion_rate': sum(stat.get('penalty_conversion_rate', 0) for stat in team_stats) / total_matches,
+            'penalty_conversion_rate': (
+                sum(stat.get('penalty_goals', 0) for stat in team_stats) / 
+                sum(stat.get('penalty_attempts', 0) for stat in team_stats) 
+                if sum(stat.get('penalty_attempts', 0) for stat in team_stats) > 0 else 0
+            ),
             'goal_difference': sum(stat.get('goal_difference', 0) for stat in team_stats) / total_matches,
             'clean_sheets': sum(stat.get('clean_sheet', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
             'scoring_rate': sum(stat.get('scored_goals', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
