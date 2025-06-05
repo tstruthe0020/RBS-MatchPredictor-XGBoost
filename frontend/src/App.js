@@ -881,8 +881,35 @@ function App() {
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h2 className="text-xl font-bold text-gray-900 mb-4">⚙️ Prediction Algorithm Configuration</h2>
               <p className="text-gray-600 mb-6">
-                Customize the weights and parameters used in the match prediction algorithm.
+                Customize the weights and parameters used in the match prediction algorithm. Each setting controls how different factors influence the final prediction.
               </p>
+
+              {/* Configuration Guide */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-blue-900 mb-3">📚 Configuration Guide</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+                  <div>
+                    <h4 className="font-medium mb-2">🎯 Algorithm Overview</h4>
+                    <p className="mb-2">The prediction algorithm works in 5 steps:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-xs">
+                      <li><strong>Calculate base xG</strong> using 3 weighted methods</li>
+                      <li><strong>Apply performance adjustments</strong> (possession, fouls, etc.)</li>
+                      <li><strong>Add penalty boost</strong> based on team penalty frequency</li>
+                      <li><strong>Apply team quality</strong> (PPG) and referee bias</li>
+                      <li><strong>Convert to goals</strong> using team conversion rates</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">🔧 Weight Strategies</h4>
+                    <div className="space-y-2 text-xs">
+                      <div><strong>Conservative:</strong> Higher historical weight (0.5), lower adjustments</div>
+                      <div><strong>Aggressive:</strong> Higher shot-based weight (0.5), stronger adjustments</div>
+                      <div><strong>Balanced:</strong> Equal weights (0.4/0.4/0.2), moderate adjustments</div>
+                      <div><strong>Defensive-focused:</strong> Higher opponent defense weight (0.3)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Configuration Selection */}
