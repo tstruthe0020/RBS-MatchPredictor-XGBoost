@@ -941,8 +941,8 @@ async def migrate_confidence():
         raise HTTPException(status_code=500, detail=f"Error migrating confidence values: {str(e)}")
 
 @api_router.post("/calculate-rbs")
-async def calculate_rbs():
-    """Calculate RBS scores for all team-referee combinations"""
+async def calculate_rbs(config_name: str = "default"):
+    """Calculate RBS scores for all team-referee combinations using specified configuration"""
     try:
         # Get all data
         matches = await db.matches.find().to_list(10000)
@@ -960,7 +960,7 @@ async def calculate_rbs():
         rbs_results = []
         for team_name, referee in team_referee_pairs:
             result = await rbs_calculator.calculate_rbs_for_team_referee(
-                team_name, referee, team_stats, matches
+                team_name, referee, team_stats, matches, config_name
             )
             if result:
                 rbs_results.append(result)
@@ -971,8 +971,9 @@ async def calculate_rbs():
         
         return {
             "success": True,
-            "message": f"Calculated RBS for {len(rbs_results)} team-referee combinations",
-            "results_count": len(rbs_results)
+            "message": f"Calculated RBS for {len(rbs_results)} team-referee combinations using '{config_name}' configuration",
+            "results_count": len(rbs_results),
+            "config_used": config_name
         }
     
     except Exception as e:
