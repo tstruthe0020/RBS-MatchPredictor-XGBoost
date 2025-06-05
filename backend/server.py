@@ -3325,6 +3325,47 @@ async def delete_rbs_config(config_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting RBS configuration: {str(e)}")
 
+@api_router.post("/rbs-configs")
+async def create_rbs_config(config: RBSConfigRequest):
+    """Create a new RBS configuration"""
+    try:
+        # Check if config name already exists
+        existing = await db.rbs_configs.find_one({"config_name": config.config_name})
+        
+        if existing:
+            raise HTTPException(status_code=400, detail=f"RBS Configuration '{config.config_name}' already exists")
+        
+        # Create new RBS configuration
+        new_config = RBSConfig(
+            config_name=config.config_name,
+            yellow_cards_weight=config.yellow_cards_weight,
+            red_cards_weight=config.red_cards_weight,
+            fouls_committed_weight=config.fouls_committed_weight,
+            fouls_drawn_weight=config.fouls_drawn_weight,
+            penalties_awarded_weight=config.penalties_awarded_weight,
+            xg_difference_weight=config.xg_difference_weight,
+            possession_percentage_weight=config.possession_percentage_weight,
+            confidence_matches_multiplier=config.confidence_matches_multiplier,
+            max_confidence=config.max_confidence,
+            min_confidence=config.min_confidence,
+            confidence_threshold_low=config.confidence_threshold_low,
+            confidence_threshold_medium=config.confidence_threshold_medium,
+            confidence_threshold_high=config.confidence_threshold_high
+        )
+        
+        await db.rbs_configs.insert_one(new_config.dict())
+        
+        return {
+            "success": True,
+            "message": f"RBS Configuration '{config.config_name}' created successfully",
+            "config": new_config.dict()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating RBS configuration: {str(e)}")
+
 @api_router.post("/regression-analysis", response_model=RegressionAnalysisResponse)
 async def perform_regression_analysis(request: RegressionAnalysisRequest):
     """Perform regression analysis on match data to determine how team stats correlate with outcomes"""
