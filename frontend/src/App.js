@@ -818,7 +818,7 @@ function App() {
                   <h3 className="font-semibold text-yellow-900 mb-2">Enhanced Variance Analysis</h3>
                   <p className="text-sm">Additionally analyzes how consistently a referee makes decisions for a specific team compared to their overall patterns across all teams.</p>
                   <p className="text-sm mt-1"><strong>Variance Ratio:</strong> team_specific_variance ÷ overall_variance</p>
-                  <p className="text-sm mt-1">Ratios >1.5 indicate more variable/inconsistent treatment than usual.</p>
+                  <p className="text-sm mt-1">Ratios &gt;1.5 indicate more variable/inconsistent treatment than usual.</p>
                 </div>
               </div>
             </div>
