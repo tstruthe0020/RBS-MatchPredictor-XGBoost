@@ -1267,8 +1267,360 @@ def test_enhanced_match_prediction():
         print("\n❌ Enhanced match prediction test failed")
         return False
 
+def test_corrected_match_prediction_algorithm():
+    """
+    Test the corrected match prediction algorithm to verify that the xG per shot and other derived statistics 
+    are now properly bounded and mathematically consistent.
+    
+    This test specifically checks:
+    1. Match prediction with teams that had problematic stats before (like Chicago Fire)
+    2. Verification that all derived statistics are within reasonable bounds:
+       - xG per shot should be ≤ 1.0
+       - Shot accuracy should be ≤ 1.0 (100%)
+       - Penalty conversion rate should be ≤ 1.0 (100%)
+    3. Team performance data for multiple teams to ensure corrections are working
+    4. Verification that prediction probabilities are calculated correctly with corrected data
+    5. Testing with multiple team combinations to ensure consistency
+    """
+    print("\n\n========== TESTING CORRECTED MATCH PREDICTION ALGORITHM ==========\n")
+    
+    # Step 1: Get teams and referees from the system
+    print("Step 1: Getting teams and referees from the system")
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    print(f"Found {len(teams)} teams: {', '.join(teams[:5])}{'...' if len(teams) > 5 else ''}")
+    
+    # Try to find Chicago Fire specifically (as mentioned in the review request)
+    chicago_fire_found = False
+    for team in teams:
+        if "Chicago Fire" in team:
+            chicago_fire_found = True
+            print(f"✅ Found Chicago Fire in the teams list: {team}")
+            break
+    
+    if not chicago_fire_found:
+        print("⚠️ Chicago Fire not found in teams list. Will use other teams for testing.")
+    
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    if referees_response.status_code != 200:
+        print(f"❌ Failed to get referees: {referees_response.status_code}")
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    print(f"Found {len(referees)} referees: {', '.join(referees[:5])}{'...' if len(referees) > 5 else ''}")
+    
+    # Step 2: Test team performance data for multiple teams
+    print("\nStep 2: Testing team performance data for multiple teams")
+    
+    # Select teams to test (including Chicago Fire if found)
+    test_teams = []
+    if chicago_fire_found:
+        for team in teams:
+            if "Chicago Fire" in team:
+                test_teams.append(team)
+                break
+    
+    # Add more teams to test
+    for team in teams:
+        if team not in test_teams and len(test_teams) < 5:
+            test_teams.append(team)
+    
+    team_stats_results = []
+    
+    for team in test_teams:
+        print(f"\nTesting team performance for: {team}")
+        response = requests.get(f"{BASE_URL}/team-performance/{team}")
+        
+        if response.status_code != 200:
+            print(f"❌ Failed to get team performance for {team}: {response.status_code}")
+            continue
+        
+        team_data = response.json()
+        if not team_data.get('success'):
+            print(f"❌ Team performance request failed for {team}")
+            continue
+        
+        home_stats = team_data.get('home_stats', {})
+        away_stats = team_data.get('away_stats', {})
+        
+        # Check for bounded statistics
+        bounded_stats = ['xg_per_shot', 'shot_accuracy', 'penalty_conversion_rate']
+        
+        print(f"Home stats for {team}:")
+        for stat in bounded_stats:
+            value = home_stats.get(stat, 0)
+            print(f"  - {stat}: {value}")
+            if value > 1.0:
+                print(f"  ❌ {stat} is greater than 1.0 ({value})")
+            else:
+                print(f"  ✅ {stat} is properly bounded (≤ 1.0)")
+        
+        print(f"Away stats for {team}:")
+        for stat in bounded_stats:
+            value = away_stats.get(stat, 0)
+            print(f"  - {stat}: {value}")
+            if value > 1.0:
+                print(f"  ❌ {stat} is greater than 1.0 ({value})")
+            else:
+                print(f"  ✅ {stat} is properly bounded (≤ 1.0)")
+        
+        team_stats_results.append({
+            'team': team,
+            'home_stats': {stat: home_stats.get(stat, 0) for stat in bounded_stats},
+            'away_stats': {stat: away_stats.get(stat, 0) for stat in bounded_stats}
+        })
+    
+    # Step 3: Test match prediction with multiple team combinations
+    print("\nStep 3: Testing match prediction with multiple team combinations")
+    
+    # Create test combinations
+    test_combinations = []
+    
+    # If Chicago Fire is found, include it in combinations
+    if chicago_fire_found:
+        chicago_fire_team = next(team for team in teams if "Chicago Fire" in team)
+        for team in teams:
+            if team != chicago_fire_team and len(test_combinations) < 2:
+                test_combinations.append((chicago_fire_team, team, referees[0]))
+                test_combinations.append((team, chicago_fire_team, referees[0]))
+    
+    # Add more combinations to test
+    for i in range(min(len(teams), 3)):
+        for j in range(min(len(teams), 3)):
+            if i != j and (teams[i], teams[j], referees[0]) not in test_combinations and len(test_combinations) < 6:
+                test_combinations.append((teams[i], teams[j], referees[0]))
+    
+    prediction_results = []
+    
+    for i, (home_team, away_team, referee) in enumerate(test_combinations):
+        print(f"\nTest {i+1}: {home_team} vs {away_team} with referee {referee}")
+        
+        request_data = {
+            "home_team": home_team,
+            "away_team": away_team,
+            "referee_name": referee
+        }
+        
+        response = requests.post(f"{BASE_URL}/predict-match", json=request_data)
+        
+        if response.status_code != 200:
+            print(f"❌ Match prediction request failed with status code {response.status_code}")
+            print(response.text)
+            continue
+        
+        prediction_data = response.json()
+        
+        if not prediction_data.get('success'):
+            error_message = prediction_data.get('prediction_breakdown', {}).get('error', 'Unknown error')
+            print(f"❌ Match prediction failed: {error_message}")
+            continue
+        
+        print("✅ Match prediction successful!")
+        print(f"Predicted Home Goals: {prediction_data['predicted_home_goals']}")
+        print(f"Predicted Away Goals: {prediction_data['predicted_away_goals']}")
+        print(f"Home xG: {prediction_data['home_xg']}")
+        print(f"Away xG: {prediction_data['away_xg']}")
+        
+        # Check for probability fields
+        home_win_prob = prediction_data.get('home_win_probability', 0)
+        draw_prob = prediction_data.get('draw_probability', 0)
+        away_win_prob = prediction_data.get('away_win_probability', 0)
+        
+        print(f"Home Win Probability: {home_win_prob}%")
+        print(f"Draw Probability: {draw_prob}%")
+        print(f"Away Win Probability: {away_win_prob}%")
+        
+        # Check prediction breakdown for bounded values
+        breakdown = prediction_data.get('prediction_breakdown', {})
+        
+        # Check xG per shot values
+        home_xg_per_shot = breakdown.get('home_xg_per_shot', 0)
+        away_xg_per_shot = breakdown.get('away_xg_per_shot', 0)
+        
+        print(f"Home xG per shot: {home_xg_per_shot}")
+        print(f"Away xG per shot: {away_xg_per_shot}")
+        
+        if home_xg_per_shot > 1.0:
+            print(f"❌ Home xG per shot is greater than 1.0 ({home_xg_per_shot})")
+        else:
+            print(f"✅ Home xG per shot is properly bounded (≤ 1.0)")
+        
+        if away_xg_per_shot > 1.0:
+            print(f"❌ Away xG per shot is greater than 1.0 ({away_xg_per_shot})")
+        else:
+            print(f"✅ Away xG per shot is properly bounded (≤ 1.0)")
+        
+        # Check penalty conversion rates
+        home_penalty_conversion = breakdown.get('home_penalty_conversion', 0)
+        away_penalty_conversion = breakdown.get('away_penalty_conversion', 0)
+        
+        print(f"Home penalty conversion rate: {home_penalty_conversion}")
+        print(f"Away penalty conversion rate: {away_penalty_conversion}")
+        
+        if home_penalty_conversion > 1.0:
+            print(f"❌ Home penalty conversion rate is greater than 1.0 ({home_penalty_conversion})")
+        else:
+            print(f"✅ Home penalty conversion rate is properly bounded (≤ 1.0)")
+        
+        if away_penalty_conversion > 1.0:
+            print(f"❌ Away penalty conversion rate is greater than 1.0 ({away_penalty_conversion})")
+        else:
+            print(f"✅ Away penalty conversion rate is properly bounded (≤ 1.0)")
+        
+        # Verify probabilities are reasonable (0-100%)
+        if not (0 <= home_win_prob <= 100 and 0 <= draw_prob <= 100 and 0 <= away_win_prob <= 100):
+            print("❌ Probabilities are not within the valid range (0-100%)!")
+        else:
+            print("✅ Probabilities are within valid range (0-100%)")
+        
+        # Verify probabilities sum to approximately 100%
+        total_prob = home_win_prob + draw_prob + away_win_prob
+        if not (99.5 <= total_prob <= 100.5):  # Allow for small rounding errors
+            print(f"❌ Probabilities do not sum to 100%! Total: {total_prob}%")
+        else:
+            print(f"✅ Probabilities sum to {total_prob}% (approximately 100%)")
+        
+        prediction_results.append({
+            'home_team': home_team,
+            'away_team': away_team,
+            'home_xg_per_shot': home_xg_per_shot,
+            'away_xg_per_shot': away_xg_per_shot,
+            'home_penalty_conversion': home_penalty_conversion,
+            'away_penalty_conversion': away_penalty_conversion,
+            'home_win_probability': home_win_prob,
+            'draw_probability': draw_prob,
+            'away_win_probability': away_win_prob
+        })
+    
+    # Step 4: Analyze results and provide summary
+    print("\n\n========== CORRECTED MATCH PREDICTION ALGORITHM TEST SUMMARY ==========\n")
+    
+    # Check team performance stats
+    print("Team Performance Stats Summary:")
+    all_team_stats_bounded = True
+    
+    for result in team_stats_results:
+        team = result['team']
+        home_stats = result['home_stats']
+        away_stats = result['away_stats']
+        
+        team_bounded = True
+        for stat, value in home_stats.items():
+            if value > 1.0:
+                team_bounded = False
+                all_team_stats_bounded = False
+                print(f"❌ {team} home {stat}: {value} (exceeds 1.0)")
+        
+        for stat, value in away_stats.items():
+            if value > 1.0:
+                team_bounded = False
+                all_team_stats_bounded = False
+                print(f"❌ {team} away {stat}: {value} (exceeds 1.0)")
+        
+        if team_bounded:
+            print(f"✅ {team}: All stats properly bounded (≤ 1.0)")
+    
+    if all_team_stats_bounded:
+        print("\n✅ All team performance statistics are properly bounded")
+    else:
+        print("\n❌ Some team performance statistics exceed bounds")
+    
+    # Check match prediction results
+    print("\nMatch Prediction Summary:")
+    all_prediction_stats_bounded = True
+    all_probabilities_valid = True
+    
+    for result in prediction_results:
+        home_team = result['home_team']
+        away_team = result['away_team']
+        
+        prediction_bounded = True
+        if result['home_xg_per_shot'] > 1.0:
+            prediction_bounded = False
+            all_prediction_stats_bounded = False
+            print(f"❌ {home_team} vs {away_team}: Home xG per shot {result['home_xg_per_shot']} (exceeds 1.0)")
+        
+        if result['away_xg_per_shot'] > 1.0:
+            prediction_bounded = False
+            all_prediction_stats_bounded = False
+            print(f"❌ {home_team} vs {away_team}: Away xG per shot {result['away_xg_per_shot']} (exceeds 1.0)")
+        
+        if result['home_penalty_conversion'] > 1.0:
+            prediction_bounded = False
+            all_prediction_stats_bounded = False
+            print(f"❌ {home_team} vs {away_team}: Home penalty conversion {result['home_penalty_conversion']} (exceeds 1.0)")
+        
+        if result['away_penalty_conversion'] > 1.0:
+            prediction_bounded = False
+            all_prediction_stats_bounded = False
+            print(f"❌ {home_team} vs {away_team}: Away penalty conversion {result['away_penalty_conversion']} (exceeds 1.0)")
+        
+        # Check probability validity
+        home_win = result['home_win_probability']
+        draw = result['draw_probability']
+        away_win = result['away_win_probability']
+        
+        probability_valid = True
+        if not (0 <= home_win <= 100 and 0 <= draw <= 100 and 0 <= away_win <= 100):
+            probability_valid = False
+            all_probabilities_valid = False
+            print(f"❌ {home_team} vs {away_team}: Probabilities out of range")
+        
+        total = home_win + draw + away_win
+        if not (99.5 <= total <= 100.5):
+            probability_valid = False
+            all_probabilities_valid = False
+            print(f"❌ {home_team} vs {away_team}: Probabilities sum to {total}% (not 100%)")
+        
+        if prediction_bounded and probability_valid:
+            print(f"✅ {home_team} vs {away_team}: All stats properly bounded and probabilities valid")
+    
+    if all_prediction_stats_bounded:
+        print("\n✅ All match prediction statistics are properly bounded")
+    else:
+        print("\n❌ Some match prediction statistics exceed bounds")
+    
+    if all_probabilities_valid:
+        print("\n✅ All match prediction probabilities are valid and sum to 100%")
+    else:
+        print("\n❌ Some match prediction probabilities are invalid or don't sum to 100%")
+    
+    # Final assessment
+    if all_team_stats_bounded and all_prediction_stats_bounded and all_probabilities_valid:
+        print("\n✅ OVERALL RESULT: The corrected match prediction algorithm is working properly!")
+        print("✅ All derived statistics are within reasonable bounds:")
+        print("  - xG per shot ≤ 1.0")
+        print("  - Shot accuracy ≤ 1.0 (100%)")
+        print("  - Penalty conversion rate ≤ 1.0 (100%)")
+        print("✅ Prediction probabilities are calculated correctly and sum to 100%")
+        return True
+    else:
+        print("\n❌ OVERALL RESULT: The corrected match prediction algorithm still has issues")
+        if not all_team_stats_bounded:
+            print("❌ Some team performance statistics exceed reasonable bounds")
+        if not all_prediction_stats_bounded:
+            print("❌ Some match prediction statistics exceed reasonable bounds")
+        if not all_probabilities_valid:
+            print("❌ Some match prediction probabilities are invalid or don't sum to 100%")
+        return False
+
 def run_tests():
     """Run all tests"""
+    # Test the corrected match prediction algorithm
+    test_corrected_match_prediction_algorithm()
+    
     # Test the enhanced match prediction endpoint
     test_enhanced_match_prediction()
     
