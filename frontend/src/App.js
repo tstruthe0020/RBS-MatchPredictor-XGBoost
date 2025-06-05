@@ -1491,6 +1491,9 @@ function App() {
                               </div>
                             </div>
                           )}
+                          
+                          {/* Step 2: Possession Adjustment */}
+                          <div className="mb-6 p-4 bg-green-50 rounded-lg">
                             <h5 className="font-semibold text-green-900 mb-3">Step 2: Possession Adjustment</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                               <div className="space-y-2">
