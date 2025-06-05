@@ -842,8 +842,9 @@ match_predictor = MatchPredictor()
 # Regression Analysis Engine
 class RegressionAnalyzer:
     def __init__(self):
+        # All statistics available for analysis - includes all RBS and Match Predictor variables
         self.available_stats = [
-            # Basic team stats
+            # Basic team stats (used in RBS calculation)
             'yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn',
             'penalties_awarded', 'xg_difference', 'possession_percentage',
             'xg', 'shots_total', 'shots_on_target',
@@ -852,7 +853,30 @@ class RegressionAnalyzer:
             'goals', 'goals_conceded', 'points_per_game',
             'xg_per_shot', 'goals_per_xg', 'shot_accuracy', 
             'conversion_rate', 'penalty_conversion_rate',
-            'penalty_attempts', 'penalty_goals'
+            'penalty_attempts', 'penalty_goals',
+            
+            # Additional RBS and predictor variables
+            'rbs_score', 'home_advantage', 'team_quality_rating',
+            'defensive_rating', 'attacking_rating', 'form_rating',
+            'head_to_head_record', 'recent_performance',
+            
+            # Context variables
+            'is_home', 'season_progress', 'days_rest',
+            'goal_difference', 'clean_sheets_rate', 'scoring_rate'
+        ]
+        
+        # RBS-specific statistics for formula optimization  
+        self.rbs_variables = [
+            'yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn',
+            'penalties_awarded', 'xg_difference', 'possession_percentage'
+        ]
+        
+        # Match Predictor-specific statistics
+        self.predictor_variables = [
+            'xg', 'shots_total', 'shots_on_target', 'xg_per_shot',
+            'goals_per_xg', 'shot_accuracy', 'conversion_rate',
+            'possession_percentage', 'fouls_drawn', 'penalties_awarded',
+            'penalty_conversion_rate', 'points_per_game', 'rbs_score'
         ]
     
     async def prepare_match_data(self):
