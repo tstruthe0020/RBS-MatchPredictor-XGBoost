@@ -1811,7 +1811,7 @@ function App() {
               {!rbsConfigEditing && currentRbsConfig && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Current RBS Configuration: {currentRbsConfig.config_name}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-6">
                     <div className="bg-gray-50 p-3 rounded">
                       <div className="font-medium text-gray-700">Yellow Cards</div>
                       <div className="text-lg font-bold text-orange-600">{currentRbsConfig.yellow_cards_weight}</div>
@@ -1840,6 +1840,32 @@ function App() {
                       <div className="font-medium text-gray-700">Possession %</div>
                       <div className="text-lg font-bold text-blue-600">{currentRbsConfig.possession_percentage_weight}</div>
                     </div>
+                  </div>
+
+                  {/* Calculate RBS with Current Config */}
+                  <div className="bg-orange-50 p-4 rounded-lg border">
+                    <h4 className="font-medium text-orange-900 mb-2">Apply Configuration</h4>
+                    <p className="text-sm text-orange-700 mb-4">
+                      Recalculate all RBS scores using the current configuration: <strong>{currentRbsConfig.config_name}</strong>
+                    </p>
+                    <button
+                      onClick={async () => {
+                        setCalculating(true);
+                        try {
+                          const response = await axios.post(`${API}/calculate-rbs?config_name=${rbsConfigName}`);
+                          alert(`✅ ${response.data.message}`);
+                          fetchStats();
+                          fetchRefereeSummary();
+                        } catch (error) {
+                          alert(`❌ Error calculating RBS: ${error.response?.data?.detail || error.message}`);
+                        }
+                        setCalculating(false);
+                      }}
+                      disabled={calculating || !stats.matches || !stats.team_stats}
+                      className="px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {calculating ? 'Calculating...' : `Calculate RBS with ${rbsConfigName} Config`}
+                    </button>
                   </div>
                 </div>
               )}
