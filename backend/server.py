@@ -851,6 +851,9 @@ class MatchPredictor:
                 predicted_away_goals=0.0,
                 home_xg=0.0,
                 away_xg=0.0,
+                home_win_probability=0.0,
+                draw_probability=0.0,
+                away_win_probability=0.0,
                 prediction_breakdown={"error": str(e), "config_used": config_name},
                 confidence_factors={"error": "Insufficient data", "config_used": config_name}
             )
