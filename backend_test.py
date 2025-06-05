@@ -330,6 +330,160 @@ class RBSAPITester:
         else:
             print("⚠️ API accepted invalid team name without error")
             return False, response
+            
+    # RBS Configuration Tests
+    def test_initialize_default_rbs_config(self):
+        """Test initializing the default RBS configuration"""
+        success, response = self.run_test(
+            "Initialize Default RBS Config",
+            "POST",
+            "initialize-default-rbs-config",
+            200
+        )
+        
+        if success:
+            print(f"Default RBS config initialized: {response.get('success', False)}")
+            if response.get('success', False):
+                config = response.get('config', {})
+                print(f"Config name: {config.get('config_name', 'unknown')}")
+                print(f"Yellow cards weight: {config.get('yellow_cards_weight', 0)}")
+                print(f"Red cards weight: {config.get('red_cards_weight', 0)}")
+                print(f"Fouls committed weight: {config.get('fouls_committed_weight', 0)}")
+                print(f"Fouls drawn weight: {config.get('fouls_drawn_weight', 0)}")
+                print(f"Penalties awarded weight: {config.get('penalties_awarded_weight', 0)}")
+                print(f"xG difference weight: {config.get('xg_difference_weight', 0)}")
+                print(f"Possession percentage weight: {config.get('possession_percentage_weight', 0)}")
+            return success, response
+        return False, None
+        
+    def test_create_custom_rbs_config(self, config_name="test_config"):
+        """Test creating a custom RBS configuration"""
+        data = {
+            "config_name": config_name,
+            "yellow_cards_weight": 0.4,
+            "red_cards_weight": 0.6,
+            "fouls_committed_weight": 0.2,
+            "fouls_drawn_weight": 0.2,
+            "penalties_awarded_weight": 0.7,
+            "xg_difference_weight": 0.5,
+            "possession_percentage_weight": 0.3,
+            "confidence_matches_multiplier": 5,
+            "max_confidence": 90,
+            "min_confidence": 15,
+            "confidence_threshold_low": 3,
+            "confidence_threshold_medium": 6,
+            "confidence_threshold_high": 12
+        }
+        
+        success, response = self.run_test(
+            f"Create Custom RBS Config '{config_name}'",
+            "POST",
+            "rbs-config",
+            200,
+            data=data
+        )
+        
+        if success:
+            print(f"Custom RBS config created: {response.get('success', False)}")
+            if response.get('success', False):
+                config = response.get('config', {})
+                print(f"Config name: {config.get('config_name', 'unknown')}")
+                print(f"Yellow cards weight: {config.get('yellow_cards_weight', 0)}")
+                print(f"Red cards weight: {config.get('red_cards_weight', 0)}")
+                print(f"xG difference weight: {config.get('xg_difference_weight', 0)}")
+            return success, response
+        return False, None
+        
+    def test_list_rbs_configs(self):
+        """Test listing all RBS configurations"""
+        success, response = self.run_test(
+            "List RBS Configs",
+            "GET",
+            "rbs-configs",
+            200
+        )
+        
+        if success:
+            configs = response.get('configs', [])
+            print(f"Found {len(configs)} RBS configurations")
+            
+            if len(configs) > 0:
+                print("\nAvailable RBS Configurations:")
+                for i, config in enumerate(configs):
+                    print(f"{i+1}. {config.get('config_name', 'unknown')}")
+            return success, configs
+        return False, []
+        
+    def test_get_specific_rbs_config(self, config_name):
+        """Test getting a specific RBS configuration"""
+        success, response = self.run_test(
+            f"Get RBS Config '{config_name}'",
+            "GET",
+            f"rbs-config/{config_name}",
+            200
+        )
+        
+        if success:
+            print(f"Successfully retrieved RBS config: {config_name}")
+            config = response.get('config', {})
+            if config:
+                print(f"Yellow cards weight: {config.get('yellow_cards_weight', 0)}")
+                print(f"Red cards weight: {config.get('red_cards_weight', 0)}")
+                print(f"Fouls committed weight: {config.get('fouls_committed_weight', 0)}")
+                print(f"Fouls drawn weight: {config.get('fouls_drawn_weight', 0)}")
+                print(f"Penalties awarded weight: {config.get('penalties_awarded_weight', 0)}")
+                print(f"xG difference weight: {config.get('xg_difference_weight', 0)}")
+                print(f"Possession percentage weight: {config.get('possession_percentage_weight', 0)}")
+            return success, config
+        return False, None
+        
+    def test_delete_rbs_config(self, config_name):
+        """Test deleting an RBS configuration"""
+        success, response = self.run_test(
+            f"Delete RBS Config '{config_name}'",
+            "DELETE",
+            f"rbs-config/{config_name}",
+            200
+        )
+        
+        if success:
+            print(f"Successfully deleted RBS config: {config_name}")
+            return success, response
+        return False, None
+        
+    def test_delete_default_rbs_config(self):
+        """Test attempting to delete the default RBS configuration (should fail)"""
+        success, response = self.run_test(
+            "Delete Default RBS Config (should fail)",
+            "DELETE",
+            "rbs-config/default",
+            400  # Should return 400 Bad Request
+        )
+        
+        if not success:
+            print("✅ Correctly prevented deletion of default RBS config")
+            return True, response
+        else:
+            print("❌ API incorrectly allowed deletion of default RBS config")
+            return False, response
+            
+    def test_calculate_rbs(self, config_name="default"):
+        """Test calculating RBS scores with a specific configuration"""
+        success, response = self.run_test(
+            f"Calculate RBS with config '{config_name}'",
+            "POST",
+            "calculate-rbs",
+            200,
+            params={"config_name": config_name}
+        )
+        
+        if success:
+            print(f"RBS calculation successful: {response.get('success', False)}")
+            if response.get('success', False):
+                print(f"Results count: {response.get('results_count', 0)}")
+                print(f"Config used: {response.get('config_used', 'unknown')}")
+            return success, response
+        return False, None
 
 def main():
     # Get backend URL from frontend .env
