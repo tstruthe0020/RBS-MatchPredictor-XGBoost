@@ -955,6 +955,72 @@ function App() {
                   >
                     Edit Current
                   </button>
+                  <div className="ml-4">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Quick Templates:</label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const templates = {
+                            conservative: {
+                              config_name: 'conservative',
+                              xg_shot_based_weight: 0.3,
+                              xg_historical_weight: 0.5,
+                              xg_opponent_defense_weight: 0.2,
+                              ppg_adjustment_factor: 0.10,
+                              possession_adjustment_per_percent: 0.005,
+                              fouls_drawn_factor: 0.015,
+                              penalty_xg_value: 0.75,
+                              rbs_scaling_factor: 0.15
+                            },
+                            aggressive: {
+                              config_name: 'aggressive',
+                              xg_shot_based_weight: 0.5,
+                              xg_historical_weight: 0.3,
+                              xg_opponent_defense_weight: 0.2,
+                              ppg_adjustment_factor: 0.20,
+                              possession_adjustment_per_percent: 0.015,
+                              fouls_drawn_factor: 0.025,
+                              penalty_xg_value: 0.85,
+                              rbs_scaling_factor: 0.25
+                            },
+                            defensive: {
+                              config_name: 'defensive-focused',
+                              xg_shot_based_weight: 0.35,
+                              xg_historical_weight: 0.35,
+                              xg_opponent_defense_weight: 0.3,
+                              ppg_adjustment_factor: 0.12,
+                              possession_adjustment_per_percent: 0.008,
+                              fouls_drawn_factor: 0.018,
+                              penalty_xg_value: 0.79,
+                              rbs_scaling_factor: 0.18
+                            }
+                          };
+                          const template = templates[e.target.value];
+                          setConfigForm({
+                            ...configForm,
+                            ...template,
+                            fouls_drawn_baseline: 10.0,
+                            fouls_drawn_min_multiplier: 0.8,
+                            fouls_drawn_max_multiplier: 1.3,
+                            min_conversion_rate: 0.5,
+                            max_conversion_rate: 2.0,
+                            min_xg_per_match: 0.1,
+                            confidence_matches_multiplier: 4,
+                            max_confidence: 90,
+                            min_confidence: 20
+                          });
+                          setConfigEditing(true);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="px-3 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Template</option>
+                      <option value="conservative">Conservative</option>
+                      <option value="aggressive">Aggressive</option>
+                      <option value="defensive">Defensive-focused</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
