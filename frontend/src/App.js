@@ -202,6 +202,110 @@ function App() {
     setCalculating(false);
   };
 
+  // Multi-dataset functions
+  const fetchDatasets = async () => {
+    try {
+      const response = await axios.get(`${API}/datasets`);
+      setDatasets(response.data.datasets || []);
+    } catch (error) {
+      console.error('Error fetching datasets:', error);
+    }
+  };
+
+  const deleteDataset = async (datasetName) => {
+    if (!window.confirm(`Are you sure you want to delete dataset "${datasetName}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      const response = await axios.delete(`${API}/datasets/${datasetName}`);
+      alert(`✅ ${response.data.message}`);
+      fetchDatasets();
+      fetchStats();
+      fetchRefereeSummary();
+    } catch (error) {
+      alert(`❌ Error deleting dataset: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const addDatasetUpload = () => {
+    setMultiDatasetFiles([...multiDatasetFiles, {
+      id: Date.now(),
+      dataset_name: '',
+      matches_file: null,
+      team_stats_file: null,
+      player_stats_file: null
+    }]);
+  };
+
+  const removeDatasetUpload = (id) => {
+    setMultiDatasetFiles(multiDatasetFiles.filter(dataset => dataset.id !== id));
+  };
+
+  const updateDatasetField = (id, field, value) => {
+    setMultiDatasetFiles(multiDatasetFiles.map(dataset => 
+      dataset.id === id ? { ...dataset, [field]: value } : dataset
+    ));
+  };
+
+  const uploadMultiDataset = async () => {
+    if (multiDatasetFiles.length === 0) {
+      alert('Please add at least one dataset to upload');
+      return;
+    }
+
+    // Validation
+    for (const dataset of multiDatasetFiles) {
+      if (!dataset.dataset_name) {
+        alert('Please provide a name for all datasets');
+        return;
+      }
+      if (!dataset.matches_file || !dataset.team_stats_file || !dataset.player_stats_file) {
+        alert(`Please upload all 3 files for dataset "${dataset.dataset_name}"`);
+        return;
+      }
+    }
+
+    // Check for duplicate names
+    const names = multiDatasetFiles.map(d => d.dataset_name);
+    if (new Set(names).size !== names.length) {
+      alert('Dataset names must be unique');
+      return;
+    }
+
+    setUploadingMultiDataset(true);
+    try {
+      const formData = new FormData();
+      
+      // Add dataset names as form data
+      const datasetNames = [];
+      for (const dataset of multiDatasetFiles) {
+        datasetNames.push(dataset.dataset_name);
+        formData.append('files', dataset.matches_file);
+        formData.append('files', dataset.team_stats_file);
+        formData.append('files', dataset.player_stats_file);
+      }
+      
+      // Add dataset names as JSON string
+      for (const name of datasetNames) {
+        formData.append('dataset_names', name);
+      }
+
+      const response = await axios.post(`${API}/upload/multi-dataset`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setMultiDatasetResults(response.data);
+      setMultiDatasetFiles([]);
+      fetchDatasets();
+      fetchStats();
+      fetchRefereeSummary();
+    } catch (error) {
+      alert(`❌ Error uploading datasets: ${error.response?.data?.detail || error.message}`);
+    }
+    setUploadingMultiDataset(false);
+  };
+
   const getRBSColor = (score) => {
     if (score > 0.1) return 'text-green-600 bg-green-50';
     if (score < -0.1) return 'text-red-600 bg-red-50';
