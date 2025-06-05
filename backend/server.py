@@ -594,7 +594,557 @@ class RBSCalculator:
 # Initialize RBS Calculator
 rbs_calculator = RBSCalculator()
 
-# Match Prediction Engine
+# ML-Based Match Prediction Engine
+class MLMatchPredictor:
+    def __init__(self):
+        self.models = {}
+        self.scaler = StandardScaler()
+        self.feature_columns = []
+        self.models_dir = "/app/backend/models"
+        self.ensure_models_dir()
+        self.load_models()
+    
+    def ensure_models_dir(self):
+        """Ensure models directory exists"""
+        os.makedirs(self.models_dir, exist_ok=True)
+    
+    def get_model_paths(self):
+        """Get file paths for all models"""
+        return {
+            'classifier': os.path.join(self.models_dir, 'match_outcome_classifier.pkl'),
+            'home_goals': os.path.join(self.models_dir, 'home_goals_regressor.pkl'),
+            'away_goals': os.path.join(self.models_dir, 'away_goals_regressor.pkl'),
+            'home_xg': os.path.join(self.models_dir, 'home_xg_regressor.pkl'),
+            'away_xg': os.path.join(self.models_dir, 'away_xg_regressor.pkl'),
+            'scaler': os.path.join(self.models_dir, 'feature_scaler.pkl'),
+            'feature_columns': os.path.join(self.models_dir, 'feature_columns.pkl')
+        }
+    
+    def load_models(self):
+        """Load trained models if they exist"""
+        model_paths = self.get_model_paths()
+        try:
+            if all(os.path.exists(path) for path in model_paths.values()):
+                self.models['classifier'] = joblib.load(model_paths['classifier'])
+                self.models['home_goals'] = joblib.load(model_paths['home_goals'])
+                self.models['away_goals'] = joblib.load(model_paths['away_goals'])
+                self.models['home_xg'] = joblib.load(model_paths['home_xg'])
+                self.models['away_xg'] = joblib.load(model_paths['away_xg'])
+                self.scaler = joblib.load(model_paths['scaler'])
+                self.feature_columns = joblib.load(model_paths['feature_columns'])
+                print("ML models loaded successfully")
+            else:
+                print("ML models not found - will need to train first")
+        except Exception as e:
+            print(f"Error loading ML models: {e}")
+            self.models = {}
+    
+    def save_models(self):
+        """Save trained models"""
+        model_paths = self.get_model_paths()
+        try:
+            joblib.dump(self.models['classifier'], model_paths['classifier'])
+            joblib.dump(self.models['home_goals'], model_paths['home_goals'])
+            joblib.dump(self.models['away_goals'], model_paths['away_goals'])
+            joblib.dump(self.models['home_xg'], model_paths['home_xg'])
+            joblib.dump(self.models['away_xg'], model_paths['away_xg'])
+            joblib.dump(self.scaler, model_paths['scaler'])
+            joblib.dump(self.feature_columns, model_paths['feature_columns'])
+            print("ML models saved successfully")
+        except Exception as e:
+            print(f"Error saving ML models: {e}")
+    
+    async def extract_features_for_match(self, home_team, away_team, referee, match_date=None):
+        """Extract features for a single match prediction"""
+        try:
+            # Get team stats (use existing calculation methods)
+            home_stats = await self.calculate_team_features(home_team, is_home=True)
+            away_stats = await self.calculate_team_features(away_team, is_home=False)
+            
+            if not home_stats or not away_stats:
+                raise ValueError("Could not calculate team features")
+            
+            # Get referee bias
+            home_rbs, home_rbs_conf = await self.get_referee_bias(home_team, referee)
+            away_rbs, away_rbs_conf = await self.get_referee_bias(away_team, referee)
+            
+            # Get head-to-head stats
+            h2h_stats = await self.get_head_to_head_stats(home_team, away_team)
+            
+            # Build feature vector
+            features = {
+                # Home team offensive stats
+                'home_xg_per_match': home_stats['xg'],
+                'home_goals_per_match': home_stats['goals'],
+                'home_shots_per_match': home_stats['shots_total'],
+                'home_shots_on_target_per_match': home_stats['shots_on_target'],
+                'home_xg_per_shot': home_stats['xg_per_shot'],
+                'home_shot_accuracy': home_stats['shot_accuracy'],
+                'home_conversion_rate': home_stats['conversion_rate'],
+                'home_possession_pct': home_stats['possession_pct'],
+                
+                # Home team defensive stats (what they concede)
+                'home_goals_conceded_per_match': home_stats['goals_conceded'],
+                'home_xg_conceded_per_match': home_stats.get('xg_conceded', 0),
+                
+                # Away team offensive stats
+                'away_xg_per_match': away_stats['xg'],
+                'away_goals_per_match': away_stats['goals'],
+                'away_shots_per_match': away_stats['shots_total'],
+                'away_shots_on_target_per_match': away_stats['shots_on_target'],
+                'away_xg_per_shot': away_stats['xg_per_shot'],
+                'away_shot_accuracy': away_stats['shot_accuracy'],
+                'away_conversion_rate': away_stats['conversion_rate'],
+                'away_possession_pct': away_stats['possession_pct'],
+                
+                # Away team defensive stats
+                'away_goals_conceded_per_match': away_stats['goals_conceded'],
+                'away_xg_conceded_per_match': away_stats.get('xg_conceded', 0),
+                
+                # Form over last 5 matches
+                'home_form_last5': await self.get_team_form(home_team, last_n=5),
+                'away_form_last5': await self.get_team_form(away_team, last_n=5),
+                
+                # Home advantage
+                'home_advantage': 1,  # Always 1 for home team
+                
+                # Referee bias
+                'home_referee_bias': home_rbs,
+                'away_referee_bias': away_rbs,
+                'home_rbs_confidence': home_rbs_conf,
+                'away_rbs_confidence': away_rbs_conf,
+                
+                # Head-to-head
+                'h2h_home_wins': h2h_stats['home_wins'],
+                'h2h_draws': h2h_stats['draws'],
+                'h2h_away_wins': h2h_stats['away_wins'],
+                'h2h_home_goals_avg': h2h_stats['home_goals_avg'],
+                'h2h_away_goals_avg': h2h_stats['away_goals_avg'],
+                
+                # Team quality metrics
+                'home_ppg': home_stats['points_per_game'],
+                'away_ppg': away_stats['points_per_game'],
+                'ppg_difference': home_stats['points_per_game'] - away_stats['points_per_game'],
+                
+                # Additional advanced stats
+                'home_penalties_per_match': home_stats['penalties_awarded'],
+                'away_penalties_per_match': away_stats['penalties_awarded'],
+                'home_fouls_drawn_per_match': home_stats['fouls_drawn'],
+                'away_fouls_drawn_per_match': away_stats['fouls_drawn'],
+                'home_fouls_committed_per_match': home_stats['fouls'],
+                'away_fouls_committed_per_match': away_stats['fouls'],
+                'home_yellow_cards_per_match': home_stats['yellow_cards'],
+                'away_yellow_cards_per_match': away_stats['yellow_cards'],
+                'home_red_cards_per_match': home_stats['red_cards'],
+                'away_red_cards_per_match': away_stats['red_cards'],
+            }
+            
+            return features
+            
+        except Exception as e:
+            print(f"Error extracting features: {e}")
+            return None
+    
+    async def calculate_team_features(self, team_name, is_home):
+        """Calculate comprehensive team features using existing methods"""
+        # Use existing team averages calculation
+        stats = await match_predictor.calculate_team_averages(team_name, is_home)
+        if not stats:
+            return None
+        
+        # Ensure all required fields exist with defaults
+        required_fields = [
+            'xg', 'goals', 'shots_total', 'shots_on_target', 'xg_per_shot', 
+            'shot_accuracy', 'conversion_rate', 'possession_pct', 'goals_conceded',
+            'points_per_game', 'penalties_awarded', 'fouls_drawn', 'fouls',
+            'yellow_cards', 'red_cards'
+        ]
+        
+        for field in required_fields:
+            if field not in stats:
+                stats[field] = 0.0
+        
+        return stats
+    
+    async def get_referee_bias(self, team_name, referee):
+        """Get referee bias score"""
+        try:
+            rbs_result = await db.rbs_results.find_one({
+                "team_name": team_name,
+                "referee": referee
+            })
+            if rbs_result:
+                return rbs_result['rbs_score'], rbs_result['confidence_level']
+            return 0.0, 0.0
+        except:
+            return 0.0, 0.0
+    
+    async def get_head_to_head_stats(self, home_team, away_team):
+        """Get head-to-head statistics"""
+        try:
+            h2h_matches = await db.matches.find({
+                "$or": [
+                    {"home_team": home_team, "away_team": away_team},
+                    {"home_team": away_team, "away_team": home_team}
+                ]
+            }).to_list(100)
+            
+            if not h2h_matches:
+                return {
+                    'home_wins': 0, 'draws': 0, 'away_wins': 0,
+                    'home_goals_avg': 0, 'away_goals_avg': 0
+                }
+            
+            home_wins = 0
+            draws = 0
+            away_wins = 0
+            total_home_goals = 0
+            total_away_goals = 0
+            
+            for match in h2h_matches:
+                # Adjust perspective based on which team is home in current prediction
+                if match['home_team'] == home_team:
+                    home_goals = match['home_score']
+                    away_goals = match['away_score']
+                else:
+                    home_goals = match['away_score']
+                    away_goals = match['home_score']
+                
+                total_home_goals += home_goals
+                total_away_goals += away_goals
+                
+                if home_goals > away_goals:
+                    home_wins += 1
+                elif home_goals == away_goals:
+                    draws += 1
+                else:
+                    away_wins += 1
+            
+            return {
+                'home_wins': home_wins,
+                'draws': draws,
+                'away_wins': away_wins,
+                'home_goals_avg': total_home_goals / len(h2h_matches),
+                'away_goals_avg': total_away_goals / len(h2h_matches)
+            }
+        except:
+            return {
+                'home_wins': 0, 'draws': 0, 'away_wins': 0,
+                'home_goals_avg': 0, 'away_goals_avg': 0
+            }
+    
+    async def get_team_form(self, team_name, last_n=5):
+        """Calculate team form over last N matches"""
+        try:
+            # Get recent matches for the team
+            recent_matches = await db.matches.find({
+                "$or": [
+                    {"home_team": team_name},
+                    {"away_team": team_name}
+                ]
+            }).sort("match_date", -1).limit(last_n).to_list(last_n)
+            
+            if not recent_matches:
+                return 0.0
+            
+            total_points = 0
+            for match in recent_matches:
+                if match['home_team'] == team_name:
+                    if match['home_score'] > match['away_score']:
+                        total_points += 3  # Win
+                    elif match['home_score'] == match['away_score']:
+                        total_points += 1  # Draw
+                else:  # Away team
+                    if match['away_score'] > match['home_score']:
+                        total_points += 3  # Win
+                    elif match['away_score'] == match['home_score']:
+                        total_points += 1  # Draw
+            
+            return total_points / len(recent_matches)
+        except:
+            return 0.0
+    
+    async def build_training_dataset(self):
+        """Build training dataset from historical matches"""
+        try:
+            print("Building training dataset...")
+            
+            # Get all matches
+            all_matches = await db.matches.find().to_list(10000)
+            print(f"Found {len(all_matches)} matches")
+            
+            features_list = []
+            targets = []
+            
+            for i, match in enumerate(all_matches):
+                if i % 100 == 0:
+                    print(f"Processing match {i+1}/{len(all_matches)}")
+                
+                try:
+                    # Extract features for this match
+                    features = await self.extract_features_for_match(
+                        match['home_team'], 
+                        match['away_team'], 
+                        match['referee'],
+                        match.get('match_date')
+                    )
+                    
+                    if features is None:
+                        continue
+                    
+                    # Get actual match outcome and goals
+                    home_score = match['home_score']
+                    away_score = match['away_score']
+                    
+                    # Determine match outcome
+                    if home_score > away_score:
+                        outcome = 0  # Home win
+                    elif home_score == away_score:
+                        outcome = 1  # Draw
+                    else:
+                        outcome = 2  # Away win
+                    
+                    # Get actual xG values from team stats
+                    home_team_stats = await db.team_stats.find_one({
+                        "match_id": match['match_id'],
+                        "team_name": match['home_team'],
+                        "is_home": True
+                    })
+                    away_team_stats = await db.team_stats.find_one({
+                        "match_id": match['match_id'],
+                        "team_name": match['away_team'],
+                        "is_home": False
+                    })
+                    
+                    home_xg = home_team_stats.get('xg', 0) if home_team_stats else 0
+                    away_xg = away_team_stats.get('xg', 0) if away_team_stats else 0
+                    
+                    features_list.append(features)
+                    targets.append({
+                        'outcome': outcome,
+                        'home_goals': home_score,
+                        'away_goals': away_score,
+                        'home_xg': home_xg,
+                        'away_xg': away_xg
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing match {match['match_id']}: {e}")
+                    continue
+            
+            print(f"Successfully processed {len(features_list)} matches for training")
+            return features_list, targets
+            
+        except Exception as e:
+            print(f"Error building training dataset: {e}")
+            return [], []
+    
+    async def train_models(self, test_size=0.2, random_state=42):
+        """Train all ML models"""
+        try:
+            print("Starting ML model training...")
+            
+            # Build training dataset
+            features_list, targets = await self.build_training_dataset()
+            
+            if len(features_list) == 0:
+                raise ValueError("No training data available")
+            
+            # Convert to DataFrame for easier handling
+            import pandas as pd
+            X = pd.DataFrame(features_list)
+            
+            # Store feature columns for later use
+            self.feature_columns = X.columns.tolist()
+            
+            # Prepare target variables
+            y_outcome = [t['outcome'] for t in targets]
+            y_home_goals = [t['home_goals'] for t in targets]
+            y_away_goals = [t['away_goals'] for t in targets]
+            y_home_xg = [t['home_xg'] for t in targets]
+            y_away_xg = [t['away_xg'] for t in targets]
+            
+            # Split data
+            X_train, X_test, y_outcome_train, y_outcome_test = train_test_split(
+                X, y_outcome, test_size=test_size, random_state=random_state, stratify=y_outcome
+            )
+            
+            # Scale features
+            X_train_scaled = self.scaler.fit_transform(X_train)
+            X_test_scaled = self.scaler.transform(X_test)
+            
+            # Split other targets with same indices
+            train_indices = X_train.index
+            test_indices = X_test.index
+            
+            y_home_goals_train = [y_home_goals[i] for i in train_indices]
+            y_home_goals_test = [y_home_goals[i] for i in test_indices]
+            y_away_goals_train = [y_away_goals[i] for i in train_indices]
+            y_away_goals_test = [y_away_goals[i] for i in test_indices]
+            y_home_xg_train = [y_home_xg[i] for i in train_indices]
+            y_home_xg_test = [y_home_xg[i] for i in test_indices]
+            y_away_xg_train = [y_away_xg[i] for i in train_indices]
+            y_away_xg_test = [y_away_xg[i] for i in test_indices]
+            
+            print(f"Training on {len(X_train)} samples, testing on {len(X_test)} samples")
+            
+            # Train models
+            models_to_train = {
+                'classifier': (RandomForestClassifier(n_estimators=100, random_state=random_state), 
+                              y_outcome_train, y_outcome_test),
+                'home_goals': (RandomForestRegressor(n_estimators=100, random_state=random_state),
+                              y_home_goals_train, y_home_goals_test),
+                'away_goals': (RandomForestRegressor(n_estimators=100, random_state=random_state),
+                              y_away_goals_train, y_away_goals_test),
+                'home_xg': (RandomForestRegressor(n_estimators=100, random_state=random_state),
+                           y_home_xg_train, y_home_xg_test),
+                'away_xg': (RandomForestRegressor(n_estimators=100, random_state=random_state),
+                           y_away_xg_train, y_away_xg_test)
+            }
+            
+            training_results = {}
+            
+            for model_name, (model, y_train, y_test) in models_to_train.items():
+                print(f"Training {model_name}...")
+                
+                # Train model
+                model.fit(X_train_scaled, y_train)
+                
+                # Make predictions
+                y_pred = model.predict(X_test_scaled)
+                
+                # Evaluate
+                if model_name == 'classifier':
+                    from sklearn.metrics import accuracy_score, classification_report
+                    accuracy = accuracy_score(y_test, y_pred)
+                    training_results[model_name] = {
+                        'accuracy': accuracy,
+                        'samples': len(y_test)
+                    }
+                    print(f"{model_name} accuracy: {accuracy:.3f}")
+                else:
+                    r2 = r2_score(y_test, y_pred)
+                    mse = mean_squared_error(y_test, y_pred)
+                    training_results[model_name] = {
+                        'r2_score': r2,
+                        'mse': mse,
+                        'samples': len(y_test)
+                    }
+                    print(f"{model_name} R² score: {r2:.3f}, MSE: {mse:.3f}")
+                
+                # Store trained model
+                self.models[model_name] = model
+            
+            # Save models
+            self.save_models()
+            
+            print("ML model training completed successfully!")
+            return training_results
+            
+        except Exception as e:
+            print(f"Error training ML models: {e}")
+            raise e
+    
+    async def predict_match(self, home_team, away_team, referee, match_date=None):
+        """Make match prediction using trained ML models"""
+        try:
+            # Check if models are available
+            if not self.models or len(self.models) != 5:
+                raise ValueError("ML models not trained. Please train models first.")
+            
+            # Extract features
+            features = await self.extract_features_for_match(home_team, away_team, referee, match_date)
+            if features is None:
+                raise ValueError("Could not extract features for prediction")
+            
+            # Convert to DataFrame and ensure correct column order
+            import pandas as pd
+            X = pd.DataFrame([features])
+            X = X.reindex(columns=self.feature_columns, fill_value=0)
+            
+            # Scale features
+            X_scaled = self.scaler.transform(X)
+            
+            # Make predictions
+            outcome_probs = self.models['classifier'].predict_proba(X_scaled)[0]
+            home_goals = max(0, self.models['home_goals'].predict(X_scaled)[0])
+            away_goals = max(0, self.models['away_goals'].predict(X_scaled)[0])
+            home_xg = max(0, self.models['home_xg'].predict(X_scaled)[0])
+            away_xg = max(0, self.models['away_xg'].predict(X_scaled)[0])
+            
+            # Get outcome probabilities (convert to percentages)
+            home_win_prob = outcome_probs[0] * 100
+            draw_prob = outcome_probs[1] * 100
+            away_win_prob = outcome_probs[2] * 100
+            
+            # Ensure probabilities sum to 100%
+            total_prob = home_win_prob + draw_prob + away_win_prob
+            if total_prob > 0:
+                home_win_prob = (home_win_prob / total_prob) * 100
+                draw_prob = (draw_prob / total_prob) * 100
+                away_win_prob = (away_win_prob / total_prob) * 100
+            
+            # Create prediction breakdown for compatibility
+            prediction_breakdown = {
+                'model_confidence': {
+                    'classifier_confidence': max(outcome_probs),
+                    'features_used': len(self.feature_columns),
+                    'training_samples': 'Variable by model'
+                },
+                'feature_importance': {
+                    'top_features': self._get_top_feature_importance(5)
+                },
+                'prediction_method': 'Machine Learning (Random Forest)'
+            }
+            
+            return {
+                'success': True,
+                'home_team': home_team,
+                'away_team': away_team,
+                'referee': referee,
+                'predicted_home_goals': round(home_goals, 2),
+                'predicted_away_goals': round(away_goals, 2),
+                'home_xg': round(home_xg, 2),
+                'away_xg': round(away_xg, 2),
+                'home_win_probability': round(home_win_prob, 2),
+                'draw_probability': round(draw_prob, 2),
+                'away_win_probability': round(away_win_prob, 2),
+                'prediction_breakdown': prediction_breakdown,
+                'confidence_factors': {
+                    'model_type': 'Random Forest ML Models',
+                    'features_count': len(self.feature_columns),
+                    'data_quality': 'Historical match data'
+                }
+            }
+            
+        except Exception as e:
+            print(f"Error making ML prediction: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'home_team': home_team,
+                'away_team': away_team,
+                'referee': referee
+            }
+    
+    def _get_top_feature_importance(self, top_n=5):
+        """Get top feature importance from classifier"""
+        try:
+            if 'classifier' not in self.models:
+                return {}
+            
+            feature_importance = self.models['classifier'].feature_importances_
+            feature_names = self.feature_columns
+            
+            importance_dict = dict(zip(feature_names, feature_importance))
+            sorted_features = sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)
+            
+            return dict(sorted_features[:top_n])
+        except:
+            return {}
+
+# Initialize ML Match Predictor
+ml_predictor = MLMatchPredictor()
 class MatchPredictor:
     def __init__(self):
         self.default_config = PredictionConfig()
