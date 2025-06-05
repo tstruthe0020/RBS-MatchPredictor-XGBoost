@@ -1077,8 +1077,201 @@ def test_match_prediction_fix():
         print("❌ Match prediction fix test failed")
         return False
 
+def test_enhanced_match_prediction():
+    """Test the enhanced match prediction endpoint with probability fields"""
+    print("\n\n========== TESTING ENHANCED MATCH PREDICTION WITH PROBABILITY FIELDS ==========\n")
+    
+    # Step 1: Get teams and referees from the system
+    print("Step 1: Getting teams and referees from the system")
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    print(f"Found {len(teams)} teams: {', '.join(teams[:5])}{'...' if len(teams) > 5 else ''}")
+    
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    if referees_response.status_code != 200:
+        print(f"❌ Failed to get referees: {referees_response.status_code}")
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    print(f"Found {len(referees)} referees: {', '.join(referees[:5])}{'...' if len(referees) > 5 else ''}")
+    
+    # Step 2: Test match prediction with different team combinations
+    print("\nStep 2: Testing match prediction with different team combinations")
+    
+    # Test with at least 3 different team combinations
+    test_combinations = []
+    if len(teams) >= 6:
+        test_combinations = [
+            (teams[0], teams[1], referees[0]),
+            (teams[2], teams[3], referees[0]),
+            (teams[4], teams[5], referees[0])
+        ]
+    elif len(teams) >= 4:
+        test_combinations = [
+            (teams[0], teams[1], referees[0]),
+            (teams[2], teams[3], referees[0]),
+            (teams[0], teams[2], referees[0])
+        ]
+    elif len(teams) >= 2:
+        test_combinations = [
+            (teams[0], teams[1], referees[0]),
+            (teams[1], teams[0], referees[0]),
+            (teams[0], teams[1], referees[-1] if len(referees) > 1 else referees[0])
+        ]
+    
+    results = []
+    
+    for i, (home_team, away_team, referee) in enumerate(test_combinations):
+        print(f"\nTest {i+1}: {home_team} vs {away_team} with referee {referee}")
+        
+        request_data = {
+            "home_team": home_team,
+            "away_team": away_team,
+            "referee_name": referee
+        }
+        
+        response = requests.post(f"{BASE_URL}/predict-match", json=request_data)
+        
+        if response.status_code != 200:
+            print(f"❌ Match prediction request failed with status code {response.status_code}")
+            print(response.text)
+            continue
+        
+        prediction_data = response.json()
+        
+        if not prediction_data.get('success'):
+            error_message = prediction_data.get('prediction_breakdown', {}).get('error', 'Unknown error')
+            print(f"❌ Match prediction failed: {error_message}")
+            continue
+        
+        print("✅ Match prediction successful!")
+        print(f"Predicted Home Goals: {prediction_data['predicted_home_goals']}")
+        print(f"Predicted Away Goals: {prediction_data['predicted_away_goals']}")
+        print(f"Home xG: {prediction_data['home_xg']}")
+        print(f"Away xG: {prediction_data['away_xg']}")
+        
+        # Check for probability fields
+        if 'home_win_probability' not in prediction_data or 'draw_probability' not in prediction_data or 'away_win_probability' not in prediction_data:
+            print("❌ Probability fields are missing from the response!")
+            continue
+        
+        home_win_prob = prediction_data['home_win_probability']
+        draw_prob = prediction_data['draw_probability']
+        away_win_prob = prediction_data['away_win_probability']
+        
+        print(f"Home Win Probability: {home_win_prob}%")
+        print(f"Draw Probability: {draw_prob}%")
+        print(f"Away Win Probability: {away_win_prob}%")
+        
+        # Verify probabilities are reasonable (0-100%)
+        if not (0 <= home_win_prob <= 100 and 0 <= draw_prob <= 100 and 0 <= away_win_prob <= 100):
+            print("❌ Probabilities are not within the valid range (0-100%)!")
+            continue
+        
+        # Verify probabilities sum to approximately 100%
+        total_prob = home_win_prob + draw_prob + away_win_prob
+        if not (99.5 <= total_prob <= 100.5):  # Allow for small rounding errors
+            print(f"❌ Probabilities do not sum to 100%! Total: {total_prob}%")
+            continue
+        
+        print(f"✅ Probabilities are valid and sum to {total_prob}%")
+        
+        # Verify probabilities are consistent with predicted goals
+        if prediction_data['predicted_home_goals'] > prediction_data['predicted_away_goals'] and home_win_prob <= away_win_prob:
+            print("❌ Inconsistency: Home team has higher predicted goals but lower win probability!")
+        elif prediction_data['predicted_home_goals'] < prediction_data['predicted_away_goals'] and home_win_prob >= away_win_prob:
+            print("❌ Inconsistency: Away team has higher predicted goals but lower win probability!")
+        else:
+            print("✅ Probabilities are consistent with predicted goals")
+        
+        results.append({
+            'home_team': home_team,
+            'away_team': away_team,
+            'referee': referee,
+            'predicted_home_goals': prediction_data['predicted_home_goals'],
+            'predicted_away_goals': prediction_data['predicted_away_goals'],
+            'home_xg': prediction_data['home_xg'],
+            'away_xg': prediction_data['away_xg'],
+            'home_win_probability': home_win_prob,
+            'draw_probability': draw_prob,
+            'away_win_probability': away_win_prob
+        })
+    
+    # Step 3: Analyze results across different combinations
+    print("\nStep 3: Analyzing results across different combinations")
+    
+    if not results:
+        print("❌ No successful predictions to analyze")
+        return False
+    
+    print(f"Successfully tested {len(results)} team combinations")
+    
+    # Check if probabilities vary across different combinations
+    if len(results) > 1:
+        home_win_probs = [r['home_win_probability'] for r in results]
+        draw_probs = [r['draw_probability'] for r in results]
+        away_win_probs = [r['away_win_probability'] for r in results]
+        
+        home_win_prob_range = max(home_win_probs) - min(home_win_probs)
+        draw_prob_range = max(draw_probs) - min(draw_probs)
+        away_win_prob_range = max(away_win_probs) - min(away_win_probs)
+        
+        print(f"Home Win Probability Range: {home_win_prob_range:.2f}%")
+        print(f"Draw Probability Range: {draw_prob_range:.2f}%")
+        print(f"Away Win Probability Range: {away_win_prob_range:.2f}%")
+        
+        if home_win_prob_range < 1 and draw_prob_range < 1 and away_win_prob_range < 1:
+            print("❌ Probabilities don't vary significantly across different team combinations!")
+        else:
+            print("✅ Probabilities vary across different team combinations as expected")
+    
+    # Final summary
+    print("\n========== ENHANCED MATCH PREDICTION TEST SUMMARY ==========")
+    
+    all_tests_passed = True
+    for i, result in enumerate(results):
+        print(f"\nTest {i+1}: {result['home_team']} vs {result['away_team']} with referee {result['referee']}")
+        print(f"  Predicted Score: {result['predicted_home_goals']} - {result['predicted_away_goals']}")
+        print(f"  xG: {result['home_xg']} - {result['away_xg']}")
+        print(f"  Probabilities: Home Win {result['home_win_probability']}%, Draw {result['draw_probability']}%, Away Win {result['away_win_probability']}%")
+        
+        # Check if this test passed all criteria
+        total_prob = result['home_win_probability'] + result['draw_probability'] + result['away_win_probability']
+        prob_in_range = (0 <= result['home_win_probability'] <= 100 and 
+                         0 <= result['draw_probability'] <= 100 and 
+                         0 <= result['away_win_probability'] <= 100)
+        prob_sum_valid = 99.5 <= total_prob <= 100.5
+        
+        if prob_in_range and prob_sum_valid:
+            print("  ✅ Test passed")
+        else:
+            print("  ❌ Test failed")
+            all_tests_passed = False
+    
+    if all_tests_passed and results:
+        print("\n✅ Enhanced match prediction with probability fields is working correctly!")
+        return True
+    else:
+        print("\n❌ Enhanced match prediction test failed")
+        return False
+
 def run_tests():
     """Run all tests"""
+    # Test the enhanced match prediction endpoint
+    test_enhanced_match_prediction()
+    
     # Test the match prediction fix specifically
     test_match_prediction_fix()
     
