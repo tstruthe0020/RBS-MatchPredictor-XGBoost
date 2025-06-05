@@ -240,6 +240,21 @@ backend:
         agent: "testing"
         comment: "Successfully tested the enhanced match prediction endpoint with probability fields. The POST /api/predict-match endpoint now correctly includes the new probability fields (home_win_probability, draw_probability, away_win_probability) in the response. Testing with multiple team combinations confirmed that the probabilities are reasonable numbers between 0-100% and sum to exactly 100%. The probabilities are also consistent with the predicted goals - teams with higher predicted goals have higher win probabilities. Testing with different team combinations (Arsenal vs Aston Villa: 22.39%/70.32%/7.29%, Atlanta United vs Austin FC: 61.2%/25.84%/12.96%, Bournemouth vs CF Montréal: 9.61%/54.24%/36.15%) showed that the probabilities vary appropriately based on the predicted goals. The existing functionality for predicted goals and xG continues to work correctly alongside the new probability fields."
 
+  - task: "ML-based Match Prediction System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented ML-based match prediction system with Random Forest algorithms, replacing the statistical prediction system."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the ML-based match prediction system. The system includes 5 ML models: a classifier for Win/Draw/Loss prediction and 4 regression models for Home/Away Goals/xG prediction. All endpoints work correctly: 1) GET /api/ml-models/status correctly reports model status, 2) POST /api/train-ml-models successfully trains all models with good accuracy (classifier: 75.2%, home_goals R²: 0.45, away_goals R²: 0.28, home_xg R²: 1.0, away_xg R²: 1.0), 3) POST /api/ml-models/reload successfully reloads models from disk, and 4) POST /api/predict-match correctly uses the ML models to generate predictions with probabilities that sum to 100%. The feature engineering extracts 45 features including team stats, referee bias, form, and head-to-head stats. Models are properly persisted using joblib in the /app/backend/models/ directory. The prediction breakdown includes model confidence, feature importance, and prediction method information."
+
   - task: "Formula Optimization Frontend"
     implemented: true
     working: true
