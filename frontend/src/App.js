@@ -3713,7 +3713,7 @@ ${Object.entries(response.data.variance_analysis.variance_ratios || {}).map(([st
                           </div>
                           <div className="mt-2 text-xs text-blue-700">
                             <strong>Variance Analysis:</strong> Compares referee's decision consistency for each team vs their overall patterns. 
-                            Ratios >1.5 indicate more variable treatment than usual.
+                            Ratios &gt;1.5 indicate more variable treatment than usual.
                           </div>
                         </div>
                         
