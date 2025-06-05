@@ -956,6 +956,9 @@ function App() {
                     {/* xG Calculation Weights */}
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-3">xG Calculation Weights (must sum to 1.0)</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                        <strong>How xG is calculated:</strong> The algorithm combines three methods to calculate expected goals (xG) for each team. These weights determine how much influence each method has on the final xG calculation.
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Shot-based Weight</label>
@@ -968,6 +971,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('xg_shot_based_weight', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Uses team's average shots per game × xG per shot ratio. Higher values favor teams with more shooting volume and quality.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Historical Weight</label>
@@ -980,6 +986,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('xg_historical_weight', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Uses team's direct historical xG average. Higher values favor teams with consistently high xG regardless of shot volume.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Opponent Defense Weight</label>
@@ -992,6 +1001,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('xg_opponent_defense_weight', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Considers how many goals the opponent typically concedes. Higher values favor teams playing against weaker defenses.
+                          </div>
                         </div>
                       </div>
                       <div className="mt-2 text-sm text-gray-600">
@@ -1002,6 +1014,9 @@ function App() {
                     {/* Team Performance Adjustments */}
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-3">Team Performance Adjustments</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-green-50 p-3 rounded">
+                        <strong>Performance modifiers:</strong> These factors adjust the base xG calculation based on team playing style and quality metrics.
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">PPG Adjustment Factor</label>
@@ -1012,6 +1027,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('ppg_adjustment_factor', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Adjusts xG based on team quality (Points Per Game difference). If Arsenal has 2.0 PPG and opponent has 1.0 PPG, Arsenal gets +0.15 xG boost (with default 0.15 factor).
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Possession Adjustment (/percent)</label>
@@ -1022,6 +1040,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('possession_adjustment_per_percent', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Teams with higher possession create more chances. For every 1% possession above 50%, xG increases by this factor. Default 0.01 = 1% boost per possession percent.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Drawn Factor</label>
@@ -1032,6 +1053,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('fouls_drawn_factor', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Teams that draw more fouls get more set pieces and penalties. For every foul drawn above baseline (10), xG increases by this factor.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Drawn Baseline</label>
@@ -1042,6 +1066,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('fouls_drawn_baseline', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> The "normal" number of fouls drawn per match. Teams drawing more than this get a boost, teams drawing less get a penalty.
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1049,6 +1076,9 @@ function App() {
                     {/* Penalty & Referee Settings */}
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-3">Penalty & Referee Settings</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-yellow-50 p-3 rounded">
+                        <strong>Penalty and referee influence:</strong> How penalties and referee bias affect the final prediction.
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Penalty xG Value</label>
@@ -1059,6 +1089,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('penalty_xg_value', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> The xG value of each penalty. Professional football standard is 0.79. Each penalty attempt adds this value × team conversion rate to xG.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">RBS Scaling Factor</label>
@@ -1069,6 +1102,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('rbs_scaling_factor', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> How much referee bias affects xG. Default 0.2 means RBS score of -5.0 gives -1.0 xG adjustment. Higher values make referee bias more influential.
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1076,6 +1112,9 @@ function App() {
                     {/* Bounds & Limits */}
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-3">Bounds & Limits</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-purple-50 p-3 rounded">
+                        <strong>Safety constraints:</strong> These prevent unrealistic predictions by capping extreme values.
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Min Conversion Rate</label>
@@ -1086,6 +1125,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('min_conversion_rate', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Minimum goals-per-xG ratio. Prevents predictions being too low for poor finishing teams. Default 0.5 means teams score at least half their xG.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Max Conversion Rate</label>
@@ -1096,6 +1138,9 @@ function App() {
                             onChange={(e) => handleConfigFormChange('max_conversion_rate', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Maximum goals-per-xG ratio. Prevents predictions being too high for clinical finishing teams. Default 2.0 means teams score at most double their xG.
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Min xG per Match</label>
@@ -1106,6 +1151,58 @@ function App() {
                             onChange={(e) => handleConfigFormChange('min_xg_per_match', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Minimum xG any team can have in a match. Prevents unrealistic 0.0 xG predictions. Every team creates at least some chances.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Confidence Calculation */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Confidence Calculation</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-indigo-50 p-3 rounded">
+                        <strong>Prediction reliability:</strong> How the system calculates confidence in its predictions based on data quality.
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Confidence Matches Multiplier</label>
+                          <input
+                            type="number"
+                            step="1"
+                            value={configForm.confidence_matches_multiplier}
+                            onChange={(e) => handleConfigFormChange('confidence_matches_multiplier', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> More matches = higher confidence. Average match count × this multiplier = confidence percentage. Default 4 means 20 matches = 80% confidence.
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Max Confidence</label>
+                          <input
+                            type="number"
+                            step="1"
+                            value={configForm.max_confidence}
+                            onChange={(e) => handleConfigFormChange('max_confidence', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Maximum confidence percentage. Even with lots of data, confidence is capped at this level to account for football's unpredictability.
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Min Confidence</label>
+                          <input
+                            type="number"
+                            step="1"
+                            value={configForm.min_confidence}
+                            onChange={(e) => handleConfigFormChange('min_confidence', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>What it does:</strong> Minimum confidence percentage. Even with little data, predictions have at least this confidence level. Prevents 0% confidence.
+                          </div>
                         </div>
                       </div>
                     </div>
