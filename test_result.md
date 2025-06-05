@@ -184,6 +184,21 @@
         agent: "testing"
         comment: "The POST /api/analyze-comprehensive-regression endpoint is currently failing with a 500 Internal Server Error. The server logs show a 'ValueError: Out of range float values are not JSON compliant' error, which suggests there are NaN or Infinity values in the regression results that cannot be serialized to JSON. This is likely due to division by zero or other mathematical operations on sparse data. The endpoint needs to be updated to handle these edge cases by replacing NaN/Infinity values with null or appropriate default values before JSON serialization."
 
+  - task: "Match Prediction Fix"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed the match prediction functionality to properly handle the 'points_per_game' field and ensure all required statistics are available for prediction."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the match prediction fix. The 'Prediction Failed 'points_per_game'' error has been resolved. The match prediction endpoint now works correctly with actual team names and referees from the system. All required fields for the prediction breakdown are properly available in the team averages, including points_per_game, xg_per_shot, shots_total, goals, penalties_awarded, fouls_drawn, and penalty_conversion_rate. The prediction breakdown contains non-zero values for key metrics like home_xg_per_shot (0.806), away_xg_per_shot (0.625), home_shots_avg (1.0), away_shots_avg (1.0), home_goals_avg (1.67), away_goals_avg (0.97), and all conversion rates. The only field with zero value was home_penalties_avg, which appears to be a data issue rather than a code issue as the field is properly included in the calculation. The end-to-end workflow from comprehensive team stats calculation to RBS calculation to match prediction works correctly."
+
   - task: "Formula Optimization Frontend"
     implemented: true
     working: true
