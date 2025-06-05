@@ -177,31 +177,6 @@ function App() {
     }
   };
 
-  const loadEnhancedRBSData = async (refereeName, rbsResults) => {
-    try {
-      console.log('Loading enhanced RBS data for referee:', refereeName);
-      const enhancedData = {};
-      
-      // For each team in the RBS results, fetch enhanced analysis
-      for (const result of rbsResults) {
-        try {
-          const response = await axios.get(`${API}/enhanced-rbs-analysis/${encodeURIComponent(result.team_name)}/${encodeURIComponent(refereeName)}`);
-          if (response.data.success) {
-            enhancedData[result.team_name] = response.data;
-          }
-        } catch (error) {
-          console.error(`Error loading enhanced data for ${result.team_name}:`, error);
-          // Continue with other teams even if one fails
-        }
-      }
-      
-      setEnhancedRBSData(enhancedData);
-      console.log('Enhanced RBS data loaded:', enhancedData);
-    } catch (error) {
-      console.error('Error loading enhanced RBS data:', error);
-    }
-  };
-
   const fetchRefereeDetails = async (refereeName) => {
     try {
       console.log('Fetching referee details for:', refereeName);
