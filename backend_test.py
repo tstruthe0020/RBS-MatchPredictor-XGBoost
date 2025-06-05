@@ -685,66 +685,271 @@ def verify_data_integration():
         print("\n❌ Some player statistics are not properly aggregated into team-level statistics")
         return False
 
+def test_match_prediction(home_team="Arsenal", away_team="Chelsea", referee_name="Michael Oliver"):
+    """Test the match prediction endpoint"""
+    print(f"\n=== Testing Match Prediction for {home_team} vs {away_team} with referee {referee_name} ===")
+    
+    # Prepare request data
+    request_data = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee_name
+    }
+    
+    response = requests.post(f"{BASE_URL}/predict-match", json=request_data)
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data['success']}")
+        
+        if data['success']:
+            print(f"Home Team: {data['home_team']}")
+            print(f"Away Team: {data['away_team']}")
+            print(f"Referee: {data['referee']}")
+            print(f"Predicted Home Goals: {data['predicted_home_goals']}")
+            print(f"Predicted Away Goals: {data['predicted_away_goals']}")
+            print(f"Home xG: {data['home_xg']}")
+            print(f"Away xG: {data['away_xg']}")
+            
+            # Check prediction breakdown
+            breakdown = data.get('prediction_breakdown', {})
+            print("\nPrediction Breakdown:")
+            for key, value in list(breakdown.items())[:5]:
+                print(f"  - {key}: {value}")
+            if len(breakdown) > 5:
+                print("  ...")
+            
+            # Check confidence factors
+            confidence = data.get('confidence_factors', {})
+            print("\nConfidence Factors:")
+            for key, value in list(confidence.items())[:5]:
+                print(f"  - {key}: {value}")
+            if len(confidence) > 5:
+                print("  ...")
+            
+            # Verify key metrics are present and non-zero
+            key_metrics = ['home_xg_per_shot', 'away_xg_per_shot', 'home_shots_avg', 'away_shots_avg']
+            missing_metrics = [metric for metric in key_metrics if metric not in breakdown or breakdown[metric] == 0]
+            
+            if missing_metrics:
+                print(f"\n❌ Missing or zero metrics in prediction breakdown: {', '.join(missing_metrics)}")
+            else:
+                print("\n✅ All key metrics are present and non-zero in prediction breakdown")
+            
+            return data
+        else:
+            print(f"Prediction failed: {data.get('prediction_breakdown', {}).get('error', 'Unknown error')}")
+            return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_end_to_end_workflow():
+    """Test the complete workflow from comprehensive stats to RBS to match prediction"""
+    print("\n=== Testing End-to-End Workflow ===")
+    
+    # Step 1: Calculate comprehensive team stats
+    print("\nStep 1: Calculate comprehensive team stats")
+    comp_stats_response = requests.post(f"{BASE_URL}/calculate-comprehensive-team-stats")
+    
+    if comp_stats_response.status_code != 200 or not comp_stats_response.json().get('success'):
+        print("❌ Failed to calculate comprehensive team stats")
+        print(f"Status: {comp_stats_response.status_code}")
+        print(comp_stats_response.text)
+        return False
+    
+    comp_stats_data = comp_stats_response.json()
+    print(f"✅ Comprehensive team stats calculated: {comp_stats_data.get('records_updated')} records updated")
+    
+    # Step 2: Calculate RBS
+    print("\nStep 2: Calculate RBS")
+    rbs_response = requests.post(f"{BASE_URL}/calculate-rbs")
+    
+    if rbs_response.status_code != 200 or not rbs_response.json().get('success'):
+        print("❌ Failed to calculate RBS")
+        print(f"Status: {rbs_response.status_code}")
+        print(rbs_response.text)
+        return False
+    
+    rbs_data = rbs_response.json()
+    print(f"✅ RBS calculated: {rbs_data.get('results_count')} results generated")
+    
+    # Step 3: Get teams for match prediction
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    
+    if teams_response.status_code != 200:
+        print("❌ Failed to get teams")
+        print(f"Status: {teams_response.status_code}")
+        print(teams_response.text)
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    # Get referees
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    
+    if referees_response.status_code != 200:
+        print("❌ Failed to get referees")
+        print(f"Status: {referees_response.status_code}")
+        print(referees_response.text)
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    # Step 4: Perform match prediction
+    home_team = teams[0]
+    away_team = teams[1]
+    referee = referees[0]
+    
+    print(f"\nStep 4: Perform match prediction for {home_team} vs {away_team} with referee {referee}")
+    prediction_data = test_match_prediction(home_team, away_team, referee)
+    
+    if not prediction_data or not prediction_data.get('success'):
+        print("❌ Match prediction failed")
+        return False
+    
+    print(f"✅ Match prediction successful")
+    
+    # Step 5: Verify team performance stats
+    print(f"\nStep 5: Verify team performance stats for {home_team}")
+    performance_data = test_team_performance_stats(home_team)
+    
+    if not performance_data or not performance_data.get('success'):
+        print(f"❌ Failed to get team performance stats for {home_team}")
+        return False
+    
+    # Check for non-zero values in key stats
+    home_stats = performance_data.get('home_stats', {})
+    away_stats = performance_data.get('away_stats', {})
+    
+    key_stats = ['xg_per_shot', 'shots_total', 'shot_accuracy', 'conversion_rate', 'goals_per_xg']
+    all_stats_ok = True
+    
+    for stat in key_stats:
+        home_value = home_stats.get(stat, 0)
+        away_value = away_stats.get(stat, 0)
+        
+        if home_value == 0 and away_value == 0:
+            print(f"❌ {stat} has zero values in both home and away stats")
+            all_stats_ok = False
+    
+    if all_stats_ok:
+        print("✅ All key team performance stats have non-zero values")
+    else:
+        print("❌ Some key team performance stats have zero values")
+    
+    # Overall workflow assessment
+    print("\nEnd-to-End Workflow Assessment:")
+    if (comp_stats_data.get('success') and 
+        rbs_data.get('success') and 
+        prediction_data.get('success') and 
+        performance_data.get('success') and
+        all_stats_ok):
+        print("✅ Complete workflow test passed successfully")
+        return True
+    else:
+        print("❌ Complete workflow test failed")
+        return False
+
 def run_tests():
     """Run all tests"""
-    print("\n\n========== TESTING ENHANCED RBS CALCULATION FUNCTIONALITY ==========\n")
+    print("\n\n========== TESTING FIXED RBS CALCULATION AND MATCH PREDICTION WORKFLOW ==========\n")
     
     # Test comprehensive team stats calculation
+    print("\n1. Testing Comprehensive Team Stats Calculation")
     comprehensive_stats_data = test_comprehensive_team_stats()
     
     # Test enhanced RBS calculation
+    print("\n2. Testing Enhanced RBS Calculation")
     rbs_calculation_data = test_enhanced_rbs_calculation()
     
+    # Test match prediction
+    print("\n3. Testing Match Prediction")
+    # Get teams for match prediction
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code == 200:
+        teams = teams_response.json().get('teams', [])
+        if len(teams) >= 2:
+            # Get referees
+            referees_response = requests.get(f"{BASE_URL}/referees")
+            if referees_response.status_code == 200:
+                referees = referees_response.json().get('referees', [])
+                if referees:
+                    match_prediction_data = test_match_prediction(teams[0], teams[1], referees[0])
+                else:
+                    print("❌ No referees found for match prediction")
+                    match_prediction_data = None
+            else:
+                print(f"❌ Failed to get referees: {referees_response.status_code}")
+                match_prediction_data = None
+        else:
+            print("❌ Not enough teams for match prediction")
+            match_prediction_data = None
+    else:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        match_prediction_data = None
+    
     # Test team performance stats to verify derived statistics
-    team_performance_data = test_team_performance_stats()
+    print("\n4. Testing Team Performance Stats")
+    team_performance_data = test_team_performance_stats("Arsenal")
     
-    # Test RBS results to verify statistics
-    rbs_results_data = test_rbs_results_stats()
-    
-    # Verify data integration
-    data_integration_success = verify_data_integration()
+    # Test end-to-end workflow
+    print("\n5. Testing End-to-End Workflow")
+    end_to_end_success = test_end_to_end_workflow()
     
     # Print summary of tests
-    print("\n\n========== ENHANCED RBS CALCULATION TESTS SUMMARY ==========\n")
+    print("\n\n========== FIXED RBS CALCULATION AND MATCH PREDICTION WORKFLOW TESTS SUMMARY ==========\n")
     
     if comprehensive_stats_data and comprehensive_stats_data.get('success'):
-        print(f"✅ Comprehensive Team Stats Calculation: {comprehensive_stats_data.get('records_updated')} records updated")
+        print(f"✅ 1. Comprehensive Team Stats Calculation: {comprehensive_stats_data.get('records_updated')} records updated")
     else:
-        print("❌ Comprehensive Team Stats Calculation: Failed")
+        print("❌ 1. Comprehensive Team Stats Calculation: Failed")
     
     if rbs_calculation_data and rbs_calculation_data.get('success'):
-        print(f"✅ Enhanced RBS Calculation: {rbs_calculation_data.get('results_count')} results calculated")
+        print(f"✅ 2. Enhanced RBS Calculation: {rbs_calculation_data.get('results_count')} results calculated")
     else:
-        print("❌ Enhanced RBS Calculation: Failed")
+        print("❌ 2. Enhanced RBS Calculation: Failed")
+    
+    if match_prediction_data and match_prediction_data.get('success'):
+        print(f"✅ 3. Match Prediction: Successfully predicted match outcome")
+    else:
+        print("❌ 3. Match Prediction: Failed")
     
     if team_performance_data and team_performance_data.get('success'):
         home_stats = team_performance_data.get('home_stats', {})
         away_stats = team_performance_data.get('away_stats', {})
         
         # Check for non-zero values in key stats
-        key_stats = ['xg_per_shot', 'shots_total']
-        all_stats_ok = all(home_stats.get(stat, 0) > 0 or away_stats.get(stat, 0) > 0 for stat in key_stats)
+        key_stats = ['xg_per_shot', 'shots_total', 'shot_accuracy', 'conversion_rate', 'goals_per_xg']
+        all_stats_ok = True
+        
+        for stat in key_stats:
+            home_value = home_stats.get(stat, 0)
+            away_value = away_stats.get(stat, 0)
+            
+            if home_value == 0 and away_value == 0:
+                print(f"❌ {stat} has zero values in both home and away stats")
+                all_stats_ok = False
         
         if all_stats_ok:
-            print("✅ Team Performance Stats: All key statistics have non-zero values")
+            print("✅ 4. Team Performance Stats: All key statistics have non-zero values")
         else:
-            print("❌ Team Performance Stats: Some key statistics have zero values")
+            print("❌ 4. Team Performance Stats: Some key statistics have zero values")
     else:
-        print("❌ Team Performance Stats: Failed")
+        print("❌ 4. Team Performance Stats: Failed")
     
-    if rbs_results_data and rbs_results_data.get('success'):
-        results = rbs_results_data.get('results', [])
-        if results:
-            print(f"✅ RBS Results Stats: {len(results)} results verified")
-        else:
-            print("❌ RBS Results Stats: No results found")
+    if end_to_end_success:
+        print("✅ 5. End-to-End Workflow: Complete workflow test passed successfully")
     else:
-        print("❌ RBS Results Stats: Failed")
-    
-    if data_integration_success:
-        print("✅ Data Integration: Player statistics are properly aggregated into team-level statistics")
-    else:
-        print("❌ Data Integration: Player statistics are not properly aggregated into team-level statistics")
+        print("❌ 5. End-to-End Workflow: Complete workflow test failed")
     
     # Test regression analysis functionality
     print("\n\n========== TESTING REGRESSION ANALYSIS FUNCTIONALITY ==========\n")
