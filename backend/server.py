@@ -16,6 +16,10 @@ import io
 from collections import defaultdict
 import csv
 import math
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, r2_score, mean_squared_error
+from sklearn.model_selection import train_test_split
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
