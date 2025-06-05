@@ -2123,24 +2123,17 @@ async def calculate_comprehensive_team_stats():
             actual_goals = match['home_score'] if is_home else match['away_score']
             goals_conceded = match['away_score'] if is_home else match['home_score']
             
-            # Calculate comprehensive statistics
-            shots_total = max(final_shots_total, 1)  # Use aggregated shots, avoid division by zero
-            shots_on_target = final_shots_on_target  # Use aggregated shots on target
-            possession_pct = team_stat.get('possession_pct', 50.0)
+            # Use ONLY actual database values - NO modifications or fallbacks
+            shots_total = final_shots_total
+            shots_on_target = final_shots_on_target
+            possession_pct = team_stat.get('possession_pct')  # Use actual value or None
             
-            # Calculate derived metrics with proper fallbacks and bounds checking
-            # xG per shot should never exceed 1.0 (maximum possible xG for a single shot)
-            raw_xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
-            xg_per_shot = min(raw_xg_per_shot, 1.0)  # Cap at 1.0 for mathematical consistency
-            
-            # Log warning if xG per shot is being capped (indicates data quality issue)
-            if raw_xg_per_shot > 1.0:
-                print(f"Warning: Capping xG per shot for {team_name} in match {match_id}: {raw_xg_per_shot:.3f} -> 1.0 (xG: {final_xg}, shots: {shots_total})")
-            
-            goals_per_xg = actual_goals / final_xg if final_xg > 0 else 1.0
-            shot_accuracy = shots_on_target / shots_total if shots_total > 0 else 0.3
-            conversion_rate = actual_goals / shots_on_target if shots_on_target > 0 else 0.1
-            penalty_conversion_rate = final_penalty_goals / final_penalties if final_penalties > 0 else 0.77
+            # Calculate derived metrics using ONLY actual database values
+            xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
+            goals_per_xg = actual_goals / final_xg if final_xg > 0 else 0
+            shot_accuracy = shots_on_target / shots_total if shots_total > 0 else 0
+            conversion_rate = actual_goals / shots_on_target if shots_on_target > 0 else 0
+            penalty_conversion_rate = final_penalty_goals / final_penalties if final_penalties > 0 else 0
             
             # Calculate points for this match
             if actual_goals > goals_conceded:
