@@ -86,6 +86,7 @@ function App() {
     fetchTeams();
     fetchReferees();
     fetchConfigs();
+    fetchRbsConfigs();
   }, []);
 
   const fetchStats = async () => {
