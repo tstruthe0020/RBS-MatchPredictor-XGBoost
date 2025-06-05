@@ -460,7 +460,7 @@ class MatchPredictor:
         averages = {
             'shots_total': sum(stat.get('shots_total', 0) for stat in team_stats) / total_matches,
             'shots_on_target': sum(stat.get('shots_on_target', 0) for stat in team_stats) / total_matches,
-            'xg': sum(stat.get('xg', 0) for stat in team_stats) / total_matches,
+            'xg': 0,  # Will be calculated from player stats aggregation
             'fouls': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
             'fouls_drawn': 0,  # Will be calculated from player stats aggregation
             'penalties_awarded': 0,  # Will be calculated from player stats aggregation
