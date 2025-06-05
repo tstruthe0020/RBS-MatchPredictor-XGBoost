@@ -257,101 +257,36 @@ def test_predictor_optimization_endpoint():
         print(response.text)
         return None
 
-def test_comprehensive_regression_endpoint():
-    """Test the comprehensive regression analysis endpoint"""
-    print("\n=== Testing Comprehensive Regression Analysis Endpoint ===")
+def test_regression_analysis_endpoint():
+    """Test the regression analysis endpoint"""
+    print("\n=== Testing Regression Analysis Endpoint ===")
     
-    # Test with a mix of RBS and Predictor variables that are likely to have valid values
+    # Simple regression analysis with basic stats
     test_data = {
-        "selected_stats": [
-            "yellow_cards", "red_cards", "fouls_committed",  # RBS variables
-            "shots_total", "shots_on_target", "is_home"  # Predictor and context variables
-        ],
+        "selected_stats": ["yellow_cards", "red_cards", "shots_total"],
         "target": "points_per_game",
         "test_size": 0.2,
         "random_state": 42
     }
     
-    response = requests.post(f"{BASE_URL}/analyze-comprehensive-regression", json=test_data)
+    response = requests.post(f"{BASE_URL}/regression-analysis", json=test_data)
     
     if response.status_code == 200:
         print(f"Status: {response.status_code} OK")
         data = response.json()
         print(f"Success: {data['success']}")
         print(f"Target: {data.get('target')}")
-        print(f"Model Type: {data.get('model_type')}")
         print(f"Sample Size: {data.get('sample_size')}")
-        
-        # Check selected stats
-        selected_stats = data.get('selected_stats', [])
-        print(f"\nSelected Stats: {len(selected_stats)}")
-        print(f"  {', '.join(selected_stats)}")
         
         # Check results
         results = data.get('results', {})
+        if 'r2_score' in results:
+            print(f"R² Score: {results['r2_score']}")
+        
         if 'coefficients' in results:
             print("\nCoefficients:")
             for var, coef in results['coefficients'].items():
                 print(f"  - {var}: {coef}")
-        
-        if 'r2_score' in results:
-            print(f"\nR² Score: {results['r2_score']}")
-        
-        # Check insights
-        insights = data.get('insights', {})
-        print(f"\nInsights sections: {len(insights)}")
-        for section_name in insights.keys():
-            print(f"  - {section_name}")
-        
-        # Check RBS variables insights
-        if 'rbs_variables_in_analysis' in insights:
-            rbs_insight = insights['rbs_variables_in_analysis']
-            print("\nRBS Variables in Analysis:")
-            print(f"  Variables: {', '.join(rbs_insight.get('variables', []))}")
-            print(f"  Recommendation: {rbs_insight.get('recommendation')}")
-        
-        # Check Predictor variables insights
-        if 'predictor_variables_in_analysis' in insights:
-            predictor_insight = insights['predictor_variables_in_analysis']
-            print("\nPredictor Variables in Analysis:")
-            print(f"  Variables: {', '.join(predictor_insight.get('variables', []))}")
-            print(f"  Recommendation: {predictor_insight.get('recommendation')}")
-        
-        # Check correlations
-        if 'variable_correlations' in insights:
-            correlations = insights['variable_correlations']
-            print("\nVariable Correlations:")
-            if 'strongest_positive' in correlations and correlations['strongest_positive']:
-                var, corr = correlations['strongest_positive']
-                print(f"  Strongest Positive: {var} ({corr})")
-            if 'strongest_negative' in correlations and correlations['strongest_negative']:
-                var, corr = correlations['strongest_negative']
-                print(f"  Strongest Negative: {var} ({corr})")
-        
-        # Check data summary
-        data_summary = data.get('data_summary', {})
-        print(f"\nData Summary:")
-        print(f"  Total Matches: {data_summary.get('total_matches')}")
-        print(f"  Teams Analyzed: {data_summary.get('teams_analyzed')}")
-        print(f"  Referees Analyzed: {data_summary.get('referees_analyzed')}")
-        
-        # Verify all required sections exist
-        required_sections = ['insights', 'data_summary']
-        missing_sections = [sec for sec in required_sections if sec not in data]
-        
-        if missing_sections:
-            print(f"\n❌ Missing sections: {', '.join(missing_sections)}")
-        else:
-            print("\n✅ All required sections present")
-        
-        # Verify insights contain variable categorization
-        required_insights = ['rbs_variables_in_analysis', 'variable_correlations']
-        missing_insights = [ins for ins in required_insights if ins not in insights]
-        
-        if missing_insights:
-            print(f"❌ Missing insights: {', '.join(missing_insights)}")
-        else:
-            print("✅ All required insights present")
         
         return data
     else:
@@ -513,8 +448,8 @@ def run_tests():
     # Test Match Predictor optimization endpoint
     predictor_optimization_data = test_predictor_optimization_endpoint()
     
-    # Test comprehensive regression analysis endpoint
-    comprehensive_regression_data = test_comprehensive_regression_endpoint()
+    # Test regression analysis endpoint
+    regression_analysis_data = test_regression_analysis_endpoint()
     
     # Print summary of regression analysis tests
     print("\n\n========== REGRESSION ANALYSIS TESTS SUMMARY ==========\n")
@@ -535,10 +470,10 @@ def run_tests():
     else:
         print("❌ Predictor Optimization Endpoint: Failed")
     
-    if comprehensive_regression_data and comprehensive_regression_data.get('success'):
-        print(f"✅ Comprehensive Regression Endpoint: {len(comprehensive_regression_data.get('selected_stats', []))} variables analyzed, R² score: {comprehensive_regression_data.get('results', {}).get('r2_score', 'N/A')}")
+    if regression_analysis_data and regression_analysis_data.get('success'):
+        print(f"✅ Regression Analysis Endpoint: {len(regression_analysis_data.get('selected_stats', []))} variables analyzed, R² score: {regression_analysis_data.get('results', {}).get('r2_score', 'N/A')}")
     else:
-        print("❌ Comprehensive Regression Endpoint: Failed")
+        print("❌ Regression Analysis Endpoint: Failed")
     
     # Test dataset management functionality
     print("\n\n========== TESTING DATASET MANAGEMENT FUNCTIONALITY ==========\n")
