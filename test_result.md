@@ -225,6 +225,21 @@ backend:
         agent: "testing"
         comment: "Performed additional testing on the match prediction algorithm with specific focus on Chicago Fire, which previously had problematic xG per shot values (2.011). The corrected algorithm now properly bounds all derived statistics: xG per shot is now ≤ 1.0 (Chicago Fire home: 0.264, away: 0.380), shot accuracy is ≤ 1.0, and penalty conversion rate is ≤ 1.0. Testing with multiple teams confirmed that all derived statistics are properly bounded across the system. Match prediction probabilities are correctly calculated and sum to exactly 100%. The algorithm now produces mathematically consistent and realistic values for all teams."
       
+  - task: "ML-Based Match Prediction Engine"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented complete ML-based match prediction system replacing statistical approach. Built MLMatchPredictor class with RandomForest models (1 classifier + 4 regression models), comprehensive feature engineering (45 features), model persistence with joblib, and new endpoints for training/management."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the ML-based match prediction system. All endpoints work correctly: GET /api/ml-models/status correctly reports model status, POST /api/train-ml-models successfully trains all 5 models with good accuracy metrics (classifier accuracy varies, regression R² scores around 0.08-0.25), POST /api/ml-models/reload successfully reloads models from disk, and POST /api/predict-match correctly uses ML models to generate predictions with proper probability calculations that sum to 100%. The system extracts 45 features as expected and models are properly persisted in /app/backend/models/ directory."
+
   - task: "Enhanced Match Prediction with Probability Fields"
     implemented: true
     working: true
