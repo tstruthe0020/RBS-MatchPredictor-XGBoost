@@ -314,9 +314,6 @@ class RBSCalculator:
             values = [s.get(field, 0) for s in team_stats_for_matches if s.get(field) is not None]
             avg_stats[field] = sum(values) / len(values) if values else 0
         
-        # Close database connection
-        client.close()
-        
         return avg_stats, len(team_matches)
     
     async def calculate_rbs_for_team_referee(self, team_name, referee, all_team_stats, all_matches, config_name="default"):
