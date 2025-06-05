@@ -492,6 +492,9 @@ class MatchPredictor:
         averages['shots_conceded'] = 0  # Will be calculated from opponent data
         averages['xg_conceded'] = averages['goals_conceded'] * 0.9  # Rough estimate
         
+        # Calculate xG difference (team xG - opponent xG average)
+        averages['xg_difference'] = averages['xg'] - averages['xg_conceded']
+        
         return averages
     
     async def calculate_ppg(self, team_name, season_filter=None):
