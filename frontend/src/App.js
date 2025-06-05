@@ -1341,20 +1341,20 @@ function App() {
 
                   {/* Algorithm Explanation */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-semibold text-gray-900 mb-2">🧮 Enhanced Match Prediction Algorithm</h3>
+                    <h3 className="text-md font-semibold text-gray-900 mb-2">🤖 ML-Based Prediction Algorithm</h3>
                     <div className="text-sm text-gray-700 space-y-1">
-                      <p><strong>1. Base xG Calculation:</strong> Team avg shots × xG per shot (shot-based expected goals)</p>
-                      <p><strong>2. Possession Adjustment:</strong> Base xG × possession factor (more possession = more chances)</p>
-                      <p><strong>3. Fouls Drawn Factor:</strong> Base xG × fouls drawn factor (drawing fouls creates opportunities)</p>
-                      <p><strong>4. Penalty Factor:</strong> Add penalty xG (penalties/game × 0.79 × conversion rate)</p>
-                      <p><strong>5. Team Quality (PPG):</strong> Adjust for quality difference (PPG difference × 0.15)</p>
-                      <p><strong>6. Referee Bias:</strong> Apply RBS adjustment based on team's performance differential with/without this referee (performance difference × 0.2 scaling factor)</p>
-                      <p><strong>7. Goal Conversion:</strong> Final xG × team's goals/xG efficiency rate</p>
-                      <p><strong>8. Match Probabilities:</strong> Poisson distribution calculates win/draw/loss % from predicted goals</p>
+                      <p><strong>1. Feature Engineering:</strong> Extract 45+ features from historical data (team stats, form, referee bias, head-to-head)</p>
+                      <p><strong>2. Team Performance:</strong> Offensive/defensive stats, xG per shot, possession, conversion rates</p>
+                      <p><strong>3. Situational Factors:</strong> Home advantage, last 5 matches form, referee bias scores (RBS)</p>
+                      <p><strong>4. Historical Context:</strong> Head-to-head results, penalties, fouls drawn, card statistics</p>
+                      <p><strong>5. ML Classification:</strong> Random Forest model predicts Win/Draw/Loss probabilities</p>
+                      <p><strong>6. ML Regression:</strong> Separate models predict Home/Away goals and expected xG</p>
+                      <p><strong>7. Feature Scaling:</strong> StandardScaler ensures all features contribute equally</p>
+                      <p><strong>8. Model Ensemble:</strong> 5 trained models working together for comprehensive predictions</p>
                     </div>
-                    <div className="mt-3 p-3 bg-blue-50 rounded text-xs text-blue-800">
-                      <strong>Data Sources:</strong> All calculations use actual database values with player stats aggregated to team level. 
-                      Home/away context preserved throughout. No estimation - only real historical performance data.
+                    <div className="mt-3 p-3 bg-green-50 rounded text-xs text-green-800">
+                      <strong>ML Models:</strong> Random Forest algorithms trained on all historical match data with comprehensive feature engineering. 
+                      Models are retrained automatically to incorporate new data and improve accuracy over time.
                     </div>
                   </div>
                 </div>
