@@ -4592,14 +4592,13 @@ async def analyze_comprehensive_regression(request: RegressionAnalysisRequest):
 
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
-    """Predict match outcome using xG-based algorithm with configurable weights"""
+    """Predict match outcome using ML-based models"""
     try:
-        prediction = await match_predictor.predict_match(
+        prediction = await ml_predictor.predict_match(
             home_team=request.home_team,
             away_team=request.away_team,
-            referee_name=request.referee_name,
-            match_date=request.match_date,
-            config_name=request.config_name or "default"
+            referee=request.referee_name,
+            match_date=request.match_date
         )
         return prediction
     except Exception as e:
