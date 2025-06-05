@@ -3601,6 +3601,56 @@ function App() {
                           )}
                         </div>
                         
+                        {/* Enhanced RBS Analysis */}
+                        <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
+                          <h4 className="text-sm font-semibold text-blue-900 mb-3">🔬 Enhanced RBS Analysis</h4>
+                          <p className="text-xs text-blue-800 mb-3">
+                            Get detailed performance differential analysis and referee decision variance patterns for specific team-referee combinations.
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedRefereeDetails.rbs_results?.map((result, idx) => (
+                              <button
+                                key={idx}
+                                onClick={async () => {
+                                  try {
+                                    const response = await axios.get(
+                                      `${API}/enhanced-rbs-analysis/${encodeURIComponent(result.team_name)}/${encodeURIComponent(selectedRefereeDetails.referee)}`
+                                    );
+                                    
+                                    if (response.data.success) {
+                                      alert(`📊 Enhanced RBS Analysis for ${result.team_name}:
+
+🎯 Performance Differential:
+${Object.entries(response.data.standard_rbs.stats_breakdown || {}).map(([stat, value]) => 
+  `• ${stat.replace(/_/g, ' ')}: ${value > 0 ? '+' : ''}${value}`).join('\n')}
+
+📈 Variance Analysis:
+${Object.entries(response.data.variance_analysis.variance_ratios || {}).map(([stat, ratio]) => 
+  `• ${stat.replace(/_/g, ' ')}: ${ratio}x ${ratio > 1.5 ? '(more variable)' : ratio < 0.5 ? '(very consistent)' : '(normal)'}`).join('\n')}
+
+📋 Summary:
+• RBS Score: ${response.data.standard_rbs.rbs_score}
+• Confidence: ${response.data.variance_analysis.confidence}
+• Sample: ${response.data.standard_rbs.matches_with_ref} matches with referee`);
+                                    } else {
+                                      alert(`❌ ${response.data.message}`);
+                                    }
+                                  } catch (error) {
+                                    alert(`❌ Error fetching enhanced analysis: ${error.response?.data?.detail || error.message}`);
+                                  }
+                                }}
+                                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                              >
+                                📊 {result.team_name}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="mt-2 text-xs text-blue-700">
+                            <strong>Variance Analysis:</strong> Compares referee's decision consistency for each team vs their overall patterns. 
+                            Ratios >1.5 indicate more variable treatment than usual.
+                          </div>
+                        </div>
+                        
                         {/* Legend for the statistics */}
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                           <h4 className="text-sm font-semibold text-gray-900 mb-2">RBS Component Legend</h4>
