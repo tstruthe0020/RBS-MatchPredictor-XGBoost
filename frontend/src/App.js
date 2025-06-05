@@ -815,7 +815,7 @@ function App() {
                 {/* Player Stats Upload */}
                 <div className="border-b pb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">3. Upload Player Stats CSV (Optional)</h3>
-                  <p className="text-sm text-gray-600 mb-4">Required columns: match_id, player_name, team_name, is_home, goals, assists, yellow_cards, fouls_committed, fouls_drawn, xg</p>
+                  <p className="text-sm text-gray-600 mb-4">Required columns: match_id, player_name, team_name, is_home, goals, assists, yellow_cards, fouls_committed, fouls_drawn, xg, shots_total, shots_on_target, penalty_attempts, penalty_goals</p>
                   <input
                     type="file"
                     accept=".csv"
