@@ -535,6 +535,45 @@ function App() {
     setPredictionResult(null);
   };
 
+  // ML Training functions
+  const checkMLStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/ml-models/status`);
+      setMlStatus(response.data);
+    } catch (error) {
+      console.error('Error checking ML status:', error);
+    }
+  };
+
+  const trainMLModels = async () => {
+    if (!window.confirm('Train ML models? This will take several minutes and use all available match data.')) {
+      return;
+    }
+
+    setTrainingModels(true);
+    setTrainingResults(null);
+    try {
+      const response = await axios.post(`${API}/train-ml-models`);
+      setTrainingResults(response.data);
+      // Refresh ML status after training
+      await checkMLStatus();
+      alert('✅ ML models trained successfully!');
+    } catch (error) {
+      alert(`❌ Training Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setTrainingModels(false);
+  };
+
+  const reloadMLModels = async () => {
+    try {
+      const response = await axios.post(`${API}/ml-models/reload`);
+      await checkMLStatus();
+      alert('✅ ML models reloaded successfully!');
+    } catch (error) {
+      alert(`❌ Reload Error: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
   // Configuration functions
   const fetchConfigs = async () => {
     try {
