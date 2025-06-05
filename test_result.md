@@ -178,6 +178,8 @@ Add a new match prediction algorithm to the Soccer Referee Bias Analysis Platfor
 
 user_problem_statement: "I have implemented a new match prediction algorithm for the Soccer Referee Bias Analysis Platform. Please test the following: 1. Match Prediction Endpoint (POST /api/predict-match) with required fields (home_team, away_team, referee_name) and optional field (match_date). 2. Team Performance Endpoint (GET /api/team-performance/{team_name}) that returns team stats used for predictions."
 
+NEW UPDATE: "Updated RBS calculation logic with new formula. The new RBS formula uses team-level statistics only and calculates per-match averages for yellow_cards, red_cards, fouls_committed, fouls_drawn, penalties_awarded, xg_difference (team xG - opponent xG), and possession_percentage. It applies specific weights, normalizes stat direction, and uses tanh normalization to get RBS scores between -1 and +1. Also added configurable RBS settings similar to match predictor."
+
 backend:
   - task: "Match Prediction Endpoint"
     implemented: true
@@ -208,6 +210,30 @@ backend:
       - working: true
         agent: "testing"
         comment: "Endpoint is working correctly. Successfully tested with valid team (Arsenal) and received comprehensive team stats including home/away context, PPG, and match counts. Minor issue: The endpoint doesn't return an error for non-existent teams but instead returns empty stats with success=true. This is acceptable behavior as it doesn't break functionality, but could be improved for better error handling."
+
+  - task: "Updated RBS Calculator with New Formula"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated RBSCalculator class with new formula: 1) Uses team-level statistics only 2) Calculates xg_difference as (team xG - opponent xG) per match 3) Applies new weights: yellow_cards(0.3), red_cards(0.5), fouls_committed(0.1), fouls_drawn(0.1), penalties_awarded(0.5), xg_difference(0.4), possession_percentage(0.2) 4) Uses tanh normalization for RBS scores between -1 and +1 5) Made calculate_rbs_for_team_referee async"
+
+  - task: "RBS Configuration System"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added RBSConfig model and configuration endpoints: POST /api/rbs-config (create/update), GET /api/rbs-configs (list all), GET /api/rbs-config/{config_name} (get specific), DELETE /api/rbs-config/{config_name} (delete), POST /api/initialize-default-rbs-config (create default). Updated calculate-rbs endpoint to accept config_name parameter."
 
 metadata:
   created_by: "testing_agent"
