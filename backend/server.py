@@ -2139,7 +2139,7 @@ async def calculate_comprehensive_team_stats():
             xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
             goals_per_xg = actual_goals / final_xg if final_xg > 0 else 0
             shot_accuracy = shots_on_target / shots_total if shots_total > 0 else 0
-            conversion_rate = actual_goals / shots_on_target if shots_on_target > 0 else 0
+            conversion_rate = actual_goals / shots_total if shots_total > 0 else 0  # Fixed: goals per total shots
             penalty_conversion_rate = final_penalty_goals / final_penalties if final_penalties > 0 else 0
             
             # Calculate points for this match
