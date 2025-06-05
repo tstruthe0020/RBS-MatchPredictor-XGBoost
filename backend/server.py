@@ -549,7 +549,7 @@ class MatchPredictor:
             final_home_xg = round(final_home_xg, 2)
             final_away_xg = round(final_away_xg, 2)
             
-            # Comprehensive prediction breakdown
+            # Comprehensive prediction breakdown with config values
             prediction_breakdown = {
                 "home_base_xg": round(home_base_xg, 2),
                 "away_base_xg": round(away_base_xg, 2),
@@ -564,16 +564,17 @@ class MatchPredictor:
                 "away_possession_avg": round(away_stats['possession_pct'], 1),
                 "home_fouls_drawn_avg": round(home_stats['fouls_drawn'], 1),
                 "away_fouls_drawn_avg": round(away_stats['fouls_drawn'], 1),
-                "home_penalties_avg": round(home_stats['penalties_awarded'], 3),  # Average penalty attempts per match
-                "away_penalties_avg": round(away_stats['penalties_awarded'], 3),  # Average penalty attempts per match
+                "home_penalties_avg": round(home_stats['penalties_awarded'], 3),
+                "away_penalties_avg": round(away_stats['penalties_awarded'], 3),
                 "home_penalty_conversion": round(home_stats['penalty_conversion_rate'], 3),
                 "away_penalty_conversion": round(away_stats['penalty_conversion_rate'], 3),
-                "home_penalty_goals_avg": round(home_stats['penalty_goals'], 3),  # Average penalty goals per match
-                "away_penalty_goals_avg": round(away_stats['penalty_goals'], 3),  # Average penalty goals per match
+                "home_penalty_goals_avg": round(home_stats['penalty_goals'], 3),
+                "away_penalty_goals_avg": round(away_stats['penalty_goals'], 3),
                 "home_goals_avg": round(home_stats['goals'], 2),
                 "away_goals_avg": round(away_stats['goals'], 2),
                 "home_conversion_rate": round(home_conversion, 2),
-                "away_conversion_rate": round(away_conversion, 2)
+                "away_conversion_rate": round(away_conversion, 2),
+                "config_used": config_name
             }
             
             # Enhanced confidence factors
