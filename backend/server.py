@@ -3611,7 +3611,7 @@ async def get_available_regression_stats():
                 "xg_per_shot": "Expected goals per shot ratio",
                 "goals_per_xg": "Goals scored per expected goal (finishing efficiency)",
                 "shot_accuracy": "Percentage of shots that were on target",
-                "conversion_rate": "Goals per shot on target ratio",
+                "conversion_rate": "Goals per total shots ratio",
                 "penalty_attempts": "Number of penalty attempts",
                 "penalty_goals": "Number of penalty goals scored",
                 "penalty_conversion_rate": "Penalty goals / penalty attempts ratio",
