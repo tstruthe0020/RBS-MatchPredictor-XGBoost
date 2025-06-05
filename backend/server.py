@@ -4655,6 +4655,45 @@ async def reload_ml_models():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reload error: {str(e)}")
 
+@api_router.delete("/database/wipe")
+async def wipe_database():
+    """Wipe all data from the database"""
+    try:
+        # Count existing data before deletion
+        matches_count = await db.matches.count_documents({})
+        team_stats_count = await db.team_stats.count_documents({})
+        player_stats_count = await db.player_stats.count_documents({})
+        rbs_results_count = await db.rbs_results.count_documents({})
+        configs_count = await db.prediction_configs.count_documents({})
+        rbs_configs_count = await db.rbs_configs.count_documents({})
+        
+        # Delete all collections
+        await db.matches.delete_many({})
+        await db.team_stats.delete_many({})
+        await db.player_stats.delete_many({})
+        await db.rbs_results.delete_many({})
+        await db.prediction_configs.delete_many({})
+        await db.rbs_configs.delete_many({})
+        
+        # Also delete any other collections that might exist
+        await db.datasets.delete_many({})
+        await db.comprehensive_team_stats.delete_many({})
+        
+        return {
+            "success": True,
+            "message": "Database wiped successfully",
+            "deleted_counts": {
+                "matches": matches_count,
+                "team_stats": team_stats_count,
+                "player_stats": player_stats_count,
+                "rbs_results": rbs_results_count,
+                "prediction_configs": configs_count,
+                "rbs_configs": rbs_configs_count
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database wipe error: {str(e)}")
+
 @api_router.get("/team-performance/{team_name}")
 async def get_team_performance(team_name: str):
     """Get team performance stats for prediction insights"""
