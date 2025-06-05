@@ -519,9 +519,16 @@ class MatchPredictor:
             'scoring_rate': sum(stat.get('scored_goals', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
         }
         
-        # Calculate actual goals scored and conceded from matches
-        match_ids = [stat['match_id'] for stat in team_stats]
-        matches = await db.matches.find({"match_id": {"$in": match_ids}}).to_list(1000)
+        # Calculate additional derived metrics
+        if averages['shots_total'] > 0:
+            averages['shots_per_game'] = averages['shots_total']
+            averages['shots_on_target_per_game'] = averages['shots_on_target']
+        else:
+            averages['shots_per_game'] = 0
+            averages['shots_on_target_per_game'] = 0
+        
+        # Calculate PPG (Points Per Game)
+        averages['ppg'] = averages['points']
         
         # Get player stats for these matches to aggregate fouls_drawn and penalties_awarded
         player_stats = await db.player_stats.find({
