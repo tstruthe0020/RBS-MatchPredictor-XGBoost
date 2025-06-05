@@ -51,6 +51,13 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
 
 ## 🚀 Quick Start
 
+### Using the Startup Script (Recommended)
+```bash
+# Run the quick start script
+./quick_start.sh
+```
+
+### Manual Steps
 1. **Check services are running:**
    ```bash
    sudo supervisorctl status
@@ -66,9 +73,13 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
    - Match results CSV
 
 4. **Train ML models (first time only):**
-   - Navigate to Match Prediction tab
-   - Click "🧠 Train ML Models"
-   - Wait for training completion
+   ```bash
+   # Use training script
+   ./train_models.sh
+   
+   # Or train via frontend
+   # Navigate to Match Prediction tab → Click "🧠 Train ML Models"
+   ```
 
 5. **Start analyzing:**
    - Calculate comprehensive team stats
