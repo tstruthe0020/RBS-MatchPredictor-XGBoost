@@ -3451,6 +3451,85 @@ async def suggest_prediction_config_from_regression():
             "message": f"Error generating suggestions: {str(e)}"
         }
 
+@api_router.post("/analyze-rbs-optimization")
+async def analyze_rbs_optimization():
+    """Analyze RBS formula for optimization based on statistical correlations"""
+    try:
+        analysis = await regression_analyzer.analyze_rbs_formula_optimization()
+        return analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in RBS optimization analysis: {str(e)}")
+
+@api_router.post("/analyze-predictor-optimization")
+async def analyze_predictor_optimization():
+    """Analyze Match Predictor variables for optimization based on statistical significance"""
+    try:
+        analysis = await regression_analyzer.analyze_match_predictor_optimization()
+        return analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in predictor optimization analysis: {str(e)}")
+
+@api_router.post("/analyze-comprehensive-regression")
+async def analyze_comprehensive_regression(request: RegressionAnalysisRequest):
+    """Run comprehensive regression analysis with all available variables"""
+    try:
+        # Prepare data with all variables
+        df = await regression_analyzer.prepare_match_data(include_rbs=True)
+        
+        if df.empty:
+            raise HTTPException(status_code=400, detail="No match data available for analysis")
+        
+        # Run the requested regression analysis
+        result = regression_analyzer.run_regression(
+            df=df,
+            selected_stats=request.selected_stats,
+            target=request.target,
+            test_size=request.test_size or 0.2,
+            random_state=request.random_state or 42
+        )
+        
+        # Add additional insights if analyzing RBS or Predictor variables
+        insights = {}
+        
+        # Check if analyzing RBS variables
+        rbs_vars_analyzed = [var for var in request.selected_stats if var in regression_analyzer.rbs_variables]
+        if rbs_vars_analyzed:
+            insights['rbs_variables_in_analysis'] = {
+                'variables': rbs_vars_analyzed,
+                'recommendation': 'These variables are used in RBS calculation - consider weight adjustments based on coefficients'
+            }
+        
+        # Check if analyzing Match Predictor variables
+        predictor_vars_analyzed = [var for var in request.selected_stats if var in regression_analyzer.predictor_variables]
+        if predictor_vars_analyzed:
+            insights['predictor_variables_in_analysis'] = {
+                'variables': predictor_vars_analyzed,
+                'recommendation': 'These variables are used in match prediction - consider algorithm weight adjustments'
+            }
+        
+        # Add correlation analysis
+        if result['success'] and len(request.selected_stats) > 1:
+            correlation_df = df[request.selected_stats + [request.target]].corr()
+            target_correlations = correlation_df[request.target].drop(request.target).to_dict()
+            insights['variable_correlations'] = {
+                'correlations_with_target': target_correlations,
+                'strongest_positive': max(target_correlations.items(), key=lambda x: x[1]) if target_correlations else None,
+                'strongest_negative': min(target_correlations.items(), key=lambda x: x[1]) if target_correlations else None
+            }
+        
+        result['insights'] = insights
+        result['data_summary'] = {
+            'total_matches': len(df),
+            'teams_analyzed': df['team'].nunique() if 'team' in df.columns else 0,
+            'referees_analyzed': df['referee'].nunique() if 'referee' in df.columns else 0,
+            'seasons_analyzed': df['season'].nunique() if 'season' in df.columns else 0
+        }
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in comprehensive regression analysis: {str(e)}")
+
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
     """Predict match outcome using xG-based algorithm with configurable weights"""
