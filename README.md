@@ -49,6 +49,11 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
 - **[RBS Algorithm Guide](RBS_ALGORITHM_GUIDE.md)** - Detailed referee bias calculation methodology  
 - **[ML Match Prediction Guide](MATCH_PREDICTION_ALGORITHM_GUIDE.md)** - Machine Learning model architecture and training
 
+## 🛠️ Quick Start Scripts
+
+- **`quick_start.sh`** - Complete system status check and startup guide
+- **`train_models.sh`** - Interactive ML model training script
+
 ## 🚀 Quick Start
 
 ### Using the Startup Script (Recommended)
