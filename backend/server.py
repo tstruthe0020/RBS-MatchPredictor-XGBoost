@@ -1130,7 +1130,8 @@ async def upload_matches(file: UploadFile = File(...)):
                 result=str(row['result']),
                 season=str(row['season']),
                 competition=str(row['competition']),
-                match_date=str(row['match_date'])
+                match_date=str(row['match_date']),
+                dataset_name="default"  # Default dataset for single uploads
             )
             matches.append(match.dict())
         
