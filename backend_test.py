@@ -716,6 +716,65 @@ def main():
     # Clean up by deleting the second custom config
     delete_another_success, delete_another_response = tester.test_delete_rbs_config(another_config_name)
     
+    # Test Regression Analysis System
+    print("\n=== Testing Regression Analysis System ===")
+    
+    # Test getting available regression stats
+    regression_stats_success, regression_stats = tester.test_regression_stats()
+    
+    # Get available stats for regression testing
+    available_stats = []
+    if regression_stats_success and regression_stats and 'available_stats' in regression_stats:
+        available_stats = regression_stats.get('available_stats', [])
+    
+    # Test regression analysis with different configurations
+    if available_stats and len(available_stats) >= 2:
+        # Test 1: Linear regression with xg_difference and possession_percentage
+        linear_stats = ['xg_difference', 'possession_percentage']
+        linear_stats = [stat for stat in linear_stats if stat in available_stats]
+        if len(linear_stats) >= 2:
+            linear_regression_success, linear_regression = tester.test_regression_analysis(
+                linear_stats, 'points_per_game'
+            )
+        else:
+            print("⚠️ Not enough valid stats for linear regression test")
+            linear_regression_success = False
+        
+        # Test 2: Classification with yellow_cards and fouls_committed
+        class_stats = ['yellow_cards', 'fouls_committed']
+        class_stats = [stat for stat in class_stats if stat in available_stats]
+        if len(class_stats) >= 2:
+            classification_success, classification = tester.test_regression_analysis(
+                class_stats, 'match_result'
+            )
+        else:
+            print("⚠️ Not enough valid stats for classification test")
+            classification_success = False
+        
+        # Test 3: Mixed analysis with multiple stats
+        mixed_stats = ['xg_difference', 'yellow_cards', 'possession_percentage']
+        mixed_stats = [stat for stat in mixed_stats if stat in available_stats]
+        if len(mixed_stats) >= 2:
+            mixed_analysis_success, mixed_analysis = tester.test_regression_analysis(
+                mixed_stats, 'points_per_game'
+            )
+        else:
+            print("⚠️ Not enough valid stats for mixed analysis test")
+            mixed_analysis_success = False
+        
+        # Test 4: Error handling - invalid stats
+        invalid_stats_success, invalid_stats = tester.test_regression_analysis_invalid_stats()
+        
+        # Test 5: Error handling - empty stats list
+        empty_stats_success, empty_stats = tester.test_regression_analysis_empty_stats()
+    else:
+        print("⚠️ Cannot test regression analysis without available stats")
+        linear_regression_success = False
+        classification_success = False
+        mixed_analysis_success = False
+        invalid_stats_success = False
+        empty_stats_success = False
+    
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
     
