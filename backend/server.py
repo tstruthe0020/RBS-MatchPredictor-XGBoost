@@ -16,6 +16,7 @@ import io
 from collections import defaultdict
 import csv
 import math
+import base64
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, r2_score, mean_squared_error
