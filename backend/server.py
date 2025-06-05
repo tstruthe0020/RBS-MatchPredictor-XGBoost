@@ -441,8 +441,8 @@ class MatchPredictor:
             'shots_on_target': sum(stat.get('shots_on_target', 0) for stat in team_stats) / total_matches,
             'xg': sum(stat.get('xg', 0) for stat in team_stats) / total_matches,
             'fouls': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
-            'fouls_drawn': sum(stat.get('fouls_drawn', 0) for stat in team_stats) / total_matches,
-            'penalties_awarded': sum(stat.get('penalties_awarded', 0) for stat in team_stats) / total_matches,  # Correct field mapping
+            'fouls_drawn': 0,  # Will be calculated from player stats aggregation
+            'penalties_awarded': 0,  # Will be calculated from player stats aggregation
             'penalty_attempts': sum(stat.get('penalty_attempts', 0) for stat in team_stats) / total_matches,
             'penalty_goals': sum(stat.get('penalty_goals', 0) for stat in team_stats) / total_matches,
             'yellow_cards': sum(stat.get('yellow_cards', 0) for stat in team_stats) / total_matches,
