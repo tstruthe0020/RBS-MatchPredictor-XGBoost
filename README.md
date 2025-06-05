@@ -1,6 +1,6 @@
 # ⚽ Soccer Referee Bias Analysis Platform
 
-A comprehensive platform for analyzing referee bias in soccer matches and generating sophisticated match predictions using advanced xG-based algorithms.
+A comprehensive platform for analyzing referee bias in soccer matches and generating sophisticated match predictions using **Machine Learning algorithms** and advanced analytics.
 
 ## 🌟 Features
 
@@ -10,11 +10,12 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
 - Bias detection across multiple competitions and seasons
 - Referee assignment optimization tools
 
-### 🎯 Match Prediction Engine
-- **8-step sophisticated algorithm** using xG, possession, fouls, penalties, team quality, and referee bias
-- **Poisson probability distributions** for win/draw/loss percentages
-- Real-time prediction with detailed algorithmic breakdown
-- Home/away context preservation throughout calculations
+### 🤖 ML-Based Match Prediction Engine
+- **5 trained Machine Learning models** using Random Forest algorithms
+- **Classification model** for Win/Draw/Loss probability prediction
+- **4 Regression models** for Home/Away goals and xG prediction
+- **45+ engineered features** including team stats, form, referee bias, and historical data
+- Real-time prediction with model confidence metrics and feature importance
 
 ### 📊 Team Performance Analytics
 - Comprehensive team statistics aggregation
@@ -26,6 +27,12 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
 - Find optimal referee assignments to minimize total bias
 - Multi-constraint optimization for fair match officiating
 - Scenario analysis and "what-if" modeling
+
+### 🧠 ML Model Management
+- **Automated model training** on historical match data
+- **Model persistence** with joblib for fast prediction serving
+- **Continuous learning** capability with retraining on new data
+- **Feature scaling** and preprocessing for optimal performance
 
 ## 🏗️ Technical Architecture
 
