@@ -536,6 +536,7 @@ class MatchPredictor:
         
         # Calculate PPG (Points Per Game) 
         averages['ppg'] = averages['points']
+        averages['points_per_game'] = averages['points']  # Add for match prediction compatibility
         
         return averages
     
