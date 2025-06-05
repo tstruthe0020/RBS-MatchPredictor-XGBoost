@@ -292,6 +292,7 @@ test_plan:
   current_focus:
     - "Comprehensive Regression Analysis"
     - "Enhanced Match Prediction with Probability Fields"
+    - "Referee Page Functionality"
   stuck_tasks:
     - "Comprehensive Regression Analysis"
   test_all: false
