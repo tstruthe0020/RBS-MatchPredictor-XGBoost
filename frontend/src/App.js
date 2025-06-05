@@ -315,7 +315,7 @@ function App() {
       <nav className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
-            {['dashboard', 'upload', 'predict', 'results'].map((tab) => (
+            {['dashboard', 'upload', 'predict', 'config', 'results'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -324,6 +324,10 @@ function App() {
                     console.log('Results tab clicked, fetching referee summary...');
                     fetchRefereeSummary();
                   }
+                  if (tab === 'config') {
+                    fetchConfigs();
+                    fetchConfig(configName);
+                  }
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                   activeTab === tab
@@ -331,7 +335,8 @@ function App() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {tab === 'predict' ? 'Match Prediction' : tab}
+                {tab === 'predict' ? 'Match Prediction' : 
+                 tab === 'config' ? 'Configuration' : tab}
               </button>
             ))}
           </div>
