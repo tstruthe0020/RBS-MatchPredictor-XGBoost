@@ -23,6 +23,14 @@ function App() {
   const [uploadingMultiDataset, setUploadingMultiDataset] = useState(false);
   const [multiDatasetResults, setMultiDatasetResults] = useState(null);
   
+  // Formula optimization state
+  const [optimizationResults, setOptimizationResults] = useState({
+    rbs: null,
+    predictor: null
+  });
+  const [analyzingFormulas, setAnalyzingFormulas] = useState(false);
+  const [applyingWeights, setApplyingWeights] = useState(false);
+  
   // New state for referee-based navigation
   const [refereeSummary, setRefereeSummary] = useState([]);
   const [selectedRefereeDetails, setSelectedRefereeDetails] = useState(null);
