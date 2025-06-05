@@ -213,117 +213,148 @@ class MatchPredictionResponse(BaseModel):
 # RBS Calculation Engine
 class RBSCalculator:
     def __init__(self):
-        # Weights for different statistics
-        self.weights = {
-            'yellow_cards': 0.3,
-            'red_cards': 0.5,
-            'fouls': 0.1,
-            'fouls_drawn': 0.1,
-            'penalties_awarded': 0.5,
-            'xg_difference': 0.4,
-            'possession_pct': 0.2
-        }
+        # Default configuration
+        self.default_config = RBSConfig()
     
-    def calculate_team_avg_stats(self, team_stats_list, with_referee=None, exclude_referee=None):
-        """Calculate average stats for a team, optionally filtered by referee"""
-        if with_referee:
-            filtered_stats = [s for s in team_stats_list if s.get('referee') == with_referee]
-        elif exclude_referee:
-            filtered_stats = [s for s in team_stats_list if s.get('referee') != exclude_referee]
+    async def get_config(self, config_name: str = "default"):
+        """Get RBS configuration by name"""
+        config = await db.rbs_configs.find_one({"config_name": config_name})
+        if config:
+            # Convert MongoDB document to RBSConfig
+            config.pop('_id', None)  # Remove MongoDB _id
+            return RBSConfig(**config)
         else:
-            filtered_stats = team_stats_list
-        
-        if not filtered_stats:
-            return None, 0
-        
-        avg_stats = {}
-        stat_fields = ['yellow_cards', 'red_cards', 'fouls', 'fouls_drawn', 'penalties_awarded', 'xg', 'possession_pct']
-        
-        for field in stat_fields:
-            values = [s.get(field, 0) for s in filtered_stats if s.get(field) is not None]
-            avg_stats[field] = sum(values) / len(values) if values else 0
-        
-        return avg_stats, len(filtered_stats)
+            # Return default config if not found
+            return self.default_config
     
-    def calculate_rbs_for_team_referee(self, team_name, referee, all_team_stats, all_matches):
-        """Calculate RBS score for a specific team-referee combination"""
+    async def calculate_team_avg_stats(self, team_name, all_team_stats, all_matches, with_referee=None, exclude_referee=None):
+        """Calculate average stats for a team, optionally filtered by referee"""
         # Get all matches for this team
         team_matches = [m for m in all_matches if m['home_team'] == team_name or m['away_team'] == team_name]
         
-        # Get team stats with referee information
-        team_stats_with_ref = []
+        # Filter matches by referee if specified
+        if with_referee:
+            team_matches = [m for m in team_matches if m['referee'] == with_referee]
+        elif exclude_referee:
+            team_matches = [m for m in team_matches if m['referee'] != exclude_referee]
+        
+        if not team_matches:
+            return None, 0
+        
+        # Get team stats for these matches and calculate averages
+        team_stats_for_matches = []
         for match in team_matches:
             match_stats = [s for s in all_team_stats if s['match_id'] == match['match_id'] and s['team_name'] == team_name]
             for stat in match_stats:
-                stat['referee'] = match['referee']
-                team_stats_with_ref.append(stat)
+                # Calculate xG difference (team xG - opponent xG) for this match
+                opponent_name = match['away_team'] if match['home_team'] == team_name else match['home_team']
+                opponent_stats = [s for s in all_team_stats if s['match_id'] == match['match_id'] and s['team_name'] == opponent_name]
+                
+                if opponent_stats:
+                    opponent_xg = opponent_stats[0].get('xg', 0)
+                    team_xg = stat.get('xg', 0)
+                    stat['xg_difference'] = team_xg - opponent_xg
+                else:
+                    stat['xg_difference'] = stat.get('xg', 0)  # Fallback to team xG only
+                
+                # Rename fields to match new specification
+                stat['fouls_committed'] = stat.get('fouls', 0)
+                stat['possession_percentage'] = stat.get('possession_pct', 0)
+                
+                team_stats_for_matches.append(stat)
+        
+        if not team_stats_for_matches:
+            return None, 0
+        
+        # Calculate averages for required fields
+        avg_stats = {}
+        stat_fields = ['yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn', 'penalties_awarded', 'xg_difference', 'possession_percentage']
+        
+        for field in stat_fields:
+            values = [s.get(field, 0) for s in team_stats_for_matches if s.get(field) is not None]
+            avg_stats[field] = sum(values) / len(values) if values else 0
+        
+        return avg_stats, len(team_matches)
+    
+    async def calculate_rbs_for_team_referee(self, team_name, referee, all_team_stats, all_matches, config_name="default"):
+        """Calculate RBS score for a specific team-referee combination using configurable weights"""
+        # Get configuration
+        config = await self.get_config(config_name)
         
         # Calculate average stats with this referee
-        with_ref_stats, matches_with_ref = self.calculate_team_avg_stats(team_stats_with_ref, with_referee=referee)
+        with_ref_stats, matches_with_ref = await self.calculate_team_avg_stats(
+            team_name, all_team_stats, all_matches, with_referee=referee
+        )
         
         # Calculate average stats with other referees (exclude this referee)
-        without_ref_stats, matches_without_ref = self.calculate_team_avg_stats(team_stats_with_ref, exclude_referee=referee)
+        without_ref_stats, matches_without_ref = await self.calculate_team_avg_stats(
+            team_name, all_team_stats, all_matches, exclude_referee=referee
+        )
         
-        # Reduce minimum match requirement for testing
-        if not with_ref_stats or not without_ref_stats or matches_with_ref < 1:
+        # Check minimum match requirement
+        if not with_ref_stats or not without_ref_stats or matches_with_ref < config.confidence_threshold_low:
             return None
         
-        # Calculate RBS using the formula
+        # Calculate RBS using the new formula with configurable weights
         rbs_components = {}
-        total_rbs = 0
         
-        # Yellow cards (higher = worse for team)
+        # Yellow cards (higher = worse for team, so multiply by -1)
         yellow_diff = with_ref_stats['yellow_cards'] - without_ref_stats['yellow_cards']
-        rbs_components['yellow_cards'] = -yellow_diff * self.weights['yellow_cards']
+        rbs_components['yellow_cards'] = -yellow_diff * config.yellow_cards_weight
         
-        # Red cards (higher = worse for team)
+        # Red cards (higher = worse for team, so multiply by -1)
         red_diff = with_ref_stats['red_cards'] - without_ref_stats['red_cards']
-        rbs_components['red_cards'] = -red_diff * self.weights['red_cards']
+        rbs_components['red_cards'] = -red_diff * config.red_cards_weight
         
-        # Fouls committed (higher = worse for team)
-        fouls_diff = with_ref_stats['fouls'] - without_ref_stats['fouls']
-        rbs_components['fouls'] = -fouls_diff * self.weights['fouls']
+        # Fouls committed (higher = worse for team, so multiply by -1)
+        fouls_committed_diff = with_ref_stats['fouls_committed'] - without_ref_stats['fouls_committed']
+        rbs_components['fouls_committed'] = -fouls_committed_diff * config.fouls_committed_weight
         
         # Fouls drawn (higher = better for team)
         fouls_drawn_diff = with_ref_stats['fouls_drawn'] - without_ref_stats['fouls_drawn']
-        rbs_components['fouls_drawn'] = fouls_drawn_diff * self.weights['fouls_drawn']
+        rbs_components['fouls_drawn'] = fouls_drawn_diff * config.fouls_drawn_weight
         
         # Penalties awarded (higher = better for team)
         penalties_diff = with_ref_stats['penalties_awarded'] - without_ref_stats['penalties_awarded']
-        rbs_components['penalties_awarded'] = penalties_diff * self.weights['penalties_awarded']
+        rbs_components['penalties_awarded'] = penalties_diff * config.penalties_awarded_weight
         
         # xG difference (higher = better for team)
-        xg_diff = with_ref_stats['xg'] - without_ref_stats['xg']
-        rbs_components['xg_difference'] = xg_diff * self.weights['xg_difference']
+        xg_diff = with_ref_stats['xg_difference'] - without_ref_stats['xg_difference']
+        rbs_components['xg_difference'] = xg_diff * config.xg_difference_weight
         
         # Possession percentage (higher = better for team)
-        possession_diff = with_ref_stats['possession_pct'] - without_ref_stats['possession_pct']
-        rbs_components['possession_pct'] = possession_diff * self.weights['possession_pct']
+        possession_diff = with_ref_stats['possession_percentage'] - without_ref_stats['possession_percentage']
+        rbs_components['possession_percentage'] = possession_diff * config.possession_percentage_weight
         
-        # Sum all components
-        total_rbs = sum(rbs_components.values())
+        # Sum all components to get raw RBS
+        rbs_raw = sum(rbs_components.values())
         
-        # Calculate numerical confidence based on sample size
-        # Higher number of matches = higher confidence (0-100 scale)
-        if matches_with_ref >= 10:
-            confidence = min(95, 70 + (matches_with_ref - 10) * 2.5)  # 70-95%
-        elif matches_with_ref >= 5:
-            confidence = 50 + (matches_with_ref - 5) * 4  # 50-70%
-        elif matches_with_ref >= 2:
-            confidence = 20 + (matches_with_ref - 2) * 10  # 20-50%
+        # Apply tanh normalization to get RBS between -1 and +1
+        rbs_normalized = math.tanh(rbs_raw)
+        
+        # Calculate confidence based on configurable thresholds
+        if matches_with_ref >= config.confidence_threshold_high:
+            confidence = min(config.max_confidence, 70 + (matches_with_ref - config.confidence_threshold_high) * 2.5)
+        elif matches_with_ref >= config.confidence_threshold_medium:
+            confidence = 50 + (matches_with_ref - config.confidence_threshold_medium) * 4
+        elif matches_with_ref >= config.confidence_threshold_low:
+            confidence = 20 + (matches_with_ref - config.confidence_threshold_low) * 10
         else:
-            confidence = matches_with_ref * 10  # 0-20%
+            confidence = matches_with_ref * 10
         
+        confidence = max(config.min_confidence, min(config.max_confidence, confidence))
         confidence = round(confidence, 1)
         
         return {
             'team_name': team_name,
             'referee': referee,
-            'rbs_score': round(total_rbs, 3),
+            'rbs_score': round(rbs_normalized, 3),  # Return normalized score
+            'rbs_raw': round(rbs_raw, 3),  # Also include raw score for debugging
             'matches_with_ref': matches_with_ref,
             'matches_without_ref': matches_without_ref,
             'confidence_level': confidence,
-            'stats_breakdown': rbs_components
+            'stats_breakdown': {k: round(v, 4) for k, v in rbs_components.items()},
+            'config_used': config_name
         }
 
 # Initialize RBS Calculator
