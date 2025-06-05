@@ -3495,8 +3495,9 @@ async def suggest_prediction_config_from_regression():
             raise HTTPException(status_code=400, detail="No significant coefficients found")
         
         # Create suggestions based on analysis
+        timestamp = datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
         suggestions = {
-            "suggested_config_name": f"regression_optimized_{datetime.now().strftime('%Y%m%d')}",
+            "suggested_config_name": f"regression_optimized_{timestamp}",
             "analysis_basis": {
                 "r2_score": r2_score,
                 "sample_size": result['sample_size'],
