@@ -1180,10 +1180,94 @@ function App() {
         {activeTab === 'predict' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">⚽ Match Prediction Algorithm</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">⚽ ML-Based Match Prediction</h2>
               <p className="text-gray-600 mb-6">
-                Predict expected scorelines and match outcome probabilities using advanced xG-based calculations, referee bias analysis, and team performance data.
+                Predict match outcomes using trained Machine Learning models (Random Forest) with comprehensive feature engineering including team stats, referee bias, and historical data.
               </p>
+
+              {/* ML Status Section */}
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-semibold text-blue-900">🤖 ML Models Status</h3>
+                  <button
+                    onClick={checkMLStatus}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Refresh Status
+                  </button>
+                </div>
+                
+                {mlStatus ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-block w-3 h-3 rounded-full ${mlStatus.models_loaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className="text-sm font-medium">
+                        Models Status: {mlStatus.models_loaded ? '✅ Loaded' : '❌ Not Loaded'}
+                      </span>
+                    </div>
+                    <div className="text-sm text-blue-700">
+                      Features: {mlStatus.feature_columns_count} | Models: {Object.keys(mlStatus.models_status).length}
+                    </div>
+                    
+                    {!mlStatus.models_loaded && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p className="text-sm text-yellow-800">
+                          ⚠️ ML models not found. Train models first to enable ML-based predictions.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-blue-700">Click "Refresh Status" to check ML models status</div>
+                )}
+
+                {/* Training Controls */}
+                <div className="mt-4 flex space-x-3">
+                  <button
+                    onClick={trainMLModels}
+                    disabled={trainingModels}
+                    className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {trainingModels ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Training...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🧠</span>
+                        <span>Train ML Models</span>
+                      </>
+                    )}
+                  </button>
+                  
+                  {mlStatus?.models_loaded && (
+                    <button
+                      onClick={reloadMLModels}
+                      className="px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700"
+                    >
+                      🔄 Reload Models
+                    </button>
+                  )}
+                </div>
+
+                {/* Training Results */}
+                {trainingResults && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                    <h4 className="text-sm font-semibold text-green-900 mb-2">✅ Training Complete!</h4>
+                    <div className="text-xs text-green-800 space-y-1">
+                      {trainingResults.training_results && Object.entries(trainingResults.training_results).map(([model, metrics]) => (
+                        <div key={model}>
+                          <strong>{model}:</strong> {
+                            metrics.accuracy ? `Accuracy: ${(metrics.accuracy * 100).toFixed(1)}%` : 
+                            `R² Score: ${(metrics.r2_score * 100).toFixed(1)}%`
+                          }
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {!predictionResult ? (
                 /* Prediction Form */
