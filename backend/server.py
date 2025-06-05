@@ -456,6 +456,78 @@ class MatchPredictor:
             # Return default config if not found
             return self.default_config
     
+    def calculate_match_probabilities(self, home_goals, away_goals):
+        """
+        Calculate match outcome probabilities using Poisson distribution
+        
+        Args:
+            home_goals (float): Expected goals for home team
+            away_goals (float): Expected goals for away team
+            
+        Returns:
+            tuple: (home_win_prob, draw_prob, away_win_prob) as percentages
+        """
+        # Ensure minimum goal expectations to avoid mathematical issues
+        home_lambda = max(0.1, home_goals)
+        away_lambda = max(0.1, away_goals)
+        
+        # Calculate probabilities for different score combinations
+        # We'll calculate up to a reasonable maximum (e.g., 10 goals each)
+        max_goals = 10
+        
+        home_win_prob = 0.0
+        draw_prob = 0.0
+        away_win_prob = 0.0
+        
+        for home_score in range(max_goals + 1):
+            for away_score in range(max_goals + 1):
+                # Probability of this exact score
+                prob = poisson.pmf(home_score, home_lambda) * poisson.pmf(away_score, away_lambda)
+                
+                if home_score > away_score:
+                    home_win_prob += prob
+                elif home_score == away_score:
+                    draw_prob += prob
+                else:
+                    away_win_prob += prob
+        
+        # Convert to percentages and ensure they sum to 100%
+        total_prob = home_win_prob + draw_prob + away_win_prob
+        
+        if total_prob > 0:
+            home_win_percent = (home_win_prob / total_prob) * 100
+            draw_percent = (draw_prob / total_prob) * 100
+            away_win_percent = (away_win_prob / total_prob) * 100
+        else:
+            # Fallback in case of calculation issues
+            home_win_percent = 33.33
+            draw_percent = 33.33
+            away_win_percent = 33.34
+        
+        # Round to 2 decimal places
+        home_win_percent = round(home_win_percent, 2)
+        draw_percent = round(draw_percent, 2)
+        away_win_percent = round(away_win_percent, 2)
+        
+        # Ensure they sum to exactly 100% by adjusting the largest probability
+        total = home_win_percent + draw_percent + away_win_percent
+        if total != 100.0:
+            diff = 100.0 - total
+            # Add the difference to the largest probability
+            if home_win_percent >= draw_percent and home_win_percent >= away_win_percent:
+                home_win_percent += diff
+            elif draw_percent >= away_win_percent:
+                draw_percent += diff
+            else:
+                away_win_percent += diff
+            
+            # Round again to ensure clean numbers
+            home_win_percent = round(home_win_percent, 2)
+            draw_percent = round(draw_percent, 2)
+            away_win_percent = round(away_win_percent, 2)
+        
+        return home_win_percent, draw_percent, away_win_percent
+    
     async def calculate_team_averages(self, team_name, is_home, exclude_opponent=None, season_filter=None):
         """Calculate comprehensive team averages with home/away context"""
         # Build query for team stats
