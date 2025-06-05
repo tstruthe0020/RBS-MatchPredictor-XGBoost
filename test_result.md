@@ -213,27 +213,33 @@ backend:
 
   - task: "Updated RBS Calculator with New Formula"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Updated RBSCalculator class with new formula: 1) Uses team-level statistics only 2) Calculates xg_difference as (team xG - opponent xG) per match 3) Applies new weights: yellow_cards(0.3), red_cards(0.5), fouls_committed(0.1), fouls_drawn(0.1), penalties_awarded(0.5), xg_difference(0.4), possession_percentage(0.2) 4) Uses tanh normalization for RBS scores between -1 and +1 5) Made calculate_rbs_for_team_referee async"
+      - working: true
+        agent: "testing"
+        comment: "Testing completed successfully. The updated RBS calculation correctly implements the new formula with team-level statistics, proper xG difference calculation (team xG - opponent xG), new weights, and tanh normalization returning scores between -1 and +1. All RBS calculation endpoints working properly."
 
   - task: "RBS Configuration System"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added RBSConfig model and configuration endpoints: POST /api/rbs-config (create/update), GET /api/rbs-configs (list all), GET /api/rbs-config/{config_name} (get specific), DELETE /api/rbs-config/{config_name} (delete), POST /api/initialize-default-rbs-config (create default). Updated calculate-rbs endpoint to accept config_name parameter."
+      - working: true
+        agent: "testing"
+        comment: "All RBS configuration endpoints tested successfully. Can create custom configs, list all configs, retrieve specific configs, delete custom configs (prevents deletion of default), and calculate RBS using different configurations. Configuration system working as expected."
 
 metadata:
   created_by: "testing_agent"
