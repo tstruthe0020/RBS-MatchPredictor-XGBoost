@@ -2107,30 +2107,14 @@ async def calculate_comprehensive_team_stats():
             final_penalties = aggregated_penalties if aggregated_penalties > 0 else team_stat.get('penalties_awarded', 0)
             final_penalty_goals = aggregated_penalty_goals if aggregated_penalty_goals > 0 else team_stat.get('penalty_goals', 0)
             
-            # For shots, use a smarter fallback strategy
+            # For shots, use aggregated values if available, otherwise use team stats directly (no estimation)
             if aggregated_shots_total > 0:
                 final_shots_total = aggregated_shots_total
                 final_shots_on_target = aggregated_shots_on_target
             else:
-                # Player shot data missing, fall back to team stats
-                team_shots = team_stat.get('shots_total', 0)
-                team_shots_ot = team_stat.get('shots_on_target', 0)
-                
-                # Check if shot data is reasonable relative to xG
-                reasonable_xg_per_shot = final_xg / max(team_shots, 1) if team_shots > 0 else 999
-                
-                if team_shots > 0 and reasonable_xg_per_shot <= 1.0:
-                    # Team shot data seems reasonable
-                    final_shots_total = team_shots
-                    final_shots_on_target = team_shots_ot
-                else:
-                    # Team shot data is missing or unreasonable, estimate based on xG
-                    # Assume average 0.15 xG per shot for realistic estimation
-                    estimated_shots = max(int(final_xg / 0.15), 1) if final_xg > 0 else 1
-                    final_shots_total = estimated_shots
-                    final_shots_on_target = max(int(estimated_shots * 0.4), 0)  # Assume 40% shot accuracy
-                    print(f"Note: Estimating shots for {team_name} in match {match_id}: {estimated_shots} shots based on xG {final_xg} (team had {team_shots} shots)")
-            
+                # Use team stats shot data directly - no estimation
+                final_shots_total = team_stat.get('shots_total', 0)
+                final_shots_on_target = team_stat.get('shots_on_target', 0)
             
             # Get actual goals from match result
             is_home = team_stat.get('is_home', False)
