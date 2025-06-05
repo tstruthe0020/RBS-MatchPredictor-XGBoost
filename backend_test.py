@@ -1872,6 +1872,9 @@ def run_comprehensive_tests():
     # Test field mapping fixes
     test_results["Field Mapping Fixes"] = test_field_mapping_fixes()
     
+    # Test player stats aggregation
+    test_results["Player Stats Aggregation"] = test_player_stats_aggregation()
+    
     # Test RBS calculation with real data
     test_results["RBS Calculation with Real Data"] = test_rbs_calculation_with_real_data()
     
