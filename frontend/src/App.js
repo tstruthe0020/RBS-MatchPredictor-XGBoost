@@ -395,7 +395,7 @@ function App() {
       <nav className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
-            {['dashboard', 'upload', 'predict', 'config', 'rbs-config', 'results'].map((tab) => (
+            {['dashboard', 'upload', 'predict', 'analysis', 'config', 'rbs-config', 'results'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -412,6 +412,9 @@ function App() {
                     fetchRbsConfigs();
                     fetchRbsConfig(rbsConfigName);
                   }
+                  if (tab === 'analysis') {
+                    fetchAvailableStats();
+                  }
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                   activeTab === tab
@@ -421,7 +424,8 @@ function App() {
               >
                 {tab === 'predict' ? 'Match Prediction' : 
                  tab === 'config' ? 'Prediction Config' :
-                 tab === 'rbs-config' ? 'RBS Config' : tab}
+                 tab === 'rbs-config' ? 'RBS Config' :
+                 tab === 'analysis' ? 'Regression Analysis' : tab}
               </button>
             ))}
           </div>
