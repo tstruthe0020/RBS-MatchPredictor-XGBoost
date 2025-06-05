@@ -1153,7 +1153,7 @@ function App() {
 
                   {/* Algorithm Explanation */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-semibold text-gray-900 mb-2">Algorithm Overview</h3>
+                    <h3 className="text-md font-semibold text-gray-900 mb-2">Enhanced Algorithm Overview</h3>
                     <div className="text-sm text-gray-700 space-y-1">
                       <p><strong>1. Base xG Calculation:</strong> Team avg shots × xG per shot + opponent defensive stats</p>
                       <p><strong>2. PPG Adjustment:</strong> Quality difference between teams (PPG difference × 0.15)</p>
@@ -1161,6 +1161,7 @@ function App() {
                       <p><strong>4. Home/Away Context:</strong> All stats filtered by venue (home vs away performance)</p>
                       <p><strong>5. Penalty Factor:</strong> Each penalty/match adds 0.79 xG (realistic penalty value)</p>
                       <p><strong>6. Final Score:</strong> Adjusted xG × team-specific goal conversion rate</p>
+                      <p><strong>7. Match Probabilities:</strong> Poisson distribution calculates win/draw/loss probabilities from predicted goals</p>
                     </div>
                   </div>
                 </div>
