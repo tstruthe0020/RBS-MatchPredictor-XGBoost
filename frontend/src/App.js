@@ -378,6 +378,8 @@ function App() {
     try {
       const response = await axios.get(`${API}/regression-stats`);
       setAvailableStats(response.data.available_stats || []);
+      setStatDescriptions(response.data.descriptions || {});
+      setStatCategories(response.data.categories || {});
     } catch (error) {
       console.error('Error fetching available stats:', error);
     }
