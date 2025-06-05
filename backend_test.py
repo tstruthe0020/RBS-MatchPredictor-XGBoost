@@ -989,8 +989,19 @@ def main():
     else:
         print("❌ Failed to perform classification analysis")
     
+    if 'advanced_regression_success' in locals() and advanced_regression_success:
+        print("✅ Successfully performed regression with advanced statistics")
+        if 'advanced_regression' in locals() and advanced_regression and advanced_regression.get('success', False):
+            results = advanced_regression.get('results', {})
+            print(f"✅ Advanced regression R² score: {results.get('r2_score', 0)}")
+            print(f"✅ Advanced regression RMSE: {results.get('rmse', 0)}")
+        else:
+            print("⚠️ Advanced regression analysis returned an error")
+    else:
+        print("❌ Failed to perform advanced regression analysis")
+    
     if 'mixed_analysis_success' in locals() and mixed_analysis_success:
-        print("✅ Successfully performed mixed analysis")
+        print("✅ Successfully performed mixed analysis with basic and advanced stats")
     else:
         print("❌ Failed to perform mixed analysis")
     
