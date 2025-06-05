@@ -1563,33 +1563,81 @@ function App() {
                   {/* Statistics Grid */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Select Statistics for Analysis</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {availableStats.map(stat => (
-                        <button
-                          key={stat}
-                          onClick={() => toggleStat(stat)}
-                          className={`p-3 text-sm rounded-lg border-2 transition-colors ${
-                            selectedStats.includes(stat)
-                              ? 'border-purple-500 bg-purple-50 text-purple-800'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50'
-                          }`}
-                        >
-                          <div className="font-medium">{stat.replace('_', ' ')}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {stat === 'xg_difference' && 'Team xG - Opponent xG'}
-                            {stat === 'yellow_cards' && 'Cards received'}
-                            {stat === 'red_cards' && 'Red cards received'}
-                            {stat === 'fouls_committed' && 'Fouls by team'}
-                            {stat === 'fouls_drawn' && 'Fouls against team'}
-                            {stat === 'penalties_awarded' && 'Penalties for team'}
-                            {stat === 'possession_percentage' && 'Ball possession %'}
-                            {stat === 'xg' && 'Expected goals'}
-                            {stat === 'shots_total' && 'Total shots'}
-                            {stat === 'shots_on_target' && 'Shots on target'}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    
+                    {/* Basic Statistics */}
+                    {statCategories.basic_stats && statCategories.basic_stats.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-md font-medium text-gray-800 mb-3">📊 Basic Team Statistics</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                          {statCategories.basic_stats.map(stat => (
+                            <button
+                              key={stat}
+                              onClick={() => toggleStat(stat)}
+                              className={`p-3 text-sm rounded-lg border-2 transition-colors ${
+                                selectedStats.includes(stat)
+                                  ? 'border-purple-500 bg-purple-50 text-purple-800'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50'
+                              }`}
+                            >
+                              <div className="font-medium">{stat.replace(/_/g, ' ')}</div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {statDescriptions[stat] && statDescriptions[stat].substring(0, 50)}
+                                {statDescriptions[stat] && statDescriptions[stat].length > 50 && '...'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Advanced Statistics */}
+                    {statCategories.advanced_stats && statCategories.advanced_stats.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-md font-medium text-gray-800 mb-3">🎯 Advanced Performance Metrics</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                          {statCategories.advanced_stats.map(stat => (
+                            <button
+                              key={stat}
+                              onClick={() => toggleStat(stat)}
+                              className={`p-3 text-sm rounded-lg border-2 transition-colors ${
+                                selectedStats.includes(stat)
+                                  ? 'border-blue-500 bg-blue-50 text-blue-800'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                              }`}
+                            >
+                              <div className="font-medium">{stat.replace(/_/g, ' ')}</div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {statDescriptions[stat] && statDescriptions[stat].substring(0, 50)}
+                                {statDescriptions[stat] && statDescriptions[stat].length > 50 && '...'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback for all stats if categories aren't available */}
+                    {(!statCategories.basic_stats && !statCategories.advanced_stats) && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        {availableStats.map(stat => (
+                          <button
+                            key={stat}
+                            onClick={() => toggleStat(stat)}
+                            className={`p-3 text-sm rounded-lg border-2 transition-colors ${
+                              selectedStats.includes(stat)
+                                ? 'border-purple-500 bg-purple-50 text-purple-800'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50'
+                            }`}
+                          >
+                            <div className="font-medium">{stat.replace(/_/g, ' ')}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {statDescriptions[stat] && statDescriptions[stat].substring(0, 50)}
+                              {statDescriptions[stat] && statDescriptions[stat].length > 50 && '...'}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Analysis Button */}
