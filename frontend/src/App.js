@@ -3630,25 +3630,14 @@ function App() {
                                       <span className="text-xs text-gray-400">Loading...</span>
                                     )}
                                   </td>
-                                  <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
-                                    {enhancedRBSData[result.team_name] ? (
-                                      <div className="space-y-1">
-                                        {Object.entries(enhancedRBSData[result.team_name].variance_analysis.variance_ratios || {}).slice(0, 2).map(([stat, ratio]) => (
-                                          <span key={stat} className={`inline-flex px-1 py-0.5 rounded text-xs ${
-                                            ratio > 1.5 ? 'bg-orange-100 text-orange-700' :
-                                            ratio < 0.5 ? 'bg-blue-100 text-blue-700' :
-                                            'bg-gray-100 text-gray-600'
-                                          }`}>
-                                            {stat.substring(0, 3)}: {ratio?.toFixed(1)}x
-                                          </span>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs text-gray-400">Loading...</span>
-                                    )}
-                                  </td>
-                                  <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                                    {result.matches_with_ref}
+                                  <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-900" title={`Total matches: ${result.matches_with_ref || 0} with referee, ${(result.total_matches || 0) - (result.matches_with_ref || 0)} without referee`}>
+                                    <div className="text-center">
+                                      <div className="font-medium">{result.matches_with_ref || 0}</div>
+                                      <div className="text-xs text-gray-500">with ref</div>
+                                      {result.total_matches && result.total_matches > result.matches_with_ref && (
+                                        <div className="text-xs text-gray-400">{result.total_matches - result.matches_with_ref} without</div>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="px-3 py-4 whitespace-nowrap text-center">
                                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getConfidenceColor(result.confidence_level)}`}>
