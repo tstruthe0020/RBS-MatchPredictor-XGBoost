@@ -1179,7 +1179,7 @@ function App() {
                       <p><strong>3. Fouls Drawn Factor:</strong> Base xG × fouls drawn factor (drawing fouls creates opportunities)</p>
                       <p><strong>4. Penalty Factor:</strong> Add penalty xG (penalties/game × 0.79 × conversion rate)</p>
                       <p><strong>5. Team Quality (PPG):</strong> Adjust for quality difference (PPG difference × 0.15)</p>
-                      <p><strong>6. Referee Bias:</strong> Apply RBS adjustment (bias score × 0.2 scaling factor)</p>
+                      <p><strong>6. Referee Bias:</strong> Apply RBS adjustment based on team's performance differential with/without this referee (performance difference × 0.2 scaling factor)</p>
                       <p><strong>7. Goal Conversion:</strong> Final xG × team's goals/xG efficiency rate</p>
                       <p><strong>8. Match Probabilities:</strong> Poisson distribution calculates win/draw/loss % from predicted goals</p>
                     </div>
