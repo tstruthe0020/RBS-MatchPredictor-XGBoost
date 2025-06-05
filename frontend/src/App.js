@@ -35,7 +35,6 @@ function App() {
   const [refereeSummary, setRefereeSummary] = useState([]);
   const [selectedRefereeDetails, setSelectedRefereeDetails] = useState(null);
   const [enhancedRBSData, setEnhancedRBSData] = useState({});
-  const [enhancedRBSData, setEnhancedRBSData] = useState({});
   const [viewingReferee, setViewingReferee] = useState(null);
 
   // Match prediction state
