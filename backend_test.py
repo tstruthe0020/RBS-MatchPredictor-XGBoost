@@ -4,9 +4,14 @@ import json
 import base64
 import time
 import pprint
+from dotenv import load_dotenv
 
-# Base URL for API
-BASE_URL = "http://localhost:8001/api"
+# Load environment variables
+load_dotenv()
+
+# Get the backend URL from environment
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001')
+BASE_URL = f"{BACKEND_URL}/api"
 
 # Pretty printer for better output formatting
 pp = pprint.PrettyPrinter(indent=2)
