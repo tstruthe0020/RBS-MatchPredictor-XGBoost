@@ -32,6 +32,32 @@ function App() {
   const [predictionResult, setPredictionResult] = useState(null);
   const [predicting, setPredicting] = useState(false);
 
+  // Configuration state
+  const [configName, setConfigName] = useState('default');
+  const [configs, setConfigs] = useState([]);
+  const [currentConfig, setCurrentConfig] = useState(null);
+  const [configEditing, setConfigEditing] = useState(false);
+  const [configForm, setConfigForm] = useState({
+    config_name: 'default',
+    xg_shot_based_weight: 0.4,
+    xg_historical_weight: 0.4,
+    xg_opponent_defense_weight: 0.2,
+    ppg_adjustment_factor: 0.15,
+    possession_adjustment_per_percent: 0.01,
+    fouls_drawn_factor: 0.02,
+    fouls_drawn_baseline: 10.0,
+    fouls_drawn_min_multiplier: 0.8,
+    fouls_drawn_max_multiplier: 1.3,
+    penalty_xg_value: 0.79,
+    rbs_scaling_factor: 0.2,
+    min_conversion_rate: 0.5,
+    max_conversion_rate: 2.0,
+    min_xg_per_match: 0.1,
+    confidence_matches_multiplier: 4,
+    max_confidence: 90,
+    min_confidence: 20
+  });
+
   // Fetch initial data
   useEffect(() => {
     fetchStats();
