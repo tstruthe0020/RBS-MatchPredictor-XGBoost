@@ -1275,6 +1275,326 @@ async def upload_player_stats(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file: {str(e)}")
 
+# Multi-Dataset Upload Endpoints
+
+@api_router.post("/datasets", response_model=DatasetListResponse)
+async def list_datasets():
+    """Get list of all datasets with their record counts"""
+    try:
+        # Get unique dataset names from matches collection
+        datasets_pipeline = [
+            {"$group": {
+                "_id": "$dataset_name",
+                "matches_count": {"$sum": 1}
+            }}
+        ]
+        matches_data = await db.matches.aggregate(datasets_pipeline).to_list(1000)
+        
+        # Get team stats counts
+        team_stats_pipeline = [
+            {"$group": {
+                "_id": "$dataset_name", 
+                "team_stats_count": {"$sum": 1}
+            }}
+        ]
+        team_stats_data = await db.team_stats.aggregate(team_stats_pipeline).to_list(1000)
+        
+        # Get player stats counts
+        player_stats_pipeline = [
+            {"$group": {
+                "_id": "$dataset_name",
+                "player_stats_count": {"$sum": 1}
+            }}
+        ]
+        player_stats_data = await db.player_stats.aggregate(player_stats_pipeline).to_list(1000)
+        
+        # Combine data by dataset name
+        datasets_dict = {}
+        
+        # Add matches data
+        for item in matches_data:
+            dataset_name = item["_id"]
+            datasets_dict[dataset_name] = {
+                "dataset_name": dataset_name,
+                "matches_count": item["matches_count"],
+                "team_stats_count": 0,
+                "player_stats_count": 0,
+                "created_at": datetime.now().isoformat()
+            }
+        
+        # Add team stats data
+        for item in team_stats_data:
+            dataset_name = item["_id"]
+            if dataset_name in datasets_dict:
+                datasets_dict[dataset_name]["team_stats_count"] = item["team_stats_count"]
+        
+        # Add player stats data
+        for item in player_stats_data:
+            dataset_name = item["_id"]
+            if dataset_name in datasets_dict:
+                datasets_dict[dataset_name]["player_stats_count"] = item["player_stats_count"]
+        
+        datasets = [DatasetInfo(**data) for data in datasets_dict.values()]
+        
+        return DatasetListResponse(
+            success=True,
+            datasets=datasets
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing datasets: {str(e)}")
+
+@api_router.delete("/datasets/{dataset_name}", response_model=DatasetDeleteResponse)
+async def delete_dataset(dataset_name: str):
+    """Delete a specific dataset and all its records"""
+    try:
+        # Check if dataset exists
+        matches_count = await db.matches.count_documents({"dataset_name": dataset_name})
+        if matches_count == 0:
+            raise HTTPException(status_code=404, detail=f"Dataset '{dataset_name}' not found")
+        
+        # Delete all records for this dataset
+        matches_deleted = await db.matches.delete_many({"dataset_name": dataset_name})
+        team_stats_deleted = await db.team_stats.delete_many({"dataset_name": dataset_name})
+        player_stats_deleted = await db.player_stats.delete_many({"dataset_name": dataset_name})
+        rbs_deleted = await db.rbs_results.delete_many({"dataset_name": dataset_name}) if hasattr(db, 'rbs_results') else None
+        
+        total_deleted = (
+            matches_deleted.deleted_count + 
+            team_stats_deleted.deleted_count + 
+            player_stats_deleted.deleted_count +
+            (rbs_deleted.deleted_count if rbs_deleted else 0)
+        )
+        
+        return DatasetDeleteResponse(
+            success=True,
+            message=f"Successfully deleted dataset '{dataset_name}' with all associated records",
+            records_deleted=total_deleted
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting dataset: {str(e)}")
+
+@api_router.post("/upload/multi-dataset")
+async def upload_multi_dataset(files: List[UploadFile] = File(...), dataset_names: List[str] = []):
+    """Upload multiple datasets (sets of 3 files each) with custom names"""
+    try:
+        if len(files) % 3 != 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Files must be provided in sets of 3 (matches.csv, team_stats.csv, player_stats.csv)"
+            )
+        
+        num_datasets = len(files) // 3
+        if len(dataset_names) != num_datasets:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Must provide exactly {num_datasets} dataset names for {num_datasets} datasets"
+            )
+        
+        # Check for duplicate dataset names in request
+        if len(set(dataset_names)) != len(dataset_names):
+            raise HTTPException(status_code=400, detail="Dataset names must be unique")
+        
+        # Check if any dataset names already exist
+        for dataset_name in dataset_names:
+            existing_count = await db.matches.count_documents({"dataset_name": dataset_name})
+            if existing_count > 0:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Dataset '{dataset_name}' already exists. Please choose a different name."
+                )
+        
+        # Process each dataset (group of 3 files)
+        results = []
+        total_records = 0
+        
+        for i in range(num_datasets):
+            dataset_name = dataset_names[i]
+            start_idx = i * 3
+            dataset_files = files[start_idx:start_idx + 3]
+            
+            # Determine file types based on content/filename patterns
+            matches_file = None
+            team_stats_file = None
+            player_stats_file = None
+            
+            for file in dataset_files:
+                filename = file.filename.lower()
+                content = await file.read()
+                await file.seek(0)  # Reset file pointer
+                
+                # Determine file type based on filename or content
+                if 'match' in filename:
+                    matches_file = file
+                elif 'team' in filename:
+                    team_stats_file = file
+                elif 'player' in filename:
+                    player_stats_file = file
+                else:
+                    # Try to determine by CSV headers
+                    df_sample = pd.read_csv(io.StringIO(content.decode('utf-8')), nrows=1)
+                    columns = set(df_sample.columns.str.lower())
+                    
+                    if 'referee' in columns and 'home_team' in columns:
+                        matches_file = file
+                    elif 'team_name' in columns and 'yellow_cards' in columns:
+                        team_stats_file = file
+                    elif 'player_name' in columns and 'goals' in columns:
+                        player_stats_file = file
+            
+            if not all([matches_file, team_stats_file, player_stats_file]):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not identify all three file types for dataset '{dataset_name}'. Expected: matches, team_stats, player_stats files."
+                )
+            
+            # Process matches file
+            matches_content = await matches_file.read()
+            matches_df = pd.read_csv(io.StringIO(matches_content.decode('utf-8')))
+            matches_df = matches_df.fillna({
+                'home_score': 0, 'away_score': 0, 'result': 'Unknown',
+                'season': 'Unknown', 'competition': 'Unknown', 'match_date': 'Unknown'
+            })
+            
+            matches = []
+            for _, row in matches_df.iterrows():
+                def safe_int(value, default=0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return int(float(value))
+                    except (ValueError, TypeError):
+                        return default
+                
+                match = Match(
+                    match_id=str(row['match_id']),
+                    referee=str(row['referee']),
+                    home_team=str(row['home_team']),
+                    away_team=str(row['away_team']),
+                    home_score=safe_int(row['home_score']),
+                    away_score=safe_int(row['away_score']),
+                    result=str(row['result']),
+                    season=str(row['season']),
+                    competition=str(row['competition']),
+                    match_date=str(row['match_date']),
+                    dataset_name=dataset_name
+                )
+                matches.append(match.dict())
+            
+            # Process team stats file
+            team_stats_content = await team_stats_file.read()
+            team_stats_df = pd.read_csv(io.StringIO(team_stats_content.decode('utf-8')))
+            team_stats_df = team_stats_df.fillna(0)
+            
+            team_stats = []
+            for _, row in team_stats_df.iterrows():
+                def safe_int(value, default=0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return int(float(value))
+                    except (ValueError, TypeError):
+                        return default
+                
+                def safe_float(value, default=0.0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return float(value)
+                    except (ValueError, TypeError):
+                        return default
+                
+                stats = TeamStats(
+                    match_id=str(row['match_id']),
+                    team_name=str(row['team_name']),
+                    is_home=bool(row.get('is_home', False)),
+                    yellow_cards=safe_int(row.get('yellow_cards', 0)),
+                    red_cards=safe_int(row.get('red_cards', 0)),
+                    fouls=safe_int(row.get('fouls', 0)),
+                    possession_pct=safe_float(row.get('possession_pct', 0)),
+                    shots_total=safe_int(row.get('shots_total', 0)),
+                    shots_on_target=safe_int(row.get('shots_on_target', 0)),
+                    fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
+                    penalties_awarded=safe_int(row.get('penalties_awarded', 0)),
+                    xg=safe_float(row.get('xg', 0)),
+                    dataset_name=dataset_name
+                )
+                team_stats.append(stats.dict())
+            
+            # Process player stats file
+            player_stats_content = await player_stats_file.read()
+            player_stats_df = pd.read_csv(io.StringIO(player_stats_content.decode('utf-8')))
+            player_stats_df = player_stats_df.fillna(0)
+            
+            player_stats = []
+            for _, row in player_stats_df.iterrows():
+                def safe_int(value, default=0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return int(float(value))
+                    except (ValueError, TypeError):
+                        return default
+                
+                def safe_float(value, default=0.0):
+                    try:
+                        if pd.isna(value) or value == '' or value is None:
+                            return default
+                        return float(value)
+                    except (ValueError, TypeError):
+                        return default
+                
+                stats = PlayerStats(
+                    match_id=str(row['match_id']),
+                    player_name=str(row['player_name']),
+                    team_name=str(row['team_name']),
+                    is_home=bool(row.get('is_home', False)),
+                    goals=safe_int(row.get('goals', 0)),
+                    assists=safe_int(row.get('assists', 0)),
+                    yellow_cards=safe_int(row.get('yellow_cards', 0)),
+                    fouls_committed=safe_int(row.get('fouls_committed', 0)),
+                    fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
+                    xg=safe_float(row.get('xg', 0)),
+                    penalty_attempts=safe_int(row.get('penalty_attempts', 0)),
+                    penalty_goals=safe_int(row.get('penalty_goals', 0)),
+                    dataset_name=dataset_name
+                )
+                player_stats.append(stats.dict())
+            
+            # Insert all data for this dataset
+            if matches:
+                await db.matches.insert_many(matches)
+            if team_stats:
+                await db.team_stats.insert_many(team_stats)
+            if player_stats:
+                await db.player_stats.insert_many(player_stats)
+            
+            dataset_total = len(matches) + len(team_stats) + len(player_stats)
+            total_records += dataset_total
+            
+            results.append({
+                "dataset_name": dataset_name,
+                "matches": len(matches),
+                "team_stats": len(team_stats),
+                "player_stats": len(player_stats),
+                "total": dataset_total
+            })
+        
+        return {
+            "success": True,
+            "message": f"Successfully uploaded {num_datasets} datasets with {total_records} total records",
+            "records_processed": total_records,
+            "datasets": results
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing multi-dataset upload: {str(e)}")
+
 @api_router.post("/migrate-confidence")
 async def migrate_confidence():
     """Migrate old text confidence values to numerical confidence values"""
