@@ -2779,6 +2779,25 @@ async def get_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
 
+@api_router.get("/debug/team-stats-sample")
+async def get_team_stats_sample():
+    """Get sample team stats for debugging"""
+    try:
+        # Get a few sample team stats
+        sample_stats = await db.team_stats.find({"team_name": "Arsenal"}).limit(3).to_list(3)
+        
+        # Remove MongoDB _id field
+        for stat in sample_stats:
+            if '_id' in stat:
+                stat.pop('_id')
+        
+        return {
+            "success": True,
+            "sample_stats": sample_stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching sample stats: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
