@@ -1167,10 +1167,10 @@ class RegressionAnalyzer:
                 class_report = classification_report(y_test, y_pred, output_dict=True)
                 
                 # Feature importance
-                feature_importance = {
-                    stat: float(importance) 
+                feature_importance = self._safe_dict_conversion({
+                    stat: importance 
                     for stat, importance in zip(selected_stats, model.feature_importances_)
-                }
+                })
                 
                 results = {
                     'model_type': 'Random Forest Classifier',
