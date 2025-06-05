@@ -17,6 +17,21 @@ frontend:
         agent: "testing"
         comment: "Verified the enhanced referee page table functionality through code review. The table implementation includes all required columns: RBS Score with tooltips explaining bias interpretation, statistical differentials (Yellow Cards, Red Cards, Fouls, etc.) with appropriate values, Variance column showing variance ratios with color coding, Matches column showing the correct number of matches, and Confidence levels. All table headers have tooltips that explain how each calculation is performed. The loadEnhancedRBSData function properly loads and displays enhanced RBS data in the variance column. The implementation ensures that data values are up-to-date and not showing 'Loading...' indefinitely."
 
+  - task: "ML-based Match Prediction System"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented ML-based match prediction system with Random Forest algorithms, replacing the statistical prediction system."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the ML-based match prediction system. The page loads correctly with the '⚽ ML-Based Match Prediction' title and displays the ML Models Status section. The ML status shows that models are loaded with 45 features and 7 models. The 'Refresh Status' button works correctly. The match prediction form works properly, allowing selection of home team, away team, referee, and match date. The 'Predict Match' button successfully generates predictions with proper probability calculations that sum to 100%. The prediction results display correctly, showing the predicted score, expected xG values, and win/draw/loss probabilities with visual bars. The ML Model Predictions section appears in the results with Model Performance & Confidence information. The algorithm explanation mentions Feature Engineering, Random Forest, and other ML concepts as expected. The 'Reload Models' button works correctly, showing a success message when clicked."
+
 backend:
   - task: "Enhanced Regression Analysis System"
     implemented: true
@@ -319,6 +334,8 @@ agent_communication:
     message: "I've verified the enhanced referee page table functionality through code review. The table implementation includes all required columns: RBS Score with tooltips explaining bias interpretation, statistical differentials (Yellow Cards, Red Cards, Fouls, etc.) with appropriate values, Variance column showing variance ratios with color coding, Matches column showing the correct number of matches, and Confidence levels. All table headers have tooltips that explain how each calculation is performed. The loadEnhancedRBSData function properly loads and displays enhanced RBS data in the variance column. The implementation ensures that data values are up-to-date and not showing 'Loading...' indefinitely. The code is well-structured and should work correctly when there are RBS results available for the selected referee."
   - agent: "testing"
     message: "I've successfully tested the ML-based match prediction system that has replaced the statistical prediction system. The system includes 5 ML models: a classifier for Win/Draw/Loss prediction and 4 regression models for Home/Away Goals/xG prediction. All endpoints work correctly: 1) GET /api/ml-models/status correctly reports model status, 2) POST /api/train-ml-models successfully trains all models with good accuracy (classifier: 75.2%, home_goals R²: 0.45, away_goals R²: 0.28, home_xg R²: 1.0, away_xg R²: 1.0), 3) POST /api/ml-models/reload successfully reloads models from disk, and 4) POST /api/predict-match correctly uses the ML models to generate predictions with probabilities that sum to 100%. The feature engineering extracts 45 features including team stats, referee bias, form, and head-to-head stats. Models are properly persisted using joblib in the /app/backend/models/ directory. The prediction breakdown includes model confidence, feature importance, and prediction method information. All tests passed successfully with no issues found."
+  - agent: "testing"
+    message: "I've successfully tested the ML-based match prediction frontend implementation. The page loads correctly with the '⚽ ML-Based Match Prediction' title and displays the ML Models Status section. The ML status shows that models are loaded with 45 features and 7 models. The 'Refresh Status' button works correctly, showing the current model status. The match prediction form works properly, allowing selection of home team, away team, referee, and match date. The 'Predict Match' button successfully generates predictions with proper probability calculations that sum to 100%. The prediction results display correctly, showing the predicted score, expected xG values, and win/draw/loss probabilities with visual bars. The ML Model Predictions section appears in the results with Model Performance & Confidence information. The algorithm explanation mentions Feature Engineering, Random Forest, and other ML concepts as expected. The 'Reload Models' button works correctly, showing a success message when clicked. All tests passed successfully with no issues found."
 
 metadata:
   created_by: "testing_agent"
