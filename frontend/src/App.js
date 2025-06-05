@@ -3539,7 +3539,8 @@ function App() {
                                     {result.team_name}
                                   </td>
                                   <td className="px-4 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRBSColor(result.rbs_score)}`}>
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRBSColor(result.rbs_score)}`}
+                                          title={`RBS Score: ${result.rbs_score} - ${getRBSInterpretation(result.rbs_score)} bias toward this team`}>
                                       {result.rbs_score > 0 ? '+' : ''}{result.rbs_score}
                                     </span>
                                   </td>
