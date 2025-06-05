@@ -1,0 +1,194 @@
+{/* Clean Prediction Results */}
+                <div className="space-y-6">
+                  {predictionResult.success ? (
+                    <>
+                      {/* Main Result Card */}
+                      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-8 rounded-xl border border-indigo-200 shadow-lg">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="text-3xl font-bold text-indigo-700">⚽</div>
+                          </div>
+                          <h3 className="text-xl font-bold text-gray-900 mb-4">ML Prediction Results</h3>
+                          
+                          {/* Score Prediction */}
+                          <div className="bg-white/70 backdrop-blur-sm rounded-lg p-6 mb-4">
+                            <div className="text-4xl font-bold text-gray-900 mb-2">
+                              {predictionResult.home_team} <span className="text-indigo-600">{predictionResult.predicted_home_goals}</span>
+                              <span className="text-gray-400 mx-3">-</span>
+                              <span className="text-indigo-600">{predictionResult.predicted_away_goals}</span> {predictionResult.away_team}
+                            </div>
+                            <div className="text-sm text-gray-600 mb-2">
+                              Expected xG: <span className="font-medium">{predictionResult.home_xg} - {predictionResult.away_xg}</span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Referee: <span className="font-medium">{predictionResult.referee}</span>
+                            </div>
+                          </div>
+
+                          {/* Outcome Probabilities - Compact */}
+                          <div className="flex justify-center space-x-4">
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-green-600">{predictionResult.home_win_probability}%</div>
+                              <div className="text-xs text-gray-600">Home Win</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-yellow-600">{predictionResult.draw_probability}%</div>
+                              <div className="text-xs text-gray-600">Draw</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-blue-600">{predictionResult.away_win_probability}%</div>
+                              <div className="text-xs text-gray-600">Away Win</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Probability Bars */}
+                      <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">Match Outcome Probabilities</h4>
+                        <div className="space-y-3">
+                          {/* Home Win */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-medium text-gray-700">{predictionResult.home_team} Win</span>
+                              <span className="text-sm font-bold text-green-600">{predictionResult.home_win_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-500 ease-out" 
+                                style={{width: `${predictionResult.home_win_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Draw */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-medium text-gray-700">Draw</span>
+                              <span className="text-sm font-bold text-yellow-600">{predictionResult.draw_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-yellow-500 h-2 rounded-full transition-all duration-500 ease-out" 
+                                style={{width: `${predictionResult.draw_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Away Win */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-medium text-gray-700">{predictionResult.away_team} Win</span>
+                              <span className="text-sm font-bold text-blue-600">{predictionResult.away_win_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out" 
+                                style={{width: `${predictionResult.away_win_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ML Model Information - Simplified */}
+                      <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-4">🤖 ML Model Insights</h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Model Performance */}
+                          <div className="space-y-3">
+                            <h5 className="font-semibold text-gray-800">Model Performance</h5>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Algorithm:</span>
+                                <span className="font-medium">Random Forest Ensemble</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Features Used:</span>
+                                <span className="font-medium">{predictionResult.prediction_breakdown?.model_confidence?.features_used || '45+'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Model Confidence:</span>
+                                <span className="font-medium text-indigo-600">
+                                  {predictionResult.prediction_breakdown?.model_confidence?.classifier_confidence 
+                                    ? (predictionResult.prediction_breakdown.model_confidence.classifier_confidence * 100).toFixed(1) + '%' 
+                                    : 'High'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Key Factors */}
+                          <div className="space-y-3">
+                            <h5 className="font-semibold text-gray-800">Key Prediction Factors</h5>
+                            <div className="space-y-2 text-sm">
+                              {predictionResult.prediction_breakdown?.feature_importance?.top_features ? (
+                                Object.entries(predictionResult.prediction_breakdown.feature_importance.top_features).slice(0, 3).map(([feature, importance], index) => (
+                                  <div key={index} className="flex justify-between">
+                                    <span className="text-gray-600">{feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>
+                                    <span className="font-medium">{(importance * 100).toFixed(1)}%</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Team Quality Difference:</span>
+                                    <span className="font-medium">High Impact</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Recent Form:</span>
+                                    <span className="font-medium">Medium Impact</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Home Advantage:</span>
+                                    <span className="font-medium">Low Impact</span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Model Explanation */}
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-600">
+                            <strong>💡 How it works:</strong> Our ML system uses 5 trained Random Forest models to analyze 45+ features including team performance, 
+                            recent form, head-to-head records, and referee bias patterns. Predictions are based on historical data patterns and statistical modeling.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-center space-x-4">
+                        <button
+                          onClick={resetPrediction}
+                          className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          🔄 New Prediction
+                        </button>
+                        <button
+                          onClick={() => window.print()}
+                          className="px-6 py-2 bg-indigo-100 text-indigo-700 font-medium rounded-lg hover:bg-indigo-200 transition-colors"
+                        >
+                          🖨️ Print Results
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* Error State */
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                      <div className="text-center">
+                        <div className="text-4xl mb-4">❌</div>
+                        <h3 className="text-lg font-semibold text-red-800 mb-2">Prediction Failed</h3>
+                        <p className="text-red-600 mb-4">{predictionResult.error}</p>
+                        <button
+                          onClick={resetPrediction}
+                          className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700"
+                        >
+                          Try Again
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
