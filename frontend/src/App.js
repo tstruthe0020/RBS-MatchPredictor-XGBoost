@@ -3502,6 +3502,7 @@ function App() {
                                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Penalties</th>
                                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">xG Diff</th>
                                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Possession</th>
+                                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
                                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
                                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
                               </tr>
