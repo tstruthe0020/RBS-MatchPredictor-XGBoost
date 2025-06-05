@@ -1873,6 +1873,31 @@ async def get_teams():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching teams: {str(e)}")
 
+@api_router.post("/initialize-default-config")
+async def initialize_default_config():
+    """Initialize default prediction configuration"""
+    try:
+        # Check if default config already exists
+        existing = await db.prediction_configs.find_one({"config_name": "default"})
+        
+        if not existing:
+            default_config = PredictionConfig(config_name="default")
+            await db.prediction_configs.insert_one(default_config.dict())
+            return {
+                "success": True,
+                "message": "Default configuration created",
+                "config": default_config.dict()
+            }
+        else:
+            return {
+                "success": True,
+                "message": "Default configuration already exists",
+                "config": {k: v for k, v in existing.items() if k != '_id'}
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error initializing default config: {str(e)}")
+
 @api_router.post("/prediction-config", response_model=dict)
 async def create_prediction_config(config_request: PredictionConfigRequest):
     """Create or update a prediction configuration"""
