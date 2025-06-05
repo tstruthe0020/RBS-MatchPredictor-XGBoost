@@ -291,7 +291,18 @@ rbs_calculator = RBSCalculator()
 # Match Prediction Engine
 class MatchPredictor:
     def __init__(self):
-        self.rbs_scaling_factor = 0.2  # RBS of -5 gives -1.0 xG adjustment
+        self.default_config = PredictionConfig()
+    
+    async def get_config(self, config_name: str = "default"):
+        """Get prediction configuration by name"""
+        config = await db.prediction_configs.find_one({"config_name": config_name})
+        if config:
+            # Convert MongoDB document to PredictionConfig
+            config.pop('_id', None)  # Remove MongoDB _id
+            return PredictionConfig(**config)
+        else:
+            # Return default config if not found
+            return self.default_config
     
     async def calculate_team_averages(self, team_name, is_home, exclude_opponent=None, season_filter=None):
         """Calculate comprehensive team averages with home/away context"""
