@@ -879,6 +879,19 @@ class RegressionAnalyzer:
             'penalty_conversion_rate', 'points_per_game', 'rbs_score'
         ]
     
+    def _safe_float_conversion(self, value):
+        """Safely convert value to float, handling NaN and infinity"""
+        try:
+            if pd.isna(value) or np.isinf(value):
+                return 0.0
+            return float(value)
+        except (ValueError, TypeError, OverflowError):
+            return 0.0
+    
+    def _safe_dict_conversion(self, input_dict):
+        """Safely convert dictionary values to floats"""
+        return {key: self._safe_float_conversion(value) for key, value in input_dict.items()}
+    
     async def prepare_match_data(self, include_rbs=True):
         """Prepare match data for regression analysis with comprehensive variables"""
         try:
