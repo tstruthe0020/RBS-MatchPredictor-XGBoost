@@ -825,6 +825,9 @@ def main():
         
         # Test 5: Error handling - empty stats list
         empty_stats_success, empty_stats = tester.test_regression_analysis_empty_stats()
+        
+        # Test 6: Config suggestion endpoint
+        config_suggestion_success, config_suggestion = tester.test_suggest_prediction_config()
     else:
         print("⚠️ Cannot test regression analysis without available stats")
         linear_regression_success = False
@@ -832,6 +835,7 @@ def main():
         mixed_analysis_success = False
         invalid_stats_success = False
         empty_stats_success = False
+        config_suggestion_success = False
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
