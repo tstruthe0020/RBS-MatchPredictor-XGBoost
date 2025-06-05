@@ -973,6 +973,15 @@ def main():
     else:
         print("❌ Failed to test empty stats list handling")
     
+    if 'config_suggestion_success' in locals() and config_suggestion_success:
+        print("✅ Successfully tested prediction config suggestion endpoint")
+        if 'config_suggestion' in locals() and config_suggestion and config_suggestion.get('success', False):
+            print("✅ Config suggestion algorithm generated meaningful recommendations")
+        else:
+            print("⚠️ Config suggestion returned an error - this might be due to insufficient data")
+    else:
+        print("❌ Failed to test prediction config suggestion endpoint")
+    
     return 0 if tester.tests_passed == tester.tests_run else 1
 
 if __name__ == "__main__":
