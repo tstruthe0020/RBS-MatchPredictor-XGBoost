@@ -1153,15 +1153,20 @@ function App() {
 
                   {/* Algorithm Explanation */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-semibold text-gray-900 mb-2">Enhanced Algorithm Overview</h3>
+                    <h3 className="text-md font-semibold text-gray-900 mb-2">🧮 Enhanced Match Prediction Algorithm</h3>
                     <div className="text-sm text-gray-700 space-y-1">
-                      <p><strong>1. Base xG Calculation:</strong> Team avg shots × xG per shot + opponent defensive stats</p>
-                      <p><strong>2. PPG Adjustment:</strong> Quality difference between teams (PPG difference × 0.15)</p>
-                      <p><strong>3. Referee Bias:</strong> RBS score × 0.2 scaling factor (RBS -5 = -1.0 xG adjustment)</p>
-                      <p><strong>4. Home/Away Context:</strong> All stats filtered by venue (home vs away performance)</p>
-                      <p><strong>5. Penalty Factor:</strong> Each penalty/match adds 0.79 xG (realistic penalty value)</p>
-                      <p><strong>6. Final Score:</strong> Adjusted xG × team-specific goal conversion rate</p>
-                      <p><strong>7. Match Probabilities:</strong> Poisson distribution calculates win/draw/loss probabilities from predicted goals</p>
+                      <p><strong>1. Base xG Calculation:</strong> Team avg shots × xG per shot (shot-based expected goals)</p>
+                      <p><strong>2. Possession Adjustment:</strong> Base xG × possession factor (more possession = more chances)</p>
+                      <p><strong>3. Fouls Drawn Factor:</strong> Base xG × fouls drawn factor (drawing fouls creates opportunities)</p>
+                      <p><strong>4. Penalty Factor:</strong> Add penalty xG (penalties/game × 0.79 × conversion rate)</p>
+                      <p><strong>5. Team Quality (PPG):</strong> Adjust for quality difference (PPG difference × 0.15)</p>
+                      <p><strong>6. Referee Bias:</strong> Apply RBS adjustment (bias score × 0.2 scaling factor)</p>
+                      <p><strong>7. Goal Conversion:</strong> Final xG × team's goals/xG efficiency rate</p>
+                      <p><strong>8. Match Probabilities:</strong> Poisson distribution calculates win/draw/loss % from predicted goals</p>
+                    </div>
+                    <div className="mt-3 p-3 bg-blue-50 rounded text-xs text-blue-800">
+                      <strong>Data Sources:</strong> All calculations use actual database values with player stats aggregated to team level. 
+                      Home/away context preserved throughout. No estimation - only real historical performance data.
                     </div>
                   </div>
                 </div>
