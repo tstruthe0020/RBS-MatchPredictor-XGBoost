@@ -2113,8 +2113,11 @@ async def calculate_comprehensive_team_stats():
             shots_on_target = team_stat.get('shots_on_target', 0)
             possession_pct = team_stat.get('possession_pct', 50.0)
             
-            # Calculate derived metrics with proper fallbacks
-            xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
+            # Calculate derived metrics with proper fallbacks and bounds checking
+            # xG per shot should never exceed 1.0 (maximum possible xG for a single shot)
+            raw_xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
+            xg_per_shot = min(raw_xg_per_shot, 1.0)  # Cap at 1.0 for mathematical consistency
+            
             goals_per_xg = actual_goals / final_xg if final_xg > 0 else 1.0
             shot_accuracy = shots_on_target / shots_total if shots_total > 0 else 0.3
             conversion_rate = actual_goals / shots_on_target if shots_on_target > 0 else 0.1
