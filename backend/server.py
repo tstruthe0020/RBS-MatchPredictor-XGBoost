@@ -1086,7 +1086,7 @@ class RegressionAnalyzer:
                         'xg_per_shot': away_xg / away_stat.get('shots_total') if away_stat.get('shots_total', 0) > 0 else 0,
                         'goals_per_xg': away_score / away_xg if away_xg > 0 else 0,
                         'shot_accuracy': away_stat.get('shots_on_target', 0) / away_stat.get('shots_total') if away_stat.get('shots_total', 0) > 0 else 0,
-                        'conversion_rate': away_score / away_stat.get('shots_on_target') if away_stat.get('shots_on_target', 0) > 0 else 0,
+                        'conversion_rate': away_score / away_stat.get('shots_total') if away_stat.get('shots_total', 0) > 0 else 0,  # Fixed: goals per total shots
                         'penalty_attempts': away_stat.get('penalty_attempts', 0),
                         'penalty_goals': away_stat.get('penalty_goals', 0),
                         'penalty_conversion_rate': away_stat.get('penalty_goals', 0) / away_stat.get('penalty_attempts') if away_stat.get('penalty_attempts', 0) > 0 else 0,
