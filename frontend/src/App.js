@@ -1185,6 +1185,62 @@ function App() {
                         </div>
                       </div>
 
+                      {/* Match Outcome Probabilities */}
+                      <div className="bg-white p-6 rounded-lg border border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Match Outcome Probabilities</h3>
+                        <div className="space-y-4">
+                          {/* Home Win */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">{predictionResult.home_team} Win</span>
+                              <span className="text-sm font-bold text-green-600">{predictionResult.home_win_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div 
+                                className="bg-green-500 h-3 rounded-full transition-all duration-300" 
+                                style={{width: `${predictionResult.home_win_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Draw */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">Draw</span>
+                              <span className="text-sm font-bold text-yellow-600">{predictionResult.draw_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div 
+                                className="bg-yellow-500 h-3 rounded-full transition-all duration-300" 
+                                style={{width: `${predictionResult.draw_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Away Win */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">{predictionResult.away_team} Win</span>
+                              <span className="text-sm font-bold text-blue-600">{predictionResult.away_win_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div 
+                                className="bg-blue-500 h-3 rounded-full transition-all duration-300" 
+                                style={{width: `${predictionResult.away_win_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Explanation */}
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-600">
+                            <strong>How probabilities are calculated:</strong> Using Poisson distribution based on predicted goals. 
+                            The algorithm simulates thousands of possible match outcomes to determine the likelihood of each result.
+                          </p>
+                        </div>
+                      </div>
+
                       {/* Detailed Breakdown */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Prediction Components */}
