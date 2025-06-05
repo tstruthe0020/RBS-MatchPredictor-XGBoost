@@ -395,7 +395,7 @@ function App() {
       <nav className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
-            {['dashboard', 'upload', 'predict', 'config', 'results'].map((tab) => (
+            {['dashboard', 'upload', 'predict', 'config', 'rbs-config', 'results'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -407,6 +407,8 @@ function App() {
                   if (tab === 'config') {
                     fetchConfigs();
                     fetchConfig(configName);
+                  }
+                  if (tab === 'rbs-config') {
                     fetchRbsConfigs();
                     fetchRbsConfig(rbsConfigName);
                   }
@@ -418,7 +420,8 @@ function App() {
                 }`}
               >
                 {tab === 'predict' ? 'Match Prediction' : 
-                 tab === 'config' ? 'Configuration' : tab}
+                 tab === 'config' ? 'Prediction Config' :
+                 tab === 'rbs-config' ? 'RBS Config' : tab}
               </button>
             ))}
           </div>
