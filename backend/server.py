@@ -1995,13 +1995,14 @@ async def delete_prediction_config(config_name: str):
 
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
-    """Predict match outcome using xG-based algorithm"""
+    """Predict match outcome using xG-based algorithm with configurable weights"""
     try:
         prediction = await match_predictor.predict_match(
             home_team=request.home_team,
             away_team=request.away_team,
             referee_name=request.referee_name,
-            match_date=request.match_date
+            match_date=request.match_date,
+            config_name=request.config_name or "default"
         )
         return prediction
     except Exception as e:
