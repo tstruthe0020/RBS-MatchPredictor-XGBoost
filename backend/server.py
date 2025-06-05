@@ -446,8 +446,8 @@ class MatchPredictor:
             return rbs_result['rbs_score'], rbs_result['confidence_level']
         return 0.0, 0.0
     
-    async def predict_match(self, home_team, away_team, referee_name, match_date=None):
-        """Enhanced prediction function using comprehensive team stats"""
+    async def predict_match(self, home_team, away_team, referee_name, match_date=None, config_name="default"):
+        """Enhanced prediction function using comprehensive team stats with configurable weights"""
         try:
             # Get comprehensive team averages (home and away context)
             home_stats = await self.calculate_team_averages(home_team, is_home=True, exclude_opponent=away_team)
