@@ -717,6 +717,195 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {/* Multi-Dataset Upload Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">📊 Multi-Dataset Upload</h2>
+              <p className="text-gray-600 mb-6">
+                Upload multiple datasets (seasons) at once. Each dataset contains 3 files: matches.csv, team_stats.csv, and player_stats.csv.
+              </p>
+
+              {/* Dataset Management */}
+              {datasets.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📁 Existing Datasets</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {datasets.map((dataset) => (
+                        <div key={dataset.dataset_name} className="bg-white p-4 rounded-lg border shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-900">{dataset.dataset_name}</h4>
+                            <button
+                              onClick={() => deleteDataset(dataset.dataset_name)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                              title="Delete dataset"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <div>Matches: {dataset.matches_count}</div>
+                            <div>Team Stats: {dataset.team_stats_count}</div>
+                            <div>Player Stats: {dataset.player_stats_count}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Multi-Dataset Upload Form */}
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Upload New Datasets</h3>
+                  <button
+                    onClick={addDatasetUpload}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    ➕ Add Dataset
+                  </button>
+                </div>
+
+                {multiDatasetFiles.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No datasets added yet. Click "Add Dataset" to start uploading.</p>
+                  </div>
+                )}
+
+                {multiDatasetFiles.map((dataset, index) => (
+                  <div key={dataset.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium text-gray-900">Dataset #{index + 1}</h4>
+                      <button
+                        onClick={() => removeDatasetUpload(dataset.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        ❌ Remove
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Dataset Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Dataset Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={dataset.dataset_name}
+                          onChange={(e) => updateDatasetField(dataset.id, 'dataset_name', e.target.value)}
+                          placeholder="e.g., Premier League 2023-24"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+
+                      {/* File Uploads */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Matches CSV *
+                          </label>
+                          <input
+                            type="file"
+                            accept=".csv"
+                            onChange={(e) => updateDatasetField(dataset.id, 'matches_file', e.target.files[0])}
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+                          {dataset.matches_file && (
+                            <p className="mt-1 text-sm text-green-600">✅ {dataset.matches_file.name}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Team Stats CSV *
+                          </label>
+                          <input
+                            type="file"
+                            accept=".csv"
+                            onChange={(e) => updateDatasetField(dataset.id, 'team_stats_file', e.target.files[0])}
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                          />
+                          {dataset.team_stats_file && (
+                            <p className="mt-1 text-sm text-green-600">✅ {dataset.team_stats_file.name}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Player Stats CSV *
+                          </label>
+                          <input
+                            type="file"
+                            accept=".csv"
+                            onChange={(e) => updateDatasetField(dataset.id, 'player_stats_file', e.target.files[0])}
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                          />
+                          {dataset.player_stats_file && (
+                            <p className="mt-1 text-sm text-green-600">✅ {dataset.player_stats_file.name}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Upload Button */}
+                {multiDatasetFiles.length > 0 && (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={uploadMultiDataset}
+                      disabled={uploadingMultiDataset}
+                      className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {uploadingMultiDataset ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🚀</span>
+                          <span>Upload All Datasets</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload Results */}
+                {multiDatasetResults && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-900 mb-2">✅ Upload Successful!</h4>
+                    <p className="text-green-800 mb-3">{multiDatasetResults.message}</p>
+                    <div className="space-y-2">
+                      {multiDatasetResults.datasets?.map((dataset, index) => (
+                        <div key={index} className="text-sm text-green-700">
+                          <strong>{dataset.dataset_name}:</strong> {dataset.matches} matches, {dataset.team_stats} team stats, {dataset.player_stats} player stats
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setMultiDatasetResults(null)}
+                      className="mt-3 text-sm text-green-600 hover:text-green-800"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+
+                {/* Usage Instructions */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">📝 Instructions</h4>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p>1. Click "Add Dataset" to create a new dataset upload</p>
+                    <p>2. Give each dataset a unique name (e.g., "Premier League 2023-24")</p>
+                    <p>3. Upload all 3 CSV files for each dataset</p>
+                    <p>4. Click "Upload All Datasets" to process everything at once</p>
+                    <p>5. Each dataset will be stored separately and can be managed independently</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
