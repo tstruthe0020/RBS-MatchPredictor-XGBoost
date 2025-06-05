@@ -3,9 +3,13 @@ import os
 import json
 import base64
 import time
+import pprint
 
 # Base URL for API
 BASE_URL = "http://localhost:8001/api"
+
+# Pretty printer for better output formatting
+pp = pprint.PrettyPrinter(indent=2)
 
 def test_list_datasets():
     """Test the /api/datasets endpoint to list all datasets"""
