@@ -606,6 +606,10 @@ class MatchPredictor:
             'points': sum(stat.get('points_earned', 0) for stat in team_stats) / total_matches,
             'matches_count': total_matches,
             
+            # Calculate penalty totals for correct conversion rate
+            'penalty_goals_total': sum(stat.get('penalty_goals', 0) for stat in team_stats),
+            'penalty_attempts_total': sum(stat.get('penalty_attempts', 0) for stat in team_stats),
+            
             # Add comprehensive derived statistics using ONLY actual database values
             'xg_per_shot': sum(stat.get('xg_per_shot', 0) for stat in team_stats) / total_matches,
             'goals_per_xg': sum(stat.get('goals_per_xg', 0) for stat in team_stats) / total_matches,
