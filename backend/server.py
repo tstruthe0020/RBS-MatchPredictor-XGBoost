@@ -477,15 +477,23 @@ class MatchPredictor:
             home_vs_defense = home_stats['shots_total'] * (away_defensive['goals_conceded'] / away_defensive['shots_conceded'] if away_defensive.get('shots_conceded', 0) > 0 else 0.1)
             away_vs_defense = away_stats['shots_total'] * (home_defensive['goals_conceded'] / home_defensive.get('shots_conceded', 10) if home_defensive.get('shots_conceded', 0) > 0 else 0.1)
             
-            # Combine methods with weights
-            home_base_xg = (home_shot_xg * 0.4 + home_hist_xg * 0.4 + home_vs_defense * 0.2)
-            away_base_xg = (away_shot_xg * 0.4 + away_hist_xg * 0.4 + away_vs_defense * 0.2)
+            # Combine methods with configurable weights
+            home_base_xg = (
+                home_shot_xg * config.xg_shot_based_weight + 
+                home_hist_xg * config.xg_historical_weight + 
+                home_vs_defense * config.xg_opponent_defense_weight
+            )
+            away_base_xg = (
+                away_shot_xg * config.xg_shot_based_weight + 
+                away_hist_xg * config.xg_historical_weight + 
+                away_vs_defense * config.xg_opponent_defense_weight
+            )
             
-            # Factor in additional team stats
+            # Factor in additional team stats with configurable weights
             
-            # Possession adjustment (teams with higher possession typically create more chances)
-            possession_factor_home = 1 + ((home_stats['possession_pct'] - 50) * 0.01)  # +/- 1% per percentage point above/below 50%
-            possession_factor_away = 1 + ((away_stats['possession_pct'] - 50) * 0.01)
+            # Possession adjustment (configurable rate)
+            possession_factor_home = 1 + ((home_stats['possession_pct'] - 50) * config.possession_adjustment_per_percent)
+            possession_factor_away = 1 + ((away_stats['possession_pct'] - 50) * config.possession_adjustment_per_percent)
             
             home_base_xg *= possession_factor_home
             away_base_xg *= possession_factor_away
