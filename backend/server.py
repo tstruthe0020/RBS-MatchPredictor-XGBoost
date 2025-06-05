@@ -593,12 +593,12 @@ class MatchPredictor:
             'points': sum(stat.get('points_earned', 0) for stat in team_stats) / total_matches,
             'matches_count': total_matches,
             
-            # Add comprehensive derived statistics that are now calculated (with bounds checking)
-            'xg_per_shot': min(sum(stat.get('xg_per_shot', 0) for stat in team_stats) / total_matches, 1.0),  # Cap at 1.0
+            # Add comprehensive derived statistics using ONLY actual database values
+            'xg_per_shot': sum(stat.get('xg_per_shot', 0) for stat in team_stats) / total_matches,
             'goals_per_xg': sum(stat.get('goals_per_xg', 0) for stat in team_stats) / total_matches,
-            'shot_accuracy': min(sum(stat.get('shot_accuracy', 0) for stat in team_stats) / total_matches, 1.0),  # Cap at 100%
+            'shot_accuracy': sum(stat.get('shot_accuracy', 0) for stat in team_stats) / total_matches,
             'conversion_rate': sum(stat.get('conversion_rate', 0) for stat in team_stats) / total_matches,
-            'penalty_conversion_rate': min(sum(stat.get('penalty_conversion_rate', 0) for stat in team_stats) / total_matches, 1.0),  # Cap at 100%
+            'penalty_conversion_rate': sum(stat.get('penalty_conversion_rate', 0) for stat in team_stats) / total_matches,
             'goal_difference': sum(stat.get('goal_difference', 0) for stat in team_stats) / total_matches,
             'clean_sheets': sum(stat.get('clean_sheet', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
             'scoring_rate': sum(stat.get('scored_goals', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
