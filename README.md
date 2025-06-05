@@ -175,4 +175,4 @@ For detailed setup instructions, algorithm explanations, and troubleshooting gui
 
 ---
 
-**Built for accuracy, transparency, and fairness in soccer analytics.**
+**Built for accuracy, transparency, and fairness in soccer analytics powered by Machine Learning.**
