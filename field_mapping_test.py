@@ -147,49 +147,38 @@ def test_team_performance_endpoint():
     return True
 
 def test_rbs_calculation():
-    """Test RBS calculation for a specific team-referee combination"""
+    """Test RBS calculation using the RBS results endpoint"""
     print("\n=== Testing RBS Calculation ===")
     
-    # Get all referees
-    response = requests.get(f"{API_URL}/referees")
+    # Get RBS results
+    response = requests.get(f"{API_URL}/rbs-results")
     if response.status_code != 200:
-        print(f"❌ Error: Failed to get referees, status code {response.status_code}")
-        return False
-    
-    referees = response.json().get("referees", [])
-    if not referees:
-        print("❌ Error: No referees found in the database")
-        return False
-    
-    # Get all teams
-    response = requests.get(f"{API_URL}/teams")
-    if response.status_code != 200:
-        print(f"❌ Error: Failed to get teams, status code {response.status_code}")
-        return False
-    
-    teams = response.json().get("teams", [])
-    if not teams:
-        print("❌ Error: No teams found in the database")
-        return False
-    
-    # Get a sample referee and team
-    referee = referees[0]
-    team_name = teams[0]
-    
-    print(f"Testing RBS for team '{team_name}' with referee '{referee}'")
-    
-    # Get RBS for the team with this referee
-    response = requests.get(f"{API_URL}/rbs/{team_name}/{referee}")
-    if response.status_code != 200:
-        print(f"❌ Error: Failed to get RBS, status code {response.status_code}")
+        print(f"❌ Error: Failed to get RBS results, status code {response.status_code}")
         return False
     
     data = response.json()
-    print(f"RBS Score: {data.get('rbs_score', 'N/A')}")
-    print(f"Confidence: {data.get('confidence_level', 'N/A')}")
+    if not data.get("success", False):
+        print(f"❌ Error: Response indicates failure")
+        return False
+    
+    results = data.get("results", [])
+    if not results:
+        print("❌ Error: No RBS results found")
+        return False
+    
+    print(f"Found {len(results)} RBS results")
+    
+    # Get a sample result
+    sample_result = results[0]
+    team_name = sample_result.get("team_name", "Unknown")
+    referee = sample_result.get("referee", "Unknown")
+    
+    print(f"\nSample RBS for team '{team_name}' with referee '{referee}':")
+    print(f"RBS Score: {sample_result.get('rbs_score', 'N/A')}")
+    print(f"Confidence: {sample_result.get('confidence_level', 'N/A')}")
     
     # Check stats breakdown
-    stats_breakdown = data.get("stats_breakdown", {})
+    stats_breakdown = sample_result.get("stats_breakdown", {})
     print("\n=== Stats Breakdown ===")
     for stat, value in stats_breakdown.items():
         print(f"{stat}: {value}")
