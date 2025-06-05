@@ -351,7 +351,9 @@ function App() {
 
     setApplyingWeights(true);
     try {
-      const configName = `rbs_optimized_${new Date().toISOString().split('T')[0]}`;
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19); // Format: 2024-06-05T14-30-45
+      const configName = `rbs_optimized_${timestamp}`;
       
       const configData = {
         config_name: configName,
