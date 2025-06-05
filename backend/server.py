@@ -280,6 +280,10 @@ class RBSCalculator:
                 stat['fouls_committed'] = stat.get('fouls', 0)
                 stat['possession_percentage'] = stat.get('possession_pct', 0)
                 
+                # Ensure penalties_awarded is properly mapped (should already exist in database)
+                if 'penalties_awarded' not in stat:
+                    stat['penalties_awarded'] = stat.get('penalty_attempts', 0)  # Fallback mapping
+                
                 team_stats_for_matches.append(stat)
         
         if not team_stats_for_matches:
