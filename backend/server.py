@@ -252,6 +252,9 @@ class MatchPredictionResponse(BaseModel):
     predicted_away_goals: float
     home_xg: float
     away_xg: float
+    home_win_probability: float  # Percentage chance of home team winning
+    draw_probability: float      # Percentage chance of draw
+    away_win_probability: float  # Percentage chance of away team winning
     prediction_breakdown: Dict
     confidence_factors: Dict
 
