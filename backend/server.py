@@ -2566,6 +2566,106 @@ async def get_available_regression_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching regression stats: {str(e)}")
 
+@api_router.post("/suggest-prediction-config")
+async def suggest_prediction_config_from_regression():
+    """Suggest optimal prediction configuration weights based on regression analysis"""
+    try:
+        # Prepare match data
+        df = await regression_analyzer.prepare_match_data()
+        
+        if df.empty:
+            raise HTTPException(status_code=400, detail="No match data available for analysis")
+        
+        # Run regression analysis on points_per_game to find most important stats
+        important_stats = [
+            'xg_difference', 'possession_percentage', 'shot_accuracy', 
+            'conversion_rate', 'xg_per_shot', 'goals_per_xg'
+        ]
+        
+        result = regression_analyzer.run_regression(
+            df=df,
+            selected_stats=important_stats,
+            target='points_per_game'
+        )
+        
+        if not result['success']:
+            raise HTTPException(status_code=400, detail=f"Regression analysis failed: {result['message']}")
+        
+        coefficients = result['results'].get('coefficients', {})
+        r2_score = result['results'].get('r2_score', 0)
+        
+        # Calculate suggested weights based on coefficient magnitudes and signs
+        # Normalize by the sum of absolute coefficients
+        total_abs_coef = sum(abs(coef) for coef in coefficients.values())
+        
+        if total_abs_coef == 0:
+            raise HTTPException(status_code=400, detail="No significant coefficients found")
+        
+        # Create suggestions based on analysis
+        suggestions = {
+            "suggested_config_name": f"regression_optimized_{datetime.now().strftime('%Y%m%d')}",
+            "analysis_basis": {
+                "r2_score": r2_score,
+                "sample_size": result['sample_size'],
+                "stats_analyzed": important_stats
+            },
+            "suggestions": {
+                "xg_calculation": {
+                    "explanation": "Based on regression analysis of xG-related stats",
+                    "current_default": {
+                        "xg_shot_based_weight": 0.4,
+                        "xg_historical_weight": 0.4,
+                        "xg_opponent_defense_weight": 0.2
+                    }
+                },
+                "adjustments": {},
+                "confidence_level": "medium" if r2_score > 0.3 else "low"
+            }
+        }
+        
+        # Analyze specific coefficients and make suggestions
+        if 'xg_per_shot' in coefficients and coefficients['xg_per_shot'] > 0.5:
+            suggestions["suggestions"]["adjustments"]["shot_quality_focus"] = {
+                "recommendation": "Increase shot-based xG weight",
+                "suggested_xg_shot_based_weight": 0.5,
+                "suggested_xg_historical_weight": 0.35,
+                "reason": f"xG per shot shows strong correlation ({coefficients['xg_per_shot']:.3f})"
+            }
+        
+        if 'possession_percentage' in coefficients:
+            pos_coef = coefficients['possession_percentage']
+            if abs(pos_coef) > 0.01:
+                current_factor = 0.01
+                suggested_factor = min(0.02, max(0.005, current_factor * (1 + pos_coef)))
+                suggestions["suggestions"]["adjustments"]["possession_adjustment"] = {
+                    "current_factor": current_factor,
+                    "suggested_factor": round(suggested_factor, 4),
+                    "reason": f"Possession shows {'positive' if pos_coef > 0 else 'negative'} correlation ({pos_coef:.3f})"
+                }
+        
+        if 'conversion_rate' in coefficients:
+            conv_coef = coefficients['conversion_rate']
+            if abs(conv_coef) > 0.1:
+                suggestions["suggestions"]["adjustments"]["conversion_bounds"] = {
+                    "current_min": 0.5,
+                    "current_max": 2.0,
+                    "suggested_adjustment": "Consider tighter bounds" if abs(conv_coef) > 0.3 else "Current bounds seem appropriate",
+                    "reason": f"Conversion rate correlation: {conv_coef:.3f}"
+                }
+        
+        return {
+            "success": True,
+            "suggestions": suggestions,
+            "message": f"Configuration suggestions generated based on R² score of {r2_score:.3f}"
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "suggestions": {},
+            "message": f"Error generating suggestions: {str(e)}"
+        }
+
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
     """Predict match outcome using xG-based algorithm with configurable weights"""
