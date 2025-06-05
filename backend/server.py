@@ -459,6 +459,24 @@ class MatchPredictor:
         match_ids = [stat['match_id'] for stat in team_stats]
         matches = await db.matches.find({"match_id": {"$in": match_ids}}).to_list(1000)
         
+        # Get player stats for these matches to aggregate fouls_drawn and penalties_awarded
+        player_stats = await db.player_stats.find({
+            "match_id": {"$in": match_ids},
+            "team_name": team_name
+        }).to_list(10000)
+        
+        # Aggregate player stats for team-level metrics
+        total_fouls_drawn_from_players = sum(stat.get('fouls_drawn', 0) for stat in player_stats)
+        total_penalties_from_players = sum(stat.get('penalty_attempts', 0) for stat in player_stats)
+        
+        # Calculate per-match averages from player aggregation
+        if total_matches > 0:
+            averages['fouls_drawn'] = total_fouls_drawn_from_players / total_matches
+            averages['penalties_awarded'] = total_penalties_from_players / total_matches
+        else:
+            averages['fouls_drawn'] = 0
+            averages['penalties_awarded'] = 0
+        
         total_goals = 0
         total_goals_conceded = 0
         total_points = 0
