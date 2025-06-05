@@ -8,6 +8,136 @@ class RBSAPITester:
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
+        
+    def test_regression_stats(self):
+        """Test the regression-stats endpoint"""
+        success, response = self.run_test(
+            "Get Available Regression Stats",
+            "GET",
+            "regression-stats",
+            200
+        )
+        
+        if success:
+            print(f"Successfully retrieved available regression stats")
+            
+            # Check if the response has the expected structure
+            if 'available_stats' in response:
+                print(f"Available stats: {response.get('available_stats', [])}")
+            else:
+                print("⚠️ Response is missing 'available_stats' field")
+                
+            if 'targets' in response:
+                print(f"Available targets: {response.get('targets', [])}")
+            else:
+                print("⚠️ Response is missing 'targets' field")
+                
+            if 'descriptions' in response:
+                print(f"Stat descriptions included: {len(response.get('descriptions', {}))}")
+            else:
+                print("⚠️ Response is missing 'descriptions' field")
+                
+            return success, response
+        return False, None
+        
+    def test_regression_analysis(self, selected_stats, target, test_size=0.2, random_state=42):
+        """Test the regression-analysis endpoint"""
+        data = {
+            "selected_stats": selected_stats,
+            "target": target,
+            "test_size": test_size,
+            "random_state": random_state
+        }
+        
+        success, response = self.run_test(
+            f"Perform Regression Analysis (Target: {target}, Stats: {', '.join(selected_stats)})",
+            "POST",
+            "regression-analysis",
+            200,
+            data=data
+        )
+        
+        if success:
+            print(f"Regression analysis successful: {response.get('success', False)}")
+            if response.get('success', False):
+                print(f"Model type: {response.get('model_type', 'unknown')}")
+                print(f"Sample size: {response.get('sample_size', 0)}")
+                
+                # Check model-specific results
+                results = response.get('results', {})
+                if target == 'points_per_game':
+                    if 'r2_score' in results:
+                        print(f"R² score: {results.get('r2_score', 0)}")
+                    if 'rmse' in results:
+                        print(f"RMSE: {results.get('rmse', 0)}")
+                    if 'coefficients' in results:
+                        print("Coefficients included in response")
+                        for stat, coef in results.get('coefficients', {}).items():
+                            print(f"  {stat}: {coef}")
+                elif target == 'match_result':
+                    if 'accuracy' in results:
+                        print(f"Accuracy: {results.get('accuracy', 0)}")
+                    if 'feature_importance' in results:
+                        print("Feature importance included in response")
+                        for stat, importance in results.get('feature_importance', {}).items():
+                            print(f"  {stat}: {importance}")
+                    if 'classification_report' in results:
+                        print("Classification report included in response")
+            else:
+                print(f"Regression analysis failed with error: {response.get('message', 'Unknown error')}")
+                
+            return success, response
+        return False, None
+        
+    def test_regression_analysis_invalid_stats(self, target='points_per_game'):
+        """Test the regression-analysis endpoint with invalid stats"""
+        data = {
+            "selected_stats": ["invalid_stat_1", "invalid_stat_2"],
+            "target": target
+        }
+        
+        success, response = self.run_test(
+            f"Regression Analysis with Invalid Stats (Target: {target})",
+            "POST",
+            "regression-analysis",
+            200,  # Should still return 200 with success=False in the response
+            data=data
+        )
+        
+        if success:
+            if not response.get('success', True):
+                print("✅ Correctly handled invalid stats")
+                print(f"Error message: {response.get('message', 'No error message')}")
+            else:
+                print("⚠️ API accepted invalid stats without error")
+                
+            return success, response
+        return False, None
+        
+    def test_regression_analysis_empty_stats(self, target='points_per_game'):
+        """Test the regression-analysis endpoint with empty stats list"""
+        data = {
+            "selected_stats": [],
+            "target": target
+        }
+        
+        success, response = self.run_test(
+            f"Regression Analysis with Empty Stats (Target: {target})",
+            "POST",
+            "regression-analysis",
+            200,  # Should still return 200 with success=False in the response
+            data=data
+        )
+        
+        if success:
+            if not response.get('success', True):
+                print("✅ Correctly handled empty stats list")
+                print(f"Error message: {response.get('message', 'No error message')}")
+            else:
+                print("⚠️ API accepted empty stats list without error")
+                
+            return success, response
+        return False, None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
