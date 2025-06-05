@@ -1437,47 +1437,59 @@ function App() {
 
                       {/* Detailed Breakdown */}
                       <div className="grid grid-cols-1 gap-6">
-                        {/* Algorithm Steps Breakdown */}
+                        {/* ML Algorithm Breakdown */}
                         <div className="bg-white p-6 rounded-lg border">
-                          <h4 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Algorithm Breakdown</h4>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4">🤖 ML Model Predictions</h4>
                           
-                          {/* Step 1: Base xG Calculation */}
-                          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                            <h5 className="font-semibold text-blue-900 mb-3">Step 1: Base xG Calculation</h5>
+                          {/* Model Performance */}
+                          <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+                            <h5 className="font-semibold text-purple-900 mb-3">Model Performance & Confidence</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                               <div className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600">{predictionResult.home_team} Shots/Game:</span>
-                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_shots_avg}</span>
+                                  <span className="text-gray-600">Prediction Method:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.prediction_method || 'Machine Learning (Random Forest)'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600">{predictionResult.home_team} xG per Shot:</span>
-                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_xg_per_shot}</span>
+                                  <span className="text-gray-600">Features Used:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.model_confidence?.features_used || '45+'} features</span>
                                 </div>
                                 <div className="flex justify-between border-t pt-2">
-                                  <span className="text-blue-700 font-medium">Base xG (Home):</span>
-                                  <span className="font-bold text-blue-700">{predictionResult.prediction_breakdown?.home_base_xg}</span>
+                                  <span className="text-purple-700 font-medium">Model Confidence:</span>
+                                  <span className="font-bold text-purple-700">{predictionResult.prediction_breakdown?.model_confidence?.classifier_confidence ? (predictionResult.prediction_breakdown.model_confidence.classifier_confidence * 100).toFixed(1) + '%' : 'High'}</span>
                                 </div>
                               </div>
                               <div className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600">{predictionResult.away_team} Shots/Game:</span>
-                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_shots_avg}</span>
+                                  <span className="text-gray-600">Training Data:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.model_confidence?.training_samples || 'Full historical dataset'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-gray-600">{predictionResult.away_team} xG per Shot:</span>
-                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_xg_per_shot}</span>
+                                  <span className="text-gray-600">Model Type:</span>
+                                  <span className="font-medium">Random Forest Ensemble</span>
                                 </div>
                                 <div className="flex justify-between border-t pt-2">
-                                  <span className="text-blue-700 font-medium">Base xG (Away):</span>
-                                  <span className="font-bold text-blue-700">{predictionResult.prediction_breakdown?.away_base_xg}</span>
+                                  <span className="text-purple-700 font-medium">Data Quality:</span>
+                                  <span className="font-bold text-purple-700">{predictionResult.confidence_factors?.data_quality || 'Historical match data'}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Step 2: Possession Adjustment */}
-                          <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                          {/* Feature Importance */}
+                          {predictionResult.prediction_breakdown?.feature_importance?.top_features && (
+                            <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                              <h5 className="font-semibold text-green-900 mb-3">Most Important Features</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {Object.entries(predictionResult.prediction_breakdown.feature_importance.top_features).map(([feature, importance], index) => (
+                                  <div key={index} className="flex justify-between">
+                                    <span className="text-gray-600">{feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>
+                                    <span className="font-medium">{(importance * 100).toFixed(1)}%</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                             <h5 className="font-semibold text-green-900 mb-3">Step 2: Possession Adjustment</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                               <div className="space-y-2">
