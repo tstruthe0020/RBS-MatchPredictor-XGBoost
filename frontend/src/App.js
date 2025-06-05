@@ -477,6 +477,25 @@ function App() {
                 /* Prediction Form */
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Configuration Selection */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Prediction Configuration
+                      </label>
+                      <select
+                        value={configName}
+                        onChange={(e) => setConfigName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="default">Default Configuration</option>
+                        {configs.map(config => (
+                          <option key={config.config_name} value={config.config_name}>
+                            {config.config_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Home Team */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
