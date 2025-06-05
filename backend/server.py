@@ -449,6 +449,9 @@ class MatchPredictor:
     async def predict_match(self, home_team, away_team, referee_name, match_date=None, config_name="default"):
         """Enhanced prediction function using comprehensive team stats with configurable weights"""
         try:
+            # Get configuration
+            config = await self.get_config(config_name)
+            
             # Get comprehensive team averages (home and away context)
             home_stats = await self.calculate_team_averages(home_team, is_home=True, exclude_opponent=away_team)
             away_stats = await self.calculate_team_averages(away_team, is_home=False, exclude_opponent=home_team)
