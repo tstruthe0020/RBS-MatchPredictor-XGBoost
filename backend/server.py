@@ -1994,21 +1994,26 @@ async def migrate_confidence():
 
 @api_router.post("/calculate-rbs")
 async def calculate_rbs(config_name: str = "default"):
-    """Calculate RBS scores for all team-referee combinations using specified configuration"""
+    """Calculate RBS scores for all team-referee combinations and ensure all team statistics are properly calculated"""
     try:
-        # Get all data
+        # Step 1: Calculate and update comprehensive team statistics first
+        print("Step 1: Calculating comprehensive team statistics...")
+        await calculate_comprehensive_team_stats()
+        
+        # Step 2: Get all data (now with updated statistics)
         matches = await db.matches.find().to_list(10000)
         team_stats = await db.team_stats.find().to_list(10000)
         
-        # Clear existing RBS results
+        # Step 3: Clear existing RBS results
         await db.rbs_results.delete_many({})
         
-        # Get unique team-referee combinations
+        # Step 4: Get unique team-referee combinations
         team_referee_pairs = set()
         for match in matches:
             team_referee_pairs.add((match['home_team'], match['referee']))
             team_referee_pairs.add((match['away_team'], match['referee']))
         
+        # Step 5: Calculate RBS for each combination
         rbs_results = []
         for team_name, referee in team_referee_pairs:
             result = await rbs_calculator.calculate_rbs_for_team_referee(
@@ -2017,19 +2022,144 @@ async def calculate_rbs(config_name: str = "default"):
             if result:
                 rbs_results.append(result)
         
-        # Insert results
+        # Step 6: Insert results
         if rbs_results:
             await db.rbs_results.insert_many(rbs_results)
         
         return {
             "success": True,
-            "message": f"Calculated RBS for {len(rbs_results)} team-referee combinations using '{config_name}' configuration",
+            "message": f"Calculated comprehensive team statistics and RBS for {len(rbs_results)} team-referee combinations using '{config_name}' configuration",
             "results_count": len(rbs_results),
-            "config_used": config_name
+            "config_used": config_name,
+            "team_stats_updated": True
         }
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calculating RBS: {str(e)}")
+
+async def calculate_comprehensive_team_stats():
+    """Calculate all team statistics needed for RBS and match prediction"""
+    try:
+        # Get all data
+        matches = await db.matches.find().to_list(10000)
+        team_stats_raw = await db.team_stats.find().to_list(10000)
+        player_stats = await db.player_stats.find().to_list(50000)
+        
+        # Group player stats by match and team for aggregation
+        player_stats_by_match_team = {}
+        for pstat in player_stats:
+            key = f"{pstat['match_id']}_{pstat['team_name']}"
+            if key not in player_stats_by_match_team:
+                player_stats_by_match_team[key] = []
+            player_stats_by_match_team[key].append(pstat)
+        
+        # Process each team stat record and calculate comprehensive metrics
+        updated_team_stats = []
+        
+        for team_stat in team_stats_raw:
+            match_id = team_stat['match_id']
+            team_name = team_stat['team_name']
+            
+            # Get corresponding match data
+            match = next((m for m in matches if m['match_id'] == match_id), None)
+            if not match:
+                continue
+            
+            # Get player stats for this team in this match
+            player_key = f"{match_id}_{team_name}"
+            match_player_stats = player_stats_by_match_team.get(player_key, [])
+            
+            # Calculate aggregated values from player stats
+            aggregated_xg = sum(ps.get('xg', 0) for ps in match_player_stats)
+            aggregated_fouls_drawn = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
+            aggregated_penalties = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
+            aggregated_penalty_goals = sum(ps.get('penalty_goals', 0) for ps in match_player_stats)
+            
+            # Use aggregated values if available, otherwise fall back to team stats
+            final_xg = aggregated_xg if aggregated_xg > 0 else team_stat.get('xg', 0)
+            final_fouls_drawn = aggregated_fouls_drawn if aggregated_fouls_drawn > 0 else team_stat.get('fouls_drawn', 0)
+            final_penalties = aggregated_penalties if aggregated_penalties > 0 else team_stat.get('penalties_awarded', 0)
+            final_penalty_goals = aggregated_penalty_goals if aggregated_penalty_goals > 0 else team_stat.get('penalty_goals', 0)
+            
+            # Get actual goals from match result
+            is_home = team_stat.get('is_home', False)
+            actual_goals = match['home_score'] if is_home else match['away_score']
+            goals_conceded = match['away_score'] if is_home else match['home_score']
+            
+            # Calculate comprehensive statistics
+            shots_total = max(team_stat.get('shots_total', 0), 1)  # Avoid division by zero
+            shots_on_target = team_stat.get('shots_on_target', 0)
+            possession_pct = team_stat.get('possession_pct', 50.0)
+            
+            # Calculate derived metrics with proper fallbacks
+            xg_per_shot = final_xg / shots_total if shots_total > 0 else 0
+            goals_per_xg = actual_goals / final_xg if final_xg > 0 else 1.0
+            shot_accuracy = shots_on_target / shots_total if shots_total > 0 else 0.3
+            conversion_rate = actual_goals / shots_on_target if shots_on_target > 0 else 0.1
+            penalty_conversion_rate = final_penalty_goals / final_penalties if final_penalties > 0 else 0.77
+            
+            # Calculate points for this match
+            if actual_goals > goals_conceded:
+                points = 3  # Win
+            elif actual_goals == goals_conceded:
+                points = 1  # Draw
+            else:
+                points = 0  # Loss
+            
+            # Update the team stat record with all calculated values
+            team_stat.update({
+                # Core statistics (updated with aggregated values)
+                'xg': final_xg,
+                'fouls_drawn': final_fouls_drawn,
+                'penalties_awarded': final_penalties,
+                'penalty_goals': final_penalty_goals,
+                'penalty_attempts': final_penalties,  # Same as penalties_awarded for consistency
+                
+                # Derived statistics for match prediction
+                'xg_per_shot': xg_per_shot,
+                'goals_per_xg': goals_per_xg,
+                'shot_accuracy': shot_accuracy,
+                'conversion_rate': conversion_rate,
+                'penalty_conversion_rate': penalty_conversion_rate,
+                
+                # Match outcome data
+                'goals_scored': actual_goals,
+                'goals_conceded': goals_conceded,
+                'points_earned': points,
+                
+                # Additional metrics
+                'goal_difference': actual_goals - goals_conceded,
+                'clean_sheet': 1 if goals_conceded == 0 else 0,
+                'scored_goals': 1 if actual_goals > 0 else 0,
+                
+                # Ensure all required fields exist with proper defaults
+                'shots_total': shots_total,
+                'shots_on_target': shots_on_target,
+                'possession_pct': possession_pct,
+                'yellow_cards': team_stat.get('yellow_cards', 0),
+                'red_cards': team_stat.get('red_cards', 0),
+                'fouls': team_stat.get('fouls', 0),
+                
+                # Add timestamp for tracking
+                'stats_calculated_at': datetime.now().isoformat()
+            })
+            
+            updated_team_stats.append(team_stat)
+        
+        # Update the database with comprehensive team statistics
+        if updated_team_stats:
+            # Clear and replace all team stats with updated versions
+            await db.team_stats.delete_many({})
+            await db.team_stats.insert_many(updated_team_stats)
+        
+        return {
+            "success": True,
+            "message": f"Calculated comprehensive statistics for {len(updated_team_stats)} team records",
+            "records_updated": len(updated_team_stats)
+        }
+        
+    except Exception as e:
+        raise Exception(f"Error calculating comprehensive team stats: {str(e)}")
 
 @api_router.post("/recalculate-all-stats")
 async def recalculate_all_stats():
