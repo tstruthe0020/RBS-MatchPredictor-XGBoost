@@ -469,9 +469,22 @@ class MatchPredictor:
         Returns:
             tuple: (home_win_prob, draw_prob, away_win_prob) as percentages
         """
-        # Ensure minimum goal expectations to avoid mathematical issues
-        home_lambda = max(0.1, home_goals)
-        away_lambda = max(0.1, away_goals)
+        # Use actual predicted goals without modification
+        home_lambda = home_goals
+        away_lambda = away_goals
+        
+        # Handle edge case of zero goals in Poisson calculation
+        if home_lambda <= 0 or away_lambda <= 0:
+            # If either team has 0 predicted goals, calculate probabilities differently
+            if home_lambda <= 0 and away_lambda <= 0:
+                # Both teams predicted 0 goals - equal probability of all outcomes
+                return 33.33, 33.33, 33.34
+            elif home_lambda <= 0:
+                # Home team predicted 0 goals - away team very likely to win
+                return 5.0, 15.0, 80.0
+            else:
+                # Away team predicted 0 goals - home team very likely to win
+                return 80.0, 15.0, 5.0
         
         # Calculate probabilities for different score combinations
         # We'll calculate up to a reasonable maximum (e.g., 10 goals each)
