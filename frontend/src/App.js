@@ -371,6 +371,51 @@ function App() {
     });
   };
 
+  // Regression Analysis functions
+  const fetchAvailableStats = async () => {
+    try {
+      const response = await axios.get(`${API}/regression-stats`);
+      setAvailableStats(response.data.available_stats || []);
+    } catch (error) {
+      console.error('Error fetching available stats:', error);
+    }
+  };
+
+  const runRegressionAnalysis = async () => {
+    if (selectedStats.length === 0) {
+      alert('Please select at least one statistic for analysis');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const requestData = {
+        selected_stats: selectedStats,
+        target: regressionTarget
+      };
+      const response = await axios.post(`${API}/regression-analysis`, requestData);
+      setRegressionResult(response.data);
+    } catch (error) {
+      alert(`❌ Analysis Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setAnalyzing(false);
+  };
+
+  const resetAnalysis = () => {
+    setSelectedStats([]);
+    setRegressionResult(null);
+  };
+
+  const toggleStat = (stat) => {
+    setSelectedStats(prev => {
+      if (prev.includes(stat)) {
+        return prev.filter(s => s !== stat);
+      } else {
+        return [...prev, stat];
+      }
+    });
+  };
+
   // Apply filters when team/referee selection changes  
   useEffect(() => {
     if (activeTab === 'results') {
