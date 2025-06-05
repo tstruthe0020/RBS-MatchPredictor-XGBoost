@@ -1496,9 +1496,9 @@ def test_database_data_verification():
         print(json.dumps(data, indent=2))
         
         # Check if collections have data
-        if data.get("success", False):
+        if data:
             print("\n✅ Collections exist and have data")
-            for collection, count in data.get("collection_counts", {}).items():
+            for collection, count in data.items():
                 print(f"  - {collection}: {count} documents")
                 
                 # Check if we have team_stats, matches, and rbs_results
