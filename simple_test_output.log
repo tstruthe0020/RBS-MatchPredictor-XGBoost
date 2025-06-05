@@ -1,0 +1,11 @@
+Found 56 teams
+Found 68 referees
+Testing prediction for Arsenal vs Aston Villa with referee Abdou Ndiaye
+Success: True
+Predicted Home Goals: 1.1
+Predicted Away Goals: 0.4
+✅ No "points_per_game" error found
+home_xg_per_shot: 0.806
+away_xg_per_shot: 0.625
+home_shots_avg: 1.0
+away_shots_avg: 1.0
