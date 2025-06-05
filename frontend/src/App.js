@@ -747,28 +747,47 @@ function App() {
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">RBS Formula Explanation</h2>
-              <div className="text-gray-700 space-y-2">
-                <p><strong>RBS (Referee Bias Score)</strong> measures how a specific referee influences a team's performance compared to that team's performance with other referees.</p>
-                <p><strong>Formula:</strong> RBS(team,referee) = (1/N) × Σ[TeamStat(vs referee) - TeamStat(vs others)] × weight</p>
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <h4 className="font-semibold">Statistics & Weights:</h4>
-                    <ul className="mt-2 space-y-1">
-                      <li>• Yellow cards: 0.3</li>
-                      <li>• Red cards: 0.5</li>
-                      <li>• Fouls committed: 0.1</li>
-                      <li>• Fouls drawn: 0.1</li>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">🏛️ RBS Algorithm Methodology</h2>
+              <div className="text-gray-700 space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">Performance Differential Analysis</h3>
+                  <p><strong>RBS (Referee Bias Score)</strong> compares a team's performance when a specific referee officiates vs when other referees officiate.</p>
+                  <p className="text-sm mt-2"><strong>Method:</strong> Calculate the difference in team statistics with vs without the referee, then apply weighted importance factors.</p>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-2">Core Formula</h3>
+                  <div className="font-mono text-sm bg-white p-2 rounded border">
+                    RBS = tanh(Σ(differential_i × weight_i))
+                  </div>
+                  <p className="text-sm mt-2">Where differential = avg_with_referee - avg_without_referee</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded">
+                    <h4 className="font-semibold text-gray-900">📊 Analyzed Statistics:</h4>
+                    <ul className="mt-2 space-y-1 text-sm">
+                      <li>• <span className="text-red-600">Yellow cards</span> (fewer = positive bias)</li>
+                      <li>• <span className="text-red-800">Red cards</span> (fewer = positive bias)</li>
+                      <li>• <span className="text-orange-600">Fouls committed</span> (fewer = positive bias)</li>
+                      <li>• <span className="text-green-600">Fouls drawn</span> (more = positive bias)</li>
                     </ul>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">Additional Factors:</h4>
-                    <ul className="mt-2 space-y-1">
-                      <li>• Penalties awarded: 0.5</li>
-                      <li>• xG difference: 0.4</li>
-                      <li>• Possession %: 0.2</li>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <h4 className="font-semibold text-gray-900">🎯 Key Advantages:</h4>
+                    <ul className="mt-2 space-y-1 text-sm">
+                      <li>• <span className="text-purple-600">Penalties awarded</span> (more = positive bias)</li>
+                      <li>• <span className="text-blue-600">xG difference</span> (higher = positive bias)</li>
+                      <li>• <span className="text-indigo-600">Possession %</span> (more = positive bias)</li>
                     </ul>
                   </div>
+                </div>
+                
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-yellow-900 mb-2">Enhanced Variance Analysis</h3>
+                  <p className="text-sm">Additionally analyzes how consistently a referee makes decisions for a specific team compared to their overall patterns across all teams.</p>
+                  <p className="text-sm mt-1"><strong>Variance Ratio:</strong> team_specific_variance ÷ overall_variance</p>
+                  <p className="text-sm mt-1">Ratios >1.5 indicate more variable/inconsistent treatment than usual.</p>
                 </div>
               </div>
             </div>
