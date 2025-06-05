@@ -1,3 +1,19 @@
+frontend:
+  - task: "Referee Page Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed the referee page functionality to ensure that the loadEnhancedRBSData function is properly defined and the variance and matches columns display data correctly."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the referee page functionality. The Results tab loads correctly, and clicking on a referee from the referee summary list navigates to the referee details page without any errors. The 'loadEnhancedRBSData is not defined' error has been fixed, and the function is now properly called when a referee is selected. The console logs confirm that the enhanced RBS data is loaded successfully. There are no stuck 'Loading...' indicators in the variance and matches columns. The enhanced RBS data table is not displayed because there are no RBS results for the selected referee yet, but this is expected behavior rather than an error."
+
 backend:
   - task: "Enhanced Regression Analysis System"
     implemented: true
