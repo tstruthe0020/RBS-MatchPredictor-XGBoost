@@ -463,7 +463,7 @@ class MatchPredictor:
             if not home_stats or not away_stats:
                 raise ValueError("Insufficient historical data for one or both teams")
             
-            # Enhanced xG calculation using multiple factors
+            # Enhanced xG calculation using configurable weights
             
             # Method 1: Shot-based xG calculation
             home_shot_xg = home_stats['shots_total'] * home_stats['xg_per_shot']
