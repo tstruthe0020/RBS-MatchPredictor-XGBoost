@@ -1440,6 +1440,429 @@ function App() {
           </div>
         )}
 
+        {/* RBS Configuration Tab */}
+        {activeTab === 'rbs-config' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">⚖️ RBS Algorithm Configuration</h2>
+              <p className="text-gray-600 mb-6">
+                Customize the weights and parameters used in the RBS (Referee Bias Score) calculation. Each setting controls how different team statistics influence the final bias score.
+              </p>
+
+              {/* RBS Configuration Guide */}
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-orange-900 mb-3">📚 RBS Configuration Guide</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-orange-800">
+                  <div>
+                    <h4 className="font-medium mb-2">⚖️ Algorithm Overview</h4>
+                    <p className="mb-2">The RBS calculation works in 4 steps:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-xs">
+                      <li><strong>Calculate team averages</strong> with and without specific referee</li>
+                      <li><strong>Compute differences</strong> for each statistic (with ref - without ref)</li>
+                      <li><strong>Apply weights and direction</strong> (negative for bad stats, positive for good)</li>
+                      <li><strong>Normalize with tanh</strong> to get scores between -1 and +1</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">🎯 Weight Strategies</h4>
+                    <div className="space-y-2 text-xs">
+                      <div><strong>Disciplinary Focus:</strong> Higher weights on cards (yellow 0.4, red 0.6)</div>
+                      <div><strong>Performance Focus:</strong> Higher weights on xG difference (0.5) and possession (0.3)</div>
+                      <div><strong>Balanced:</strong> Default weights spread across all factors</div>
+                      <div><strong>Conservative:</strong> Lower overall weights for subtle bias detection</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* RBS Configuration Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select RBS Configuration
+                  </label>
+                  <select
+                    value={rbsConfigName}
+                    onChange={(e) => {
+                      setRbsConfigName(e.target.value);
+                      fetchRbsConfig(e.target.value);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  >
+                    <option value="default">Default RBS Configuration</option>
+                    {rbsConfigs.map(config => (
+                      <option key={config.config_name} value={config.config_name}>
+                        {config.config_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-end space-x-2">
+                  <button
+                    onClick={() => {
+                      setRbsConfigEditing(true);
+                      resetRbsConfigForm();
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Create New
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRbsConfigEditing(true);
+                      setRbsConfigForm(currentRbsConfig);
+                    }}
+                    disabled={!currentRbsConfig}
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400"
+                  >
+                    Edit Current
+                  </button>
+                  <div className="ml-4">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Quick Templates:</label>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const templates = {
+                            disciplinary: {
+                              config_name: 'disciplinary-focus',
+                              yellow_cards_weight: 0.4,
+                              red_cards_weight: 0.6,
+                              fouls_committed_weight: 0.2,
+                              fouls_drawn_weight: 0.1,
+                              penalties_awarded_weight: 0.4,
+                              xg_difference_weight: 0.2,
+                              possession_percentage_weight: 0.1
+                            },
+                            performance: {
+                              config_name: 'performance-focus',
+                              yellow_cards_weight: 0.2,
+                              red_cards_weight: 0.3,
+                              fouls_committed_weight: 0.05,
+                              fouls_drawn_weight: 0.15,
+                              penalties_awarded_weight: 0.6,
+                              xg_difference_weight: 0.5,
+                              possession_percentage_weight: 0.3
+                            },
+                            conservative: {
+                              config_name: 'conservative',
+                              yellow_cards_weight: 0.2,
+                              red_cards_weight: 0.3,
+                              fouls_committed_weight: 0.05,
+                              fouls_drawn_weight: 0.05,
+                              penalties_awarded_weight: 0.3,
+                              xg_difference_weight: 0.25,
+                              possession_percentage_weight: 0.1
+                            }
+                          };
+                          const template = templates[e.target.value];
+                          setRbsConfigForm({
+                            ...rbsConfigForm,
+                            ...template,
+                            confidence_matches_multiplier: 4,
+                            max_confidence: 95,
+                            min_confidence: 10,
+                            confidence_threshold_low: 2,
+                            confidence_threshold_medium: 5,
+                            confidence_threshold_high: 10
+                          });
+                          setRbsConfigEditing(true);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="px-3 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Select Template</option>
+                      <option value="disciplinary">Disciplinary Focus</option>
+                      <option value="performance">Performance Focus</option>
+                      <option value="conservative">Conservative</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* RBS Configuration Form */}
+              {rbsConfigEditing && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    {rbsConfigForm.config_name === 'default' ? 'Edit RBS Configuration' : 'Create RBS Configuration'}
+                  </h3>
+
+                  <div className="space-y-6">
+                    {/* Configuration Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Configuration Name
+                      </label>
+                      <input
+                        type="text"
+                        value={rbsConfigForm.config_name}
+                        onChange={(e) => handleRbsConfigFormChange('config_name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter RBS configuration name"
+                      />
+                    </div>
+
+                    {/* RBS Weights */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">RBS Statistic Weights</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-orange-50 p-3 rounded">
+                        <strong>How RBS weights work:</strong> Each weight determines how much influence that statistic has on the final bias score. Higher weights mean the statistic has more impact on detecting referee bias.
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Yellow Cards Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.yellow_cards_weight}
+                            onChange={(e) => handleRbsConfigFormChange('yellow_cards_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> Higher yellow cards = worse for team (negative impact)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Red Cards Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.red_cards_weight}
+                            onChange={(e) => handleRbsConfigFormChange('red_cards_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> Higher red cards = worse for team (negative impact)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Committed Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.fouls_committed_weight}
+                            onChange={(e) => handleRbsConfigFormChange('fouls_committed_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> More fouls committed = worse for team (negative impact)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Drawn Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.fouls_drawn_weight}
+                            onChange={(e) => handleRbsConfigFormChange('fouls_drawn_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> More fouls drawn = better for team (positive impact)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Penalties Awarded Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.penalties_awarded_weight}
+                            onChange={(e) => handleRbsConfigFormChange('penalties_awarded_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> More penalties awarded = better for team (positive impact)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">xG Difference Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.xg_difference_weight}
+                            onChange={(e) => handleRbsConfigFormChange('xg_difference_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> Higher xG difference (team xG - opponent xG) = better for team (positive impact)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Possession Percentage Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={rbsConfigForm.possession_percentage_weight}
+                            onChange={(e) => handleRbsConfigFormChange('possession_percentage_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <strong>Direction:</strong> Higher possession % = better for team (positive impact)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Confidence Settings */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Confidence Calculation Settings</h4>
+                      <div className="mb-3 text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                        <strong>Confidence settings:</strong> These control how confidence levels are calculated based on the number of matches a team has played with a specific referee.
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Min Confidence</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="100"
+                            value={rbsConfigForm.min_confidence}
+                            onChange={(e) => handleRbsConfigFormChange('min_confidence', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Max Confidence</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="100"
+                            value={rbsConfigForm.max_confidence}
+                            onChange={(e) => handleRbsConfigFormChange('max_confidence', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Low Threshold (matches)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            value={rbsConfigForm.confidence_threshold_low}
+                            onChange={(e) => handleRbsConfigFormChange('confidence_threshold_low', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            Minimum matches needed for any confidence calculation
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Medium Threshold (matches)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            value={rbsConfigForm.confidence_threshold_medium}
+                            onChange={(e) => handleRbsConfigFormChange('confidence_threshold_medium', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            Matches needed for medium confidence (50-70%)
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">High Threshold (matches)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            value={rbsConfigForm.confidence_threshold_high}
+                            onChange={(e) => handleRbsConfigFormChange('confidence_threshold_high', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            Matches needed for high confidence (70%+)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={saveRbsConfig}
+                        className="px-6 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700"
+                      >
+                        Save Configuration
+                      </button>
+                      <button
+                        onClick={() => setRbsConfigEditing(false)}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Configuration Display */}
+              {!rbsConfigEditing && currentRbsConfig && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Current RBS Configuration: {currentRbsConfig.config_name}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">Yellow Cards</div>
+                      <div className="text-lg font-bold text-orange-600">{currentRbsConfig.yellow_cards_weight}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">Red Cards</div>
+                      <div className="text-lg font-bold text-red-600">{currentRbsConfig.red_cards_weight}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">Fouls Committed</div>
+                      <div className="text-lg font-bold text-red-600">{currentRbsConfig.fouls_committed_weight}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">Fouls Drawn</div>
+                      <div className="text-lg font-bold text-green-600">{currentRbsConfig.fouls_drawn_weight}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">Penalties Awarded</div>
+                      <div className="text-lg font-bold text-green-600">{currentRbsConfig.penalties_awarded_weight}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">xG Difference</div>
+                      <div className="text-lg font-bold text-blue-600">{currentRbsConfig.xg_difference_weight}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <div className="font-medium text-gray-700">Possession %</div>
+                      <div className="text-lg font-bold text-blue-600">{currentRbsConfig.possession_percentage_weight}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* RBS Formula Explanation */}
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mt-6">
+                <h4 className="text-md font-semibold text-orange-900 mb-3">🧮 RBS Formula Explanation</h4>
+                <div className="text-sm text-orange-800 space-y-2">
+                  <p><strong>📊 Formula:</strong> RBS = tanh(Σ(delta_i × weight_i))</p>
+                  <p><strong>📈 Where delta_i:</strong> (team_stat_with_referee - team_stat_without_referee)</p>
+                  <p><strong>⚖️ Normalization:</strong> tanh() ensures RBS scores are between -1 and +1</p>
+                  <ul className="list-disc list-inside ml-4 space-y-1">
+                    <li><strong>+1.0 = Strong favorable bias:</strong> Referee significantly helps the team</li>
+                    <li><strong>0.0 = Neutral:</strong> No bias detected</li>
+                    <li><strong>-1.0 = Strong unfavorable bias:</strong> Referee significantly hurts the team</li>
+                  </ul>
+                  <p><strong>🔄 Direction:</strong> Yellow cards, red cards, and fouls committed are multiplied by -1 (higher = worse for team)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results Tab */}
         {activeTab === 'results' && (
           <div className="space-y-6">
