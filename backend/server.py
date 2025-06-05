@@ -1023,16 +1023,16 @@ class RegressionAnalyzer:
                         'shots_on_target': home_stat.get('shots_on_target', 0),
                         'is_home': True,
                         
-                        # Advanced derived stats
+                        # Advanced derived stats using ONLY actual database values
                         'goals': home_score,
                         'goals_conceded': away_score,
-                        'xg_per_shot': home_xg / max(home_stat.get('shots_total', 1), 1),
-                        'goals_per_xg': home_score / max(home_xg, 0.1),
-                        'shot_accuracy': home_stat.get('shots_on_target', 0) / max(home_stat.get('shots_total', 1), 1),
-                        'conversion_rate': home_score / max(home_stat.get('shots_on_target', 1), 1),
+                        'xg_per_shot': home_xg / home_stat.get('shots_total') if home_stat.get('shots_total', 0) > 0 else 0,
+                        'goals_per_xg': home_score / home_xg if home_xg > 0 else 0,
+                        'shot_accuracy': home_stat.get('shots_on_target', 0) / home_stat.get('shots_total') if home_stat.get('shots_total', 0) > 0 else 0,
+                        'conversion_rate': home_score / home_stat.get('shots_on_target') if home_stat.get('shots_on_target', 0) > 0 else 0,
                         'penalty_attempts': home_stat.get('penalty_attempts', 0),
                         'penalty_goals': home_stat.get('penalty_goals', 0),
-                        'penalty_conversion_rate': home_stat.get('penalty_goals', 0) / max(home_stat.get('penalty_attempts', 1), 1) if home_stat.get('penalty_attempts', 0) > 0 else 0,
+                        'penalty_conversion_rate': home_stat.get('penalty_goals', 0) / home_stat.get('penalty_attempts') if home_stat.get('penalty_attempts', 0) > 0 else 0,
                         
                         # Additional variables for comprehensive analysis
                         'rbs_score': home_rbs,
