@@ -1176,7 +1176,7 @@ class RegressionAnalyzer:
                     'model_type': 'Random Forest Classifier',
                     'classification_report': class_report,
                     'feature_importance': feature_importance,
-                    'accuracy': float(class_report['accuracy']),
+                    'accuracy': self._safe_float_conversion(class_report.get('accuracy', 0)),
                     'train_samples': len(X_train),
                     'test_samples': len(X_test),
                     'classes': list(model.classes_)
