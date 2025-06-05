@@ -2465,6 +2465,62 @@ async def delete_rbs_config(config_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting RBS configuration: {str(e)}")
 
+@api_router.post("/regression-analysis", response_model=RegressionAnalysisResponse)
+async def perform_regression_analysis(request: RegressionAnalysisRequest):
+    """Perform regression analysis on match data to determine how team stats correlate with outcomes"""
+    try:
+        # Prepare match data
+        df = await regression_analyzer.prepare_match_data()
+        
+        if df.empty:
+            raise HTTPException(status_code=400, detail="No match data available for analysis")
+        
+        # Run regression analysis
+        result = regression_analyzer.run_regression(
+            df=df,
+            selected_stats=request.selected_stats,
+            target=request.target,
+            test_size=request.test_size,
+            random_state=request.random_state
+        )
+        
+        return RegressionAnalysisResponse(**result)
+    
+    except Exception as e:
+        return RegressionAnalysisResponse(
+            success=False,
+            target=request.target,
+            selected_stats=request.selected_stats,
+            sample_size=0,
+            model_type='N/A',
+            results={},
+            message=f"Error performing regression analysis: {str(e)}"
+        )
+
+@api_router.get("/regression-stats")
+async def get_available_regression_stats():
+    """Get list of available statistics for regression analysis"""
+    try:
+        return {
+            "success": True,
+            "available_stats": regression_analyzer.available_stats,
+            "targets": ["points_per_game", "match_result"],
+            "descriptions": {
+                "yellow_cards": "Number of yellow cards received by team",
+                "red_cards": "Number of red cards received by team", 
+                "fouls_committed": "Number of fouls committed by team",
+                "fouls_drawn": "Number of fouls drawn by team",
+                "penalties_awarded": "Number of penalties awarded to team",
+                "xg_difference": "Team xG minus opponent xG",
+                "possession_percentage": "Percentage of possession held by team",
+                "xg": "Expected goals for team",
+                "shots_total": "Total shots by team",
+                "shots_on_target": "Shots on target by team"
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching regression stats: {str(e)}")
+
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
     """Predict match outcome using xG-based algorithm with configurable weights"""
