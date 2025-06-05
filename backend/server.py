@@ -2098,12 +2098,16 @@ async def calculate_comprehensive_team_stats():
             aggregated_fouls_drawn = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
             aggregated_penalties = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
             aggregated_penalty_goals = sum(ps.get('penalty_goals', 0) for ps in match_player_stats)
+            aggregated_shots_total = sum(ps.get('shots_total', 0) for ps in match_player_stats)
+            aggregated_shots_on_target = sum(ps.get('shots_on_target', 0) for ps in match_player_stats)
             
             # Use aggregated values if available, otherwise fall back to team stats
             final_xg = aggregated_xg if aggregated_xg > 0 else team_stat.get('xg', 0)
             final_fouls_drawn = aggregated_fouls_drawn if aggregated_fouls_drawn > 0 else team_stat.get('fouls_drawn', 0)
             final_penalties = aggregated_penalties if aggregated_penalties > 0 else team_stat.get('penalties_awarded', 0)
             final_penalty_goals = aggregated_penalty_goals if aggregated_penalty_goals > 0 else team_stat.get('penalty_goals', 0)
+            final_shots_total = aggregated_shots_total if aggregated_shots_total > 0 else team_stat.get('shots_total', 0)
+            final_shots_on_target = aggregated_shots_on_target if aggregated_shots_on_target > 0 else team_stat.get('shots_on_target', 0)
             
             # Get actual goals from match result
             is_home = team_stat.get('is_home', False)
