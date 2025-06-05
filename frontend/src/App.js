@@ -17,6 +17,12 @@ function App() {
   const [calculating, setCalculating] = useState(false);
   const [uploadMessages, setUploadMessages] = useState({});
   
+  // Multi-dataset upload state
+  const [datasets, setDatasets] = useState([]);
+  const [multiDatasetFiles, setMultiDatasetFiles] = useState([]);
+  const [uploadingMultiDataset, setUploadingMultiDataset] = useState(false);
+  const [multiDatasetResults, setMultiDatasetResults] = useState(null);
+  
   // New state for referee-based navigation
   const [refereeSummary, setRefereeSummary] = useState([]);
   const [selectedRefereeDetails, setSelectedRefereeDetails] = useState(null);
