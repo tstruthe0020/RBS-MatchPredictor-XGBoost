@@ -315,6 +315,117 @@ function App() {
     setUploadingMultiDataset(false);
   };
 
+  // Formula optimization functions
+  const analyzeRBSOptimization = async () => {
+    setAnalyzingFormulas(true);
+    try {
+      const response = await axios.post(`${API}/analyze-rbs-optimization`);
+      setOptimizationResults(prev => ({
+        ...prev,
+        rbs: response.data
+      }));
+    } catch (error) {
+      alert(`❌ Error analyzing RBS formula: ${error.response?.data?.detail || error.message}`);
+    }
+    setAnalyzingFormulas(false);
+  };
+
+  const analyzePredictorOptimization = async () => {
+    setAnalyzingFormulas(true);
+    try {
+      const response = await axios.post(`${API}/analyze-predictor-optimization`);
+      setOptimizationResults(prev => ({
+        ...prev,
+        predictor: response.data
+      }));
+    } catch (error) {
+      alert(`❌ Error analyzing Match Predictor formula: ${error.response?.data?.detail || error.message}`);
+    }
+    setAnalyzingFormulas(false);
+  };
+
+  const applyRBSWeights = async (suggestedWeights) => {
+    if (!window.confirm('Apply the suggested RBS weights? This will create a new RBS configuration.')) {
+      return;
+    }
+
+    setApplyingWeights(true);
+    try {
+      const configName = `rbs_optimized_${new Date().toISOString().split('T')[0]}`;
+      
+      const configData = {
+        config_name: configName,
+        yellow_cards_weight: suggestedWeights.yellow_cards || 0.3,
+        red_cards_weight: suggestedWeights.red_cards || 0.5,
+        fouls_committed_weight: suggestedWeights.fouls_committed || 0.1,
+        fouls_drawn_weight: suggestedWeights.fouls_drawn || 0.1,
+        penalties_awarded_weight: suggestedWeights.penalties_awarded || 0.5,
+        xg_difference_weight: suggestedWeights.xg_difference || 0.4,
+        possession_percentage_weight: suggestedWeights.possession_percentage || 0.2
+      };
+
+      const response = await axios.post(`${API}/rbs-configs`, configData);
+      alert(`✅ RBS configuration "${configName}" created successfully!`);
+      fetchRbsConfigs();
+    } catch (error) {
+      alert(`❌ Error applying RBS weights: ${error.response?.data?.detail || error.message}`);
+    }
+    setApplyingWeights(false);
+  };
+
+  const applyPredictorWeights = async (analysisResults) => {
+    if (!window.confirm('Apply optimized Match Predictor weights? This will create a new prediction configuration.')) {
+      return;
+    }
+
+    setApplyingWeights(true);
+    try {
+      const configName = `predictor_optimized_${new Date().toISOString().split('T')[0]}`;
+      
+      // Extract insights from predictor analysis to suggest configuration
+      const predictorAnalysis = analysisResults.results.predictor_vs_points;
+      let configData = {
+        config_name: configName,
+        // Default values that can be adjusted based on analysis
+        xg_shot_based_weight: 0.4,
+        xg_historical_weight: 0.4,
+        xg_opponent_defense_weight: 0.2,
+        ppg_adjustment_factor: 0.15,
+        possession_adjustment_per_percent: 0.01,
+        fouls_drawn_factor: 0.02,
+        penalty_xg_value: 0.79,
+        rbs_scaling_factor: 0.2
+      };
+
+      // Adjust weights based on variable importance if available
+      if (predictorAnalysis.success && predictorAnalysis.results.coefficients) {
+        const coeffs = predictorAnalysis.results.coefficients;
+        
+        // Adjust possession factor based on its coefficient
+        if (coeffs.possession_percentage) {
+          configData.possession_adjustment_per_percent = Math.max(0.005, Math.min(0.02, Math.abs(coeffs.possession_percentage) * 0.01));
+        }
+        
+        // Adjust RBS scaling based on its importance
+        if (coeffs.rbs_score) {
+          configData.rbs_scaling_factor = Math.max(0.1, Math.min(0.3, Math.abs(coeffs.rbs_score) * 0.2));
+        }
+        
+        // Adjust fouls drawn factor
+        if (coeffs.fouls_drawn) {
+          configData.fouls_drawn_factor = Math.max(0.01, Math.min(0.05, Math.abs(coeffs.fouls_drawn) * 0.02));
+        }
+      }
+
+      const response = await axios.post(`${API}/prediction-configs`, configData);
+      alert(`✅ Prediction configuration "${configName}" created successfully!`);
+      fetchConfigs();
+    } catch (error) {
+      alert(`❌ Error applying Predictor weights: ${error.response?.data?.detail || error.message}`);
+    }
+    setApplyingWeights(false);
+  };
+
   const getRBSColor = (score) => {
     if (score > 0.1) return 'text-green-600 bg-green-50';
     if (score < -0.1) return 'text-red-600 bg-red-50';
