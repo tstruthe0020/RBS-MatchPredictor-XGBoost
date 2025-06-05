@@ -1223,6 +1223,53 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {/* Database Management Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">🗄️ Database Management</h2>
+              <p className="text-gray-600 mb-6">
+                Manage your database with caution. These actions are irreversible.
+              </p>
+
+              <div className="space-y-4">
+                {/* Current Database Stats */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📊 Current Database Contents</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{stats.matches}</div>
+                      <div className="text-gray-600">Matches</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{stats.team_stats}</div>
+                      <div className="text-gray-600">Team Stats</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">{stats.player_stats}</div>
+                      <div className="text-gray-600">Player Stats</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">{stats.rbs_results}</div>
+                      <div className="text-gray-600">RBS Results</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Wipe Database Section */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-red-900 mb-2">⚠️ Danger Zone</h3>
+                  <p className="text-red-700 mb-4 text-sm">
+                    This action will permanently delete ALL data from the database including matches, team statistics, player statistics, RBS results, and configuration settings. This cannot be undone.
+                  </p>
+                  <button
+                    onClick={wipeDatabase}
+                    className="px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    🗑️ Wipe Entire Database
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
