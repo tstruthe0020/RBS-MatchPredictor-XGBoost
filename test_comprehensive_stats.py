@@ -41,7 +41,7 @@ def test_comprehensive_team_stats():
 def get_team_stats(team_name="Arsenal"):
     """Get team stats directly from the database"""
     print(f"\n=== Getting Team Stats for {team_name} ===")
-    response = requests.get(f"{BASE_URL}/team-stats/{team_name}")
+    response = requests.get(f"{BASE_URL}/debug/team-stats/{team_name}")
     
     if response.status_code == 200:
         print(f"Status: {response.status_code} OK")
