@@ -807,14 +807,8 @@ class MatchPredictor:
                 "config_used": config_name
             }
             
-            # Enhanced confidence factors with configurable calculation
-            overall_confidence = min(
-                config.max_confidence, 
-                max(
-                    config.min_confidence, 
-                    (home_stats['matches_count'] + away_stats['matches_count']) / 2 * config.confidence_matches_multiplier
-                )
-            )
+            # Confidence calculation using actual match data
+            overall_confidence = (home_stats['matches_count'] + away_stats['matches_count']) / 2 * config.confidence_matches_multiplier
             
             confidence_factors = {
                 "home_matches_count": home_stats['matches_count'],
