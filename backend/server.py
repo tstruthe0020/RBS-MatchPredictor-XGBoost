@@ -100,6 +100,28 @@ class UploadResponse(BaseModel):
     message: str
     records_processed: int
 
+class MultiDatasetUploadRequest(BaseModel):
+    dataset_name: str
+    matches_file: str  # base64 encoded CSV content
+    team_stats_file: str  # base64 encoded CSV content
+    player_stats_file: str  # base64 encoded CSV content
+
+class DatasetInfo(BaseModel):
+    dataset_name: str
+    matches_count: int
+    team_stats_count: int
+    player_stats_count: int
+    created_at: str
+
+class DatasetListResponse(BaseModel):
+    success: bool
+    datasets: List[DatasetInfo]
+
+class DatasetDeleteResponse(BaseModel):
+    success: bool
+    message: str
+    records_deleted: int
+
 class PredictionConfig(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     config_name: str = "default"
