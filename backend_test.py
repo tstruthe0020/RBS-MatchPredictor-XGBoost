@@ -864,6 +864,53 @@ def main():
     else:
         print("❌ Failed to calculate RBS scores with custom configuration")
     
+    # Regression Analysis Summary
+    print("\n=== Regression Analysis Summary ===")
+    
+    if regression_stats_success:
+        print("✅ Successfully retrieved available regression stats")
+        if regression_stats:
+            print(f"✅ Found {len(regression_stats.get('available_stats', []))} available stats for analysis")
+            print(f"✅ Found {len(regression_stats.get('targets', []))} available targets for analysis")
+    else:
+        print("❌ Failed to retrieve available regression stats")
+    
+    if 'linear_regression_success' in locals() and linear_regression_success:
+        print("✅ Successfully performed linear regression analysis")
+        if 'linear_regression' in locals() and linear_regression and linear_regression.get('success', False):
+            results = linear_regression.get('results', {})
+            print(f"✅ Linear regression R² score: {results.get('r2_score', 0)}")
+            print(f"✅ Linear regression RMSE: {results.get('rmse', 0)}")
+        else:
+            print("⚠️ Linear regression analysis returned an error")
+    else:
+        print("❌ Failed to perform linear regression analysis")
+    
+    if 'classification_success' in locals() and classification_success:
+        print("✅ Successfully performed classification analysis")
+        if 'classification' in locals() and classification and classification.get('success', False):
+            results = classification.get('results', {})
+            print(f"✅ Classification accuracy: {results.get('accuracy', 0)}")
+        else:
+            print("⚠️ Classification analysis returned an error")
+    else:
+        print("❌ Failed to perform classification analysis")
+    
+    if 'mixed_analysis_success' in locals() and mixed_analysis_success:
+        print("✅ Successfully performed mixed analysis")
+    else:
+        print("❌ Failed to perform mixed analysis")
+    
+    if 'invalid_stats_success' in locals() and invalid_stats_success:
+        print("✅ Successfully tested invalid stats handling")
+    else:
+        print("❌ Failed to test invalid stats handling")
+    
+    if 'empty_stats_success' in locals() and empty_stats_success:
+        print("✅ Successfully tested empty stats list handling")
+    else:
+        print("❌ Failed to test empty stats list handling")
+    
     return 0 if tester.tests_passed == tester.tests_run else 1
 
 if __name__ == "__main__":
