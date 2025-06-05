@@ -34,6 +34,7 @@ function App() {
   // New state for referee-based navigation
   const [refereeSummary, setRefereeSummary] = useState([]);
   const [selectedRefereeDetails, setSelectedRefereeDetails] = useState(null);
+  const [enhancedRBSData, setEnhancedRBSData] = useState({});
   const [viewingReferee, setViewingReferee] = useState(null);
 
   // Match prediction state
