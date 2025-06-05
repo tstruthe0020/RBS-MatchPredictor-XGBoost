@@ -2533,6 +2533,7 @@ async def get_available_regression_stats():
             "available_stats": regression_analyzer.available_stats,
             "targets": ["points_per_game", "match_result"],
             "descriptions": {
+                # Basic team stats
                 "yellow_cards": "Number of yellow cards received by team",
                 "red_cards": "Number of red cards received by team", 
                 "fouls_committed": "Number of fouls committed by team",
@@ -2542,7 +2543,24 @@ async def get_available_regression_stats():
                 "possession_percentage": "Percentage of possession held by team",
                 "xg": "Expected goals for team",
                 "shots_total": "Total shots by team",
-                "shots_on_target": "Shots on target by team"
+                "shots_on_target": "Shots on target by team",
+                
+                # Advanced derived stats used in match prediction
+                "goals": "Actual goals scored by team",
+                "goals_conceded": "Goals conceded by team",
+                "points_per_game": "Points earned (3=win, 1=draw, 0=loss)",
+                "xg_per_shot": "Expected goals per shot ratio",
+                "goals_per_xg": "Goals scored per expected goal (finishing efficiency)",
+                "shot_accuracy": "Percentage of shots that were on target",
+                "conversion_rate": "Goals per shot on target ratio",
+                "penalty_attempts": "Number of penalty attempts",
+                "penalty_goals": "Number of penalty goals scored",
+                "penalty_conversion_rate": "Penalty goals / penalty attempts ratio"
+            },
+            "categories": {
+                "basic_stats": ["yellow_cards", "red_cards", "fouls_committed", "fouls_drawn", "penalties_awarded", "xg_difference", "possession_percentage", "xg", "shots_total", "shots_on_target"],
+                "advanced_stats": ["goals", "goals_conceded", "xg_per_shot", "goals_per_xg", "shot_accuracy", "conversion_rate", "penalty_attempts", "penalty_goals", "penalty_conversion_rate"],
+                "outcome_stats": ["points_per_game"]
             }
         }
     except Exception as e:
