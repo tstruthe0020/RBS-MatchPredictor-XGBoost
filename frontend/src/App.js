@@ -203,6 +203,11 @@ function App() {
       console.log('Referee details response:', response.data);
       setSelectedRefereeDetails(response.data);
       setViewingReferee(refereeName);
+      
+      // Load enhanced RBS data for all teams
+      if (response.data.rbs_results) {
+        await loadEnhancedRBSData(refereeName, response.data.rbs_results);
+      }
     } catch (error) {
       console.error('Error fetching referee details:', error);
       alert(`Error loading referee details: ${error.response?.data?.detail || error.message}`);
