@@ -2161,6 +2161,15 @@ async def calculate_comprehensive_team_stats():
     except Exception as e:
         raise Exception(f"Error calculating comprehensive team stats: {str(e)}")
 
+@api_router.post("/calculate-comprehensive-team-stats")
+async def calculate_comprehensive_team_stats_endpoint():
+    """Endpoint to manually calculate comprehensive team statistics"""
+    try:
+        result = await calculate_comprehensive_team_stats()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating comprehensive team stats: {str(e)}")
+
 @api_router.post("/recalculate-all-stats")
 async def recalculate_all_stats():
     """Comprehensive function to recalculate all stats in the correct order"""
