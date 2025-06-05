@@ -711,7 +711,8 @@ function App() {
                 {tab === 'predict' ? 'Match Prediction' : 
                  tab === 'config' ? 'Prediction Config' :
                  tab === 'rbs-config' ? 'RBS Config' :
-                 tab === 'analysis' ? 'Regression Analysis' : tab}
+                 tab === 'analysis' ? 'Regression Analysis' :
+                 tab === 'optimization' ? 'Formula Optimization' : tab}
               </button>
             ))}
           </div>
