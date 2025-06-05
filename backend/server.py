@@ -487,15 +487,15 @@ class MatchPredictor:
         if not team_stats:
             return None
         
-        # Calculate comprehensive averages
+        # Calculate comprehensive averages from properly calculated team stats
         total_matches = len(team_stats)
         averages = {
             'shots_total': sum(stat.get('shots_total', 0) for stat in team_stats) / total_matches,
             'shots_on_target': sum(stat.get('shots_on_target', 0) for stat in team_stats) / total_matches,
-            'xg': 0,  # Will be calculated from player stats aggregation
+            'xg': sum(stat.get('xg', 0) for stat in team_stats) / total_matches,
             'fouls': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
-            'fouls_drawn': 0,  # Will be calculated from player stats aggregation
-            'penalties_awarded': 0,  # Will be calculated from player stats aggregation
+            'fouls_drawn': sum(stat.get('fouls_drawn', 0) for stat in team_stats) / total_matches,
+            'penalties_awarded': sum(stat.get('penalties_awarded', 0) for stat in team_stats) / total_matches,
             'penalty_attempts': sum(stat.get('penalty_attempts', 0) for stat in team_stats) / total_matches,
             'penalty_goals': sum(stat.get('penalty_goals', 0) for stat in team_stats) / total_matches,
             'yellow_cards': sum(stat.get('yellow_cards', 0) for stat in team_stats) / total_matches,
