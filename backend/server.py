@@ -2106,8 +2106,27 @@ async def calculate_comprehensive_team_stats():
             final_fouls_drawn = aggregated_fouls_drawn if aggregated_fouls_drawn > 0 else team_stat.get('fouls_drawn', 0)
             final_penalties = aggregated_penalties if aggregated_penalties > 0 else team_stat.get('penalties_awarded', 0)
             final_penalty_goals = aggregated_penalty_goals if aggregated_penalty_goals > 0 else team_stat.get('penalty_goals', 0)
-            final_shots_total = aggregated_shots_total if aggregated_shots_total > 0 else team_stat.get('shots_total', 0)
-            final_shots_on_target = aggregated_shots_on_target if aggregated_shots_on_target > 0 else team_stat.get('shots_on_target', 0)
+            
+            # For shots, use a smarter fallback strategy
+            if aggregated_shots_total > 0:
+                final_shots_total = aggregated_shots_total
+                final_shots_on_target = aggregated_shots_on_target
+            else:
+                # Player shot data missing, fall back to team stats
+                team_shots = team_stat.get('shots_total', 0)
+                team_shots_ot = team_stat.get('shots_on_target', 0)
+                
+                # If team shot data is unreasonably low compared to xG, estimate based on xG
+                if team_shots > 0:
+                    final_shots_total = team_shots
+                    final_shots_on_target = team_shots_ot
+                else:
+                    # Estimate shots based on xG (assume average 0.15 xG per shot for realistic estimation)
+                    estimated_shots = max(int(final_xg / 0.15), 1) if final_xg > 0 else 1
+                    final_shots_total = estimated_shots
+                    final_shots_on_target = max(int(estimated_shots * 0.4), 0)  # Assume 40% shot accuracy
+                    print(f"Note: Estimating shots for {team_name} in match {match_id}: {estimated_shots} shots based on xG {final_xg}")
+            
             
             # Get actual goals from match result
             is_home = team_stat.get('is_home', False)
