@@ -1788,5 +1788,192 @@ def run_tests():
     print("\nFinal dataset list after deletions:")
     test_list_datasets()
 
+def test_ml_match_prediction_system():
+    """Test the ML-based match prediction system"""
+    print("\n\n========== TESTING ML-BASED MATCH PREDICTION SYSTEM ==========\n")
+    
+    # Step 1: Check ML model status
+    print("Step 1: Checking ML model status")
+    response = requests.get(f"{BASE_URL}/ml-models/status")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data['success']}")
+        print(f"Models loaded: {data['models_loaded']}")
+        print(f"Feature columns count: {data['feature_columns_count']}")
+        
+        # Check status of each model
+        models_status = data.get('models_status', {})
+        print(f"\nModels status:")
+        for model_name, status in models_status.items():
+            print(f"  - {model_name}: {'✅ Exists' if status.get('exists') else '❌ Missing'}")
+            if status.get('exists') and status.get('last_modified'):
+                from datetime import datetime
+                last_modified = datetime.fromtimestamp(status['last_modified']).strftime('%Y-%m-%d %H:%M:%S')
+                print(f"    Last modified: {last_modified}")
+        
+        # Determine if models need training
+        models_need_training = not data['models_loaded']
+        if models_need_training:
+            print("\n❌ ML models need training")
+        else:
+            print("\n✅ ML models are already trained and loaded")
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        models_need_training = True
+    
+    # Step 2: Train models if needed
+    if models_need_training:
+        print("\nStep 2: Training ML models")
+        print("This may take some time as it processes all historical data...")
+        
+        response = requests.post(f"{BASE_URL}/train-ml-models")
+        
+        if response.status_code == 200:
+            print(f"Status: {response.status_code} OK")
+            data = response.json()
+            print(f"Success: {data['success']}")
+            print(f"Message: {data['message']}")
+            
+            # Check training results
+            training_results = data.get('training_results', {})
+            print("\nTraining results:")
+            for model_name, results in training_results.items():
+                if model_name == 'classifier':
+                    print(f"  - {model_name}: Accuracy = {results.get('accuracy', 'N/A')}, Samples = {results.get('samples', 'N/A')}")
+                else:
+                    print(f"  - {model_name}: R² = {results.get('r2_score', 'N/A')}, MSE = {results.get('mse', 'N/A')}, Samples = {results.get('samples', 'N/A')}")
+            
+            print("\n✅ ML models trained successfully")
+        else:
+            print(f"Error: {response.status_code}")
+            print(response.text)
+            print("\n❌ Failed to train ML models")
+            return False
+    else:
+        print("\nStep 2: Skipping model training as models are already trained")
+    
+    # Step 3: Test prediction
+    print("\nStep 3: Testing match prediction")
+    
+    # Get teams for prediction
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    print(f"Found {len(teams)} teams: {', '.join(teams[:5])}{'...' if len(teams) > 5 else ''}")
+    
+    # Get referees
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    if referees_response.status_code != 200:
+        print(f"❌ Failed to get referees: {referees_response.status_code}")
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    print(f"Found {len(referees)} referees: {', '.join(referees[:5])}{'...' if len(referees) > 5 else ''}")
+    
+    # Make prediction
+    home_team = teams[0]
+    away_team = teams[1]
+    referee = referees[0]
+    
+    print(f"\nPredicting match: {home_team} vs {away_team} with referee {referee}")
+    
+    prediction_data = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee
+    }
+    
+    response = requests.post(f"{BASE_URL}/predict-match", json=prediction_data)
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        
+        if data.get('success'):
+            print("\n✅ Match prediction successful")
+            print(f"Home Team: {data['home_team']}")
+            print(f"Away Team: {data['away_team']}")
+            print(f"Referee: {data['referee']}")
+            print(f"Predicted Home Goals: {data['predicted_home_goals']}")
+            print(f"Predicted Away Goals: {data['predicted_away_goals']}")
+            print(f"Home xG: {data['home_xg']}")
+            print(f"Away xG: {data['away_xg']}")
+            print(f"Home Win Probability: {data['home_win_probability']}%")
+            print(f"Draw Probability: {data['draw_probability']}%")
+            print(f"Away Win Probability: {data['away_win_probability']}%")
+            
+            # Verify probabilities sum to 100%
+            total_prob = data['home_win_probability'] + data['draw_probability'] + data['away_win_probability']
+            if 99.9 <= total_prob <= 100.1:  # Allow for small rounding errors
+                print(f"\n✅ Probabilities sum to {total_prob}% (approximately 100%)")
+            else:
+                print(f"\n❌ Probabilities do not sum to 100%! Total: {total_prob}%")
+            
+            # Check prediction breakdown
+            breakdown = data.get('prediction_breakdown', {})
+            print("\nPrediction Breakdown:")
+            for key, value in list(breakdown.items())[:5]:
+                print(f"  - {key}: {value}")
+            if len(breakdown) > 5:
+                print("  ...")
+            
+            # Check confidence factors
+            confidence = data.get('confidence_factors', {})
+            print("\nConfidence Factors:")
+            for key, value in confidence.items():
+                print(f"  - {key}: {value}")
+            
+            return True
+        else:
+            print(f"\n❌ Match prediction failed: {data.get('error', 'Unknown error')}")
+            return False
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        print("\n❌ Match prediction request failed")
+        return False
+
+# Step 4: Test model reload functionality
+    print("\nStep 4: Testing model reload functionality")
+    
+    response = requests.post(f"{BASE_URL}/ml-models/reload")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data['success']}")
+        print(f"Message: {data['message']}")
+        print(f"Models loaded: {data['models_loaded']}")
+        
+        if data['models_loaded']:
+            print("\n✅ ML models reloaded successfully")
+        else:
+            print("\n❌ Failed to reload ML models")
+        
+        return data['models_loaded']
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        print("\n❌ Model reload request failed")
+        return False
+
 if __name__ == "__main__":
-    run_tests()
+    # Test the ML-based match prediction system
+    test_ml_match_prediction_system()
+    
+    # Run other tests
+    # run_tests()
