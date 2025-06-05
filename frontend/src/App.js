@@ -3548,7 +3548,8 @@ function App() {
                                       result.stats_breakdown?.yellow_cards > 0.05 ? 'bg-red-100 text-red-700' :
                                       result.stats_breakdown?.yellow_cards < -0.05 ? 'bg-green-100 text-green-700' :
                                       'bg-gray-100 text-gray-600'
-                                    }`}>
+                                    }`}
+                                    title={`Yellow cards differential: ${result.stats_breakdown?.yellow_cards > 0 ? 'Team gets ' + Math.abs(result.stats_breakdown?.yellow_cards || 0).toFixed(2) + ' more yellow cards per game with this referee' : result.stats_breakdown?.yellow_cards < 0 ? 'Team gets ' + Math.abs(result.stats_breakdown?.yellow_cards || 0).toFixed(2) + ' fewer yellow cards per game with this referee' : 'No significant difference'}`}>
                                       {result.stats_breakdown?.yellow_cards > 0 ? '+' : ''}
                                       {(result.stats_breakdown?.yellow_cards || 0).toFixed(2)}
                                     </span>
