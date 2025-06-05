@@ -1,200 +1,288 @@
 # 🏛️ Referee Bias Score (RBS) Algorithm Guide
 
 ## Overview
-The Referee Bias Score (RBS) quantifies the statistical bias a referee shows toward specific teams based on historical match outcomes compared to expected performance.
+The Referee Bias Score (RBS) measures referee bias through two statistical approaches:
+1. **Performance Differential**: How differently a team performs with vs without a specific referee
+2. **Decision Variance**: How consistently/inconsistently a referee makes decisions for a specific team vs their overall patterns
 
-## 🧮 RBS Calculation Formula
+## 🧮 RBS Calculation Methodology
 
-### Core Formula
-```
-RBS = Σ(Actual_Points - Expected_Points) / Total_Matches
-```
+### Approach 1: Team Performance Differential
 
-### Detailed Calculation Steps
+#### Core Concept
+Compare team's average performance statistics when a specific referee officiates vs when other referees officiate.
 
-#### Step 1: Expected Points Calculation
-For each match between Team A and Referee R:
-
+#### Formula
 ```python
-# Team quality difference
-quality_diff = team_ppg - opponent_ppg
+# For each team statistic (goals, shots, fouls_drawn, penalties, etc.)
+with_referee_avg = mean(team_stats_when_referee_X_officiates)
+without_referee_avg = mean(team_stats_when_other_referees_officiate)
 
-# Expected points based on team quality
-if quality_diff > 0.5:
-    expected_points = 2.1  # Strong team expected to win
-elif quality_diff > 0.2:
-    expected_points = 1.8  # Moderate favorite
-elif quality_diff > -0.2:
-    expected_points = 1.5  # Even match
-elif quality_diff > -0.5:
-    expected_points = 1.2  # Slight underdog
-else:
-    expected_points = 0.9  # Strong underdog
+performance_differential = (with_referee_avg - without_referee_avg) / without_referee_avg * 100
 ```
 
-#### Step 2: Actual Points
-Standard soccer points system:
-- **Win**: 3 points
-- **Draw**: 1 point  
-- **Loss**: 0 points
+#### Key Statistics Analyzed
+- **Offensive Stats**: Goals, shots, xG, penalties awarded
+- **Disciplinary Stats**: Yellow cards, red cards, fouls called against
+- **Possession Stats**: Possession percentage, pass completion
+- **Defensive Stats**: Fouls drawn, opponent yellow cards
 
-#### Step 3: RBS Calculation
+### Approach 2: Referee Decision Variance Analysis
+
+#### Core Concept
+Compare how consistently a referee makes decisions for a specific team vs their overall decision patterns.
+
+#### Formula
 ```python
-rbs_sum = 0
-total_matches = 0
+# Referee's overall decision variance across all teams
+overall_variance = variance(referee_decisions_all_teams)
 
-for match in team_referee_matches:
-    actual_points = get_match_points(match)
-    expected_points = calculate_expected_points(match)
-    rbs_sum += (actual_points - expected_points)
-    total_matches += 1
+# Referee's decision variance for specific team
+team_specific_variance = variance(referee_decisions_for_team_Y)
 
-rbs_score = rbs_sum / total_matches if total_matches > 0 else 0
+# Variance ratio (higher = more inconsistent for this team)
+variance_ratio = team_specific_variance / overall_variance
 ```
 
-## 📊 RBS Score Interpretation
+#### Decision Categories
+- **Fouls Called**: Per game variance in foul decisions
+- **Cards Issued**: Variance in disciplinary actions
+- **Penalties Awarded**: Consistency in penalty decisions
+- **Advantage Played**: How often play continues vs stops
 
-### Scale and Meaning
-- **RBS > +1.0**: Strong positive bias (referee favors this team)
-- **RBS +0.5 to +1.0**: Moderate positive bias
-- **RBS -0.5 to +0.5**: Neutral (no significant bias)
-- **RBS -0.5 to -1.0**: Moderate negative bias  
-- **RBS < -1.0**: Strong negative bias (referee disfavors this team)
+## 📊 Detailed Implementation
 
-### Statistical Significance
-- **Minimum 5 matches** required for meaningful RBS calculation
-- **10+ matches** recommended for statistical reliability
-- **Confidence increases** with more historical data
+### Step 1: Data Segmentation
+```python
+def segment_team_matches(team_name, referee_name):
+    # Matches with specific referee
+    with_referee = matches.filter(
+        (home_team == team_name OR away_team == team_name) AND 
+        referee == referee_name
+    )
+    
+    # Matches with other referees
+    without_referee = matches.filter(
+        (home_team == team_name OR away_team == team_name) AND 
+        referee != referee_name
+    )
+    
+    return with_referee, without_referee
+```
+
+### Step 2: Performance Differential Calculation
+```python
+def calculate_performance_differential(team_name, referee_name):
+    with_ref, without_ref = segment_team_matches(team_name, referee_name)
+    
+    differentials = {}
+    stats_to_analyze = [
+        'goals', 'shots_total', 'xg', 'penalties_awarded', 
+        'fouls_drawn', 'yellow_cards_against', 'possession_pct'
+    ]
+    
+    for stat in stats_to_analyze:
+        with_avg = mean(with_ref[stat])
+        without_avg = mean(without_ref[stat])
+        
+        if without_avg > 0:
+            differential = (with_avg - without_avg) / without_avg * 100
+        else:
+            differential = 0
+            
+        differentials[stat] = differential
+    
+    return differentials
+```
+
+### Step 3: Variance Analysis
+```python
+def calculate_referee_variance_bias(team_name, referee_name):
+    # Get referee's decisions for specific team
+    team_decisions = get_referee_decisions_for_team(referee_name, team_name)
+    
+    # Get referee's decisions for all other teams
+    overall_decisions = get_referee_decisions_overall(referee_name)
+    
+    variance_ratios = {}
+    decision_types = ['fouls_called', 'yellow_cards', 'penalties_awarded']
+    
+    for decision in decision_types:
+        team_variance = variance(team_decisions[decision])
+        overall_variance = variance(overall_decisions[decision])
+        
+        if overall_variance > 0:
+            variance_ratios[decision] = team_variance / overall_variance
+        else:
+            variance_ratios[decision] = 1.0
+    
+    return variance_ratios
+```
+
+### Step 4: Combined RBS Score
+```python
+def calculate_comprehensive_rbs(team_name, referee_name):
+    # Performance differential component
+    performance_diff = calculate_performance_differential(team_name, referee_name)
+    
+    # Variance analysis component  
+    variance_ratios = calculate_referee_variance_bias(team_name, referee_name)
+    
+    # Weight and combine components
+    performance_score = weighted_average(performance_diff.values(), weights=[...])
+    variance_score = weighted_average(variance_ratios.values(), weights=[...])
+    
+    # Final RBS (normalized to -5 to +5 scale)
+    rbs_score = (performance_score * 0.7 + variance_score * 0.3) / 20
+    
+    return {
+        'rbs_score': rbs_score,
+        'performance_differential': performance_diff,
+        'variance_analysis': variance_ratios,
+        'sample_size_with_ref': len(with_referee_matches),
+        'sample_size_without_ref': len(without_referee_matches)
+    }
+```
 
 ## 🔍 Detailed Example
 
-### Scenario: Team Arsenal with Referee John Smith
+### Scenario: Arsenal with Referee Michael Oliver
 
-**Historical Matches:**
-
-| Match | Arsenal PPG | Opponent PPG | Quality Diff | Expected Points | Actual Result | Actual Points | Difference |
-|-------|-------------|--------------|--------------|-----------------|---------------|---------------|------------|
-| 1     | 2.1         | 1.3          | +0.8         | 2.1             | Win (3-1)     | 3             | +0.9       |
-| 2     | 2.1         | 2.0          | +0.1         | 1.5             | Draw (1-1)    | 1             | -0.5       |
-| 3     | 2.1         | 1.8          | +0.3         | 1.8             | Win (2-0)     | 3             | +1.2       |
-| 4     | 2.1         | 2.2          | -0.1         | 1.5             | Loss (0-2)    | 0             | -1.5       |
-| 5     | 2.1         | 1.5          | +0.6         | 2.1             | Win (4-1)     | 3             | +0.9       |
-
-**RBS Calculation:**
-```
-RBS = (0.9 + (-0.5) + 1.2 + (-1.5) + 0.9) / 5
-RBS = 1.0 / 5 = +0.2
-```
-
-**Interpretation:** Slight positive bias - Arsenal performs marginally better than expected with this referee.
-
-## 🛠️ Technical Implementation
-
-### Database Queries
+#### Data Collection:
 ```python
-# Get team-referee match history
-matches = db.matches.find({
-    "$or": [
-        {"home_team": team_name, "referee": referee_name},
-        {"away_team": team_name, "referee": referee_name}
-    ]
-})
+# Arsenal matches WITH Michael Oliver (last 2 seasons)
+with_oliver = [
+    {goals: 2.1, shots: 16, xg: 2.3, penalties: 0.2, fouls_drawn: 12},
+    {goals: 1.8, shots: 14, xg: 1.9, penalties: 0.1, fouls_drawn: 15},
+    {goals: 2.5, shots: 18, xg: 2.8, penalties: 0.3, fouls_drawn: 11},
+    # ... 8 more matches
+]
 
-# Calculate team PPG at time of each match
-team_ppg = calculate_historical_ppg(team_name, match_date)
-opponent_ppg = calculate_historical_ppg(opponent_name, match_date)
+# Arsenal matches WITHOUT Michael Oliver
+without_oliver = [
+    {goals: 1.6, shots: 13, xg: 1.8, penalties: 0.1, fouls_drawn: 9},
+    {goals: 1.9, shots: 15, xg: 2.1, penalties: 0.1, fouls_drawn: 8},
+    # ... 45 more matches
+]
 ```
 
-### Quality Difference Thresholds
+#### Performance Differential Calculation:
 ```python
-def calculate_expected_points(quality_diff):
-    if quality_diff > 0.5:
-        return 2.1      # 70% win probability
-    elif quality_diff > 0.2:
-        return 1.8      # 60% win probability  
-    elif quality_diff > -0.2:
-        return 1.5      # 50% win probability (even)
-    elif quality_diff > -0.5:
-        return 1.2      # 40% win probability
-    else:
-        return 0.9      # 30% win probability
+with_oliver_avg = {
+    'goals': 2.13,
+    'shots': 16.2, 
+    'xg': 2.33,
+    'penalties': 0.18,
+    'fouls_drawn': 12.7
+}
+
+without_oliver_avg = {
+    'goals': 1.74,
+    'shots': 13.8,
+    'xg': 1.95, 
+    'penalties': 0.08,
+    'fouls_drawn': 8.9
+}
+
+differentials = {
+    'goals': (2.13 - 1.74) / 1.74 * 100 = +22.4%,
+    'shots': (16.2 - 13.8) / 13.8 * 100 = +17.4%,
+    'xg': (2.33 - 1.95) / 1.95 * 100 = +19.5%,
+    'penalties': (0.18 - 0.08) / 0.08 * 100 = +125%,
+    'fouls_drawn': (12.7 - 8.9) / 8.9 * 100 = +42.7%
+}
 ```
 
-## 📈 RBS Applications
-
-### 1. Referee Assignment Optimization
+#### Variance Analysis:
 ```python
-# Find referee with minimal bias for matchup
-optimal_referee = min(available_referees, 
-                     key=lambda r: abs(get_rbs(home_team, r) + get_rbs(away_team, r)))
+# Oliver's penalty decisions for Arsenal: [0, 1, 0, 1, 0, 0, 1, 0, 0, 1]
+arsenal_penalty_variance = variance([0,1,0,1,0,0,1,0,0,1]) = 0.24
+
+# Oliver's penalty decisions across all teams: [0,0,1,0,1,0,0,1,0,1,0,0,...]  
+overall_penalty_variance = variance(all_decisions) = 0.18
+
+penalty_variance_ratio = 0.24 / 0.18 = 1.33 (33% more variable)
 ```
 
-### 2. Match Prediction Enhancement
+#### Final RBS Calculation:
 ```python
-# Apply RBS bias to xG predictions
-home_bias = get_rbs(home_team, referee) * 0.2
-away_bias = get_rbs(away_team, referee) * 0.2
+performance_component = weighted_avg([22.4, 17.4, 19.5, 125, 42.7]) = +35.2%
+variance_component = weighted_avg([1.33, 1.12, 0.95]) = +13.3%
 
-adjusted_home_xg = base_home_xg + home_bias
-adjusted_away_xg = base_away_xg + away_bias
+rbs_score = (35.2 * 0.7 + 13.3 * 0.3) / 20 = +1.43
 ```
 
-### 3. Fair Play Analysis
-- Identify referees with consistently high absolute RBS values
-- Monitor referee performance across different team types
-- Detect unusual patterns in match outcomes
+**Interpretation**: Strong positive bias - Arsenal performs significantly better with Oliver (+1.43 RBS)
 
-## 🎯 RBS Confidence Factors
+## 📈 Statistical Significance Testing
 
-### Factors Affecting Reliability
-1. **Sample Size**: More matches = higher confidence
-2. **Recency**: Recent matches weighted more heavily
-3. **Competition Level**: Different leagues may have different patterns
-4. **Match Importance**: Cup finals vs. regular season matches
-
-### Confidence Calculation
+### Minimum Sample Requirements
 ```python
-def calculate_rbs_confidence(matches_count, avg_match_age_days):
-    sample_confidence = min(matches_count / 10.0, 1.0)
-    recency_confidence = max(0.5, 1.0 - (avg_match_age_days / 365.0))
-    return sample_confidence * recency_confidence
+def is_statistically_significant(with_ref_matches, without_ref_matches):
+    return (
+        len(with_ref_matches) >= 5 AND 
+        len(without_ref_matches) >= 10 AND
+        total_matches >= 15
+    )
 ```
 
-## 🔄 RBS Updates and Maintenance
-
-### When to Recalculate
-- After each match day
-- When new historical data is added
-- Seasonally for comprehensive review
-
-### Data Quality Considerations
-- Ensure consistent team naming
-- Verify referee name standardization
-- Handle team relocations/renamings
-- Account for referee career changes
-
-## 📊 Advanced RBS Metrics
-
-### RBS Variance
-Measures consistency of referee bias:
+### Confidence Intervals
 ```python
-rbs_variance = sum((match_diff - rbs_mean)² for match_diff in match_differences) / matches_count
+def calculate_confidence_interval(differential, sample_size):
+    std_error = standard_deviation / sqrt(sample_size)
+    margin_error = 1.96 * std_error  # 95% confidence
+    
+    return {
+        'lower_bound': differential - margin_error,
+        'upper_bound': differential + margin_error
+    }
 ```
 
-### Weighted RBS
-Gives more weight to recent matches:
+## 🎯 RBS Score Interpretation
+
+### Scale and Meaning
+- **RBS > +2.0**: Very strong positive bias (team performs much better with this referee)
+- **RBS +1.0 to +2.0**: Strong positive bias
+- **RBS +0.5 to +1.0**: Moderate positive bias
+- **RBS -0.5 to +0.5**: Neutral (no significant bias detected)
+- **RBS -0.5 to -1.0**: Moderate negative bias
+- **RBS -1.0 to -2.0**: Strong negative bias
+- **RBS < -2.0**: Very strong negative bias (team performs much worse with this referee)
+
+### Component Breakdown
 ```python
-weighted_rbs = sum(match_diff * weight for match_diff, weight in zip(differences, weights)) / sum(weights)
+{
+    'rbs_score': 1.43,
+    'performance_differential': {
+        'goals': +22.4%,
+        'shots': +17.4%, 
+        'penalties': +125%,
+        'fouls_drawn': +42.7%
+    },
+    'variance_analysis': {
+        'penalty_decisions': 1.33,  # More variable than usual
+        'foul_calls': 1.12,         # Slightly more variable
+        'card_decisions': 0.95      # About average variance
+    },
+    'confidence': 'High',  # Based on sample size
+    'sample_size': {'with_ref': 11, 'without_ref': 47}
+}
 ```
 
-### RBS Trend
-Tracks how referee bias changes over time:
+## 🔄 Implementation in Match Prediction
+
+### RBS Application
 ```python
-recent_rbs = calculate_rbs(last_10_matches)
-overall_rbs = calculate_rbs(all_matches)
-rbs_trend = recent_rbs - overall_rbs
+def apply_rbs_to_prediction(base_xg, team_name, referee_name):
+    rbs_data = calculate_comprehensive_rbs(team_name, referee_name)
+    
+    # Apply only the performance differential component
+    performance_factor = rbs_data['performance_differential']['xg'] / 100
+    
+    # Conservative scaling (don't over-adjust)
+    rbs_adjustment = base_xg * performance_factor * 0.1
+    
+    return base_xg + rbs_adjustment
 ```
 
----
-
-The RBS system provides a quantitative foundation for understanding and mitigating referee bias in soccer, contributing to fairer match outcomes and more accurate predictions.
+This approach provides a much more robust, statistically grounded measure of referee bias based on actual performance differentials and decision pattern analysis.
