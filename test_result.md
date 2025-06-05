@@ -198,6 +198,21 @@
       - working: true
         agent: "testing"
         comment: "Successfully tested the match prediction fix. The 'Prediction Failed 'points_per_game'' error has been resolved. The match prediction endpoint now works correctly with actual team names and referees from the system. All required fields for the prediction breakdown are properly available in the team averages, including points_per_game, xg_per_shot, shots_total, goals, penalties_awarded, fouls_drawn, and penalty_conversion_rate. The prediction breakdown contains non-zero values for key metrics like home_xg_per_shot (0.806), away_xg_per_shot (0.625), home_shots_avg (1.0), away_shots_avg (1.0), home_goals_avg (1.67), away_goals_avg (0.97), and all conversion rates. The only field with zero value was home_penalties_avg, which appears to be a data issue rather than a code issue as the field is properly included in the calculation. The end-to-end workflow from comprehensive team stats calculation to RBS calculation to match prediction works correctly."
+      
+  - task: "Enhanced Match Prediction with Probability Fields"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced the match prediction endpoint to include probability fields (home_win_probability, draw_probability, away_win_probability) in the response."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the enhanced match prediction endpoint with probability fields. The POST /api/predict-match endpoint now correctly includes the new probability fields (home_win_probability, draw_probability, away_win_probability) in the response. Testing with multiple team combinations confirmed that the probabilities are reasonable numbers between 0-100% and sum to exactly 100%. The probabilities are also consistent with the predicted goals - teams with higher predicted goals have higher win probabilities. Testing with different team combinations (Arsenal vs Aston Villa: 22.39%/70.32%/7.29%, Atlanta United vs Austin FC: 61.2%/25.84%/12.96%, Bournemouth vs CF Montréal: 9.61%/54.24%/36.15%) showed that the probabilities vary appropriately based on the predicted goals. The existing functionality for predicted goals and xG continues to work correctly alongside the new probability fields."
 
   - task: "Formula Optimization Frontend"
     implemented: true
