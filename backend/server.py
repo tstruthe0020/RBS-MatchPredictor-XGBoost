@@ -726,6 +726,224 @@ class MatchPredictor:
 # Initialize Match Predictor
 match_predictor = MatchPredictor()
 
+# Regression Analysis Engine
+class RegressionAnalyzer:
+    def __init__(self):
+        self.available_stats = [
+            'yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn',
+            'penalties_awarded', 'xg_difference', 'possession_percentage',
+            'xg', 'shots_total', 'shots_on_target'
+        ]
+    
+    async def prepare_match_data(self):
+        """Prepare match data for regression analysis"""
+        try:
+            # Get all matches and team stats
+            matches = await db.matches.find().to_list(10000)
+            team_stats = await db.team_stats.find().to_list(10000)
+            
+            # Create a comprehensive dataset
+            match_data = []
+            
+            for match in matches:
+                # Get stats for both teams
+                home_stats = [s for s in team_stats if s['match_id'] == match['match_id'] and s['team_name'] == match['home_team'] and s['is_home']]
+                away_stats = [s for s in team_stats if s['match_id'] == match['match_id'] and s['team_name'] == match['away_team'] and not s['is_home']]
+                
+                if home_stats and away_stats:
+                    home_stat = home_stats[0]
+                    away_stat = away_stats[0]
+                    
+                    # Calculate xG difference
+                    home_xg_diff = home_stat.get('xg', 0) - away_stat.get('xg', 0)
+                    away_xg_diff = away_stat.get('xg', 0) - home_stat.get('xg', 0)
+                    
+                    # Calculate match results and points
+                    home_score = match['home_score']
+                    away_score = match['away_score']
+                    
+                    if home_score > away_score:
+                        home_result = 'W'
+                        away_result = 'L'
+                        home_points = 3
+                        away_points = 0
+                    elif home_score < away_score:
+                        home_result = 'L'
+                        away_result = 'W'
+                        home_points = 0
+                        away_points = 3
+                    else:
+                        home_result = 'D'
+                        away_result = 'D'
+                        home_points = 1
+                        away_points = 1
+                    
+                    # Add home team data
+                    home_data = {
+                        'team': match['home_team'],
+                        'opponent': match['away_team'],
+                        'referee': match['referee'],
+                        'match_result': home_result,
+                        'points_per_game': home_points,
+                        'yellow_cards': home_stat.get('yellow_cards', 0),
+                        'red_cards': home_stat.get('red_cards', 0),
+                        'fouls_committed': home_stat.get('fouls', 0),
+                        'fouls_drawn': home_stat.get('fouls_drawn', 0),
+                        'penalties_awarded': home_stat.get('penalties_awarded', 0),
+                        'xg_difference': home_xg_diff,
+                        'possession_percentage': home_stat.get('possession_pct', 0),
+                        'xg': home_stat.get('xg', 0),
+                        'shots_total': home_stat.get('shots_total', 0),
+                        'shots_on_target': home_stat.get('shots_on_target', 0),
+                        'is_home': True
+                    }
+                    
+                    # Add away team data
+                    away_data = {
+                        'team': match['away_team'],
+                        'opponent': match['home_team'],
+                        'referee': match['referee'],
+                        'match_result': away_result,
+                        'points_per_game': away_points,
+                        'yellow_cards': away_stat.get('yellow_cards', 0),
+                        'red_cards': away_stat.get('red_cards', 0),
+                        'fouls_committed': away_stat.get('fouls', 0),
+                        'fouls_drawn': away_stat.get('fouls_drawn', 0),
+                        'penalties_awarded': away_stat.get('penalties_awarded', 0),
+                        'xg_difference': away_xg_diff,
+                        'possession_percentage': away_stat.get('possession_pct', 0),
+                        'xg': away_stat.get('xg', 0),
+                        'shots_total': away_stat.get('shots_total', 0),
+                        'shots_on_target': away_stat.get('shots_on_target', 0),
+                        'is_home': False
+                    }
+                    
+                    match_data.append(home_data)
+                    match_data.append(away_data)
+            
+            return pd.DataFrame(match_data)
+        
+        except Exception as e:
+            raise Exception(f"Error preparing match data: {str(e)}")
+    
+    def run_regression(self, df, selected_stats, target='points_per_game', test_size=0.2, random_state=42):
+        """Run regression analysis on match data"""
+        try:
+            # Validate inputs
+            if df.empty:
+                raise ValueError("DataFrame is empty")
+            
+            # Check if selected stats exist in DataFrame
+            missing_stats = [stat for stat in selected_stats if stat not in df.columns]
+            if missing_stats:
+                raise ValueError(f"Missing statistics in data: {missing_stats}")
+            
+            if target not in df.columns:
+                raise ValueError(f"Target '{target}' not found in data")
+            
+            # Prepare features and target
+            X = df[selected_stats].copy()
+            y = df[target].copy()
+            
+            # Remove rows with missing values
+            mask = ~(X.isnull().any(axis=1) | y.isnull())
+            X = X[mask]
+            y = y[mask]
+            
+            if len(X) == 0:
+                raise ValueError("No valid data remaining after removing missing values")
+            
+            sample_size = len(X)
+            
+            # Split data
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=test_size, random_state=random_state
+            )
+            
+            results = {}
+            
+            if target == 'points_per_game':
+                # Linear regression for points per game
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+                
+                # Make predictions
+                y_pred = model.predict(X_test)
+                
+                # Calculate metrics
+                r2 = r2_score(y_test, y_pred)
+                mse = mean_squared_error(y_test, y_pred)
+                rmse = np.sqrt(mse)
+                
+                # Prepare results
+                results = {
+                    'model_type': 'Linear Regression',
+                    'coefficients': {stat: float(coef) for stat, coef in zip(selected_stats, model.coef_)},
+                    'intercept': float(model.intercept_),
+                    'r2_score': float(r2),
+                    'mse': float(mse),
+                    'rmse': float(rmse),
+                    'train_samples': len(X_train),
+                    'test_samples': len(X_test),
+                    'feature_importance': {
+                        stat: abs(coef) for stat, coef in zip(selected_stats, model.coef_)
+                    }
+                }
+                
+            elif target == 'match_result':
+                # Random Forest for match result classification
+                model = RandomForestClassifier(n_estimators=100, random_state=random_state)
+                model.fit(X_train, y_train)
+                
+                # Make predictions
+                y_pred = model.predict(X_test)
+                
+                # Get classification report
+                class_report = classification_report(y_test, y_pred, output_dict=True)
+                
+                # Feature importance
+                feature_importance = {
+                    stat: float(importance) 
+                    for stat, importance in zip(selected_stats, model.feature_importances_)
+                }
+                
+                results = {
+                    'model_type': 'Random Forest Classifier',
+                    'classification_report': class_report,
+                    'feature_importance': feature_importance,
+                    'accuracy': float(class_report['accuracy']),
+                    'train_samples': len(X_train),
+                    'test_samples': len(X_test),
+                    'classes': list(model.classes_)
+                }
+            
+            else:
+                raise ValueError(f"Unsupported target: {target}")
+            
+            return {
+                'success': True,
+                'target': target,
+                'selected_stats': selected_stats,
+                'sample_size': sample_size,
+                'model_type': results['model_type'],
+                'results': results,
+                'message': f"Regression analysis completed successfully for {target}"
+            }
+        
+        except Exception as e:
+            return {
+                'success': False,
+                'target': target,
+                'selected_stats': selected_stats,
+                'sample_size': 0,
+                'model_type': 'N/A',
+                'results': {},
+                'message': f"Error in regression analysis: {str(e)}"
+            }
+
+# Initialize Regression Analyzer
+regression_analyzer = RegressionAnalyzer()
+
 # API Routes
 @api_router.get("/")
 async def root():
