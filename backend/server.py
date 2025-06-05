@@ -1143,16 +1143,16 @@ class RegressionAnalyzer:
                 # Prepare results
                 results = {
                     'model_type': 'Linear Regression',
-                    'coefficients': {stat: float(coef) for stat, coef in zip(selected_stats, model.coef_)},
-                    'intercept': float(model.intercept_),
-                    'r2_score': float(r2),
-                    'mse': float(mse),
-                    'rmse': float(rmse),
+                    'coefficients': self._safe_dict_conversion({stat: coef for stat, coef in zip(selected_stats, model.coef_)}),
+                    'intercept': self._safe_float_conversion(model.intercept_),
+                    'r2_score': self._safe_float_conversion(r2),
+                    'mse': self._safe_float_conversion(mse),
+                    'rmse': self._safe_float_conversion(rmse),
                     'train_samples': len(X_train),
                     'test_samples': len(X_test),
-                    'feature_importance': {
+                    'feature_importance': self._safe_dict_conversion({
                         stat: abs(coef) for stat, coef in zip(selected_stats, model.coef_)
-                    }
+                    })
                 }
                 
             elif target == 'match_result':
