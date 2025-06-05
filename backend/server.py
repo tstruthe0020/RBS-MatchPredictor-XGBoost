@@ -4604,6 +4604,57 @@ async def predict_match(request: MatchPredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
 
+@api_router.post("/train-ml-models")
+async def train_ml_models():
+    """Train ML models using all available data"""
+    try:
+        training_results = await ml_predictor.train_models()
+        return {
+            "success": True,
+            "message": "ML models trained successfully",
+            "training_results": training_results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Training error: {str(e)}")
+
+@api_router.get("/ml-models/status")
+async def get_ml_models_status():
+    """Get status of ML models"""
+    try:
+        model_paths = ml_predictor.get_model_paths()
+        status = {}
+        
+        for model_name, path in model_paths.items():
+            status[model_name] = {
+                "exists": os.path.exists(path),
+                "path": path,
+                "last_modified": None
+            }
+            if os.path.exists(path):
+                status[model_name]["last_modified"] = os.path.getmtime(path)
+        
+        return {
+            "success": True,
+            "models_loaded": len(ml_predictor.models) == 5,
+            "feature_columns_count": len(ml_predictor.feature_columns),
+            "models_status": status
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Status error: {str(e)}")
+
+@api_router.post("/ml-models/reload")
+async def reload_ml_models():
+    """Reload ML models from disk"""
+    try:
+        ml_predictor.load_models()
+        return {
+            "success": True,
+            "message": "ML models reloaded successfully",
+            "models_loaded": len(ml_predictor.models) == 5
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reload error: {str(e)}")
+
 @api_router.get("/team-performance/{team_name}")
 async def get_team_performance(team_name: str):
     """Get team performance stats for prediction insights"""
