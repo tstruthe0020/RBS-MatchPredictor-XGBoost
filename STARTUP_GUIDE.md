@@ -285,19 +285,27 @@ sudo supervisorctl restart mongodb
 ## 📚 Next Steps
 
 1. **Upload your data** following the CSV format guidelines
-2. **Explore team performance** to understand your dataset
-3. **Calculate RBS scores** for referee bias analysis
-4. **Make match predictions** using the advanced algorithm
-5. **Optimize referee assignments** using the RBS optimization tool
+2. **Train ML models** for match prediction (first time setup)
+3. **Explore team performance** to understand your dataset
+4. **Calculate RBS scores** for referee bias analysis
+5. **Make ML predictions** using the trained models
+6. **Optimize referee assignments** using the RBS optimization tool
+7. **Monitor model performance** and retrain as needed
 
 ## 🆘 Support
 
 For technical issues:
 1. Check the logs first
-2. Verify data format requirements
-3. Ensure all services are running
-4. Review this startup guide
+2. Verify ML models are trained (Match Prediction tab)
+3. Verify data format requirements
+4. Ensure all services are running
+5. Review this startup guide
+
+### ML-Specific Support
+- **Model Training Issues**: Check system memory and available data
+- **Prediction Errors**: Verify model status and feature availability
+- **Performance Problems**: Consider model retraining or feature selection
 
 ---
 
-**Important**: Always backup your data before making significant changes to the system.
+**Important**: Always backup your data before making significant changes to the system. ML model training may take several minutes depending on dataset size.
