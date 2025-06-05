@@ -82,6 +82,8 @@ function App() {
 
   // Regression Analysis state
   const [availableStats, setAvailableStats] = useState([]);
+  const [statDescriptions, setStatDescriptions] = useState({});
+  const [statCategories, setStatCategories] = useState({});
   const [selectedStats, setSelectedStats] = useState([]);
   const [regressionTarget, setRegressionTarget] = useState('points_per_game');
   const [regressionResult, setRegressionResult] = useState(null);
