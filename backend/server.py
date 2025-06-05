@@ -536,7 +536,37 @@ class MatchPredictor:
         
         # Defensive metrics (shots conceded, xG conceded)
         averages['shots_conceded'] = 0  # Will be calculated from opponent data
-        averages['xg_conceded'] = averages['goals_conceded'] * 0.9  # Rough estimate
+        
+        # Calculate opponent xG by getting all opponent team averages for the same matches
+        # Get all opponent teams that played against this team in these matches
+        opponent_xg_total = 0
+        opponent_matches_count = 0
+        
+        for match in matches:
+            if match['home_team'] == team_name and is_home:
+                # This team was home, opponent was away
+                opponent_team = match['away_team']
+                # Get opponent player stats for this match
+                opponent_player_stats = await db.player_stats.find({
+                    "match_id": match['match_id'],
+                    "team_name": opponent_team
+                }).to_list(100)
+                opponent_match_xg = sum(ps.get('xg', 0) for ps in opponent_player_stats)
+                opponent_xg_total += opponent_match_xg
+                opponent_matches_count += 1
+            elif match['away_team'] == team_name and not is_home:
+                # This team was away, opponent was home
+                opponent_team = match['home_team']
+                # Get opponent player stats for this match
+                opponent_player_stats = await db.player_stats.find({
+                    "match_id": match['match_id'],
+                    "team_name": opponent_team
+                }).to_list(100)
+                opponent_match_xg = sum(ps.get('xg', 0) for ps in opponent_player_stats)
+                opponent_xg_total += opponent_match_xg
+                opponent_matches_count += 1
+        
+        averages['xg_conceded'] = opponent_xg_total / opponent_matches_count if opponent_matches_count > 0 else 0
         
         # Calculate xG difference (team xG - opponent xG average)
         averages['xg_difference'] = averages['xg'] - averages['xg_conceded']
