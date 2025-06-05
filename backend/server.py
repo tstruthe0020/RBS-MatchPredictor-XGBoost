@@ -1093,6 +1093,15 @@ class RegressionAnalyzer:
             X = X[mask]
             y = y[mask]
             
+            # Replace any infinity values with NaN and then drop
+            X = X.replace([np.inf, -np.inf], np.nan)
+            y = y.replace([np.inf, -np.inf], np.nan)
+            
+            # Remove any remaining NaN values
+            mask = ~(X.isnull().any(axis=1) | y.isnull())
+            X = X[mask]
+            y = y[mask]
+            
             if len(X) == 0:
                 raise ValueError("No valid data remaining after removing missing values")
             
