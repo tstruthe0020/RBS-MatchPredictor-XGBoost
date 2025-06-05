@@ -1192,7 +1192,8 @@ async def upload_team_stats(file: UploadFile = File(...)):
                 shots_on_target=safe_int(row.get('shots_on_target', 0)),
                 fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
                 penalties_awarded=safe_int(row.get('penalties_awarded', 0)),
-                xg=safe_float(row.get('xg', 0))
+                xg=safe_float(row.get('xg', 0)),
+                dataset_name="default"  # Default dataset for single uploads
             )
             team_stats.append(stats.dict())
         
