@@ -516,30 +516,29 @@ class MatchPredictor:
             home_ppg = home_stats['points_per_game']
             away_ppg = away_stats['points_per_game']
             
-            # Enhanced PPG adjustment considering home/away context
+            # Enhanced PPG adjustment (configurable factor)
             ppg_diff = home_ppg - away_ppg
-            ppg_adjustment = ppg_diff * 0.15  # Base adjustment factor
+            ppg_adjustment = ppg_diff * config.ppg_adjustment_factor
             
             # Apply PPG adjustment
             home_adjusted_xg = home_base_xg + ppg_adjustment
             away_adjusted_xg = away_base_xg - ppg_adjustment
             
-            # Get referee bias with enhanced calculation
+            # Get referee bias with configurable scaling
             home_rbs, home_rbs_confidence = await self.get_referee_bias(home_team, referee_name)
             away_rbs, away_rbs_confidence = await self.get_referee_bias(away_team, referee_name)
             
-            # Apply referee bias (enhanced scaling)
-            home_ref_adjustment = home_rbs * self.rbs_scaling_factor
-            away_ref_adjustment = away_rbs * self.rbs_scaling_factor
+            # Apply referee bias (configurable scaling)
+            home_ref_adjustment = home_rbs * config.rbs_scaling_factor
+            away_ref_adjustment = away_rbs * config.rbs_scaling_factor
             
-            # Final xG predictions with bounds
-            final_home_xg = max(0.1, home_adjusted_xg + home_ref_adjustment)
-            final_away_xg = max(0.1, away_adjusted_xg + away_ref_adjustment)
+            # Final xG predictions with configurable bounds
+            final_home_xg = max(config.min_xg_per_match, home_adjusted_xg + home_ref_adjustment)
+            final_away_xg = max(config.min_xg_per_match, away_adjusted_xg + away_ref_adjustment)
             
-            # Enhanced goal prediction using conversion rates
-            # Use team-specific conversion rates rather than just goals_per_xg
-            home_conversion = max(0.5, min(2.0, home_stats['goals_per_xg']))
-            away_conversion = max(0.5, min(2.0, away_stats['goals_per_xg']))
+            # Enhanced goal prediction using configurable conversion rates
+            home_conversion = max(config.min_conversion_rate, min(config.max_conversion_rate, home_stats['goals_per_xg']))
+            away_conversion = max(config.min_conversion_rate, min(config.max_conversion_rate, away_stats['goals_per_xg']))
             
             predicted_home_goals = final_home_xg * home_conversion
             predicted_away_goals = final_away_xg * away_conversion
