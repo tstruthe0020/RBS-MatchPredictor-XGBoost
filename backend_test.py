@@ -1026,5 +1026,587 @@ def main():
     
     return 0 if tester.tests_passed == tester.tests_run else 1
 
+def test_field_mapping_fixes():
+    """Test field mapping fixes specifically"""
+    print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
+    
+    # Get backend URL from frontend .env
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                backend_url = line.strip().split('=')[1].strip('"\'')
+                break
+    
+    api_url = f"{backend_url}/api"
+    print(f"Using backend URL: {api_url}")
+    
+    print_separator("FIELD MAPPING FIXES VERIFICATION")
+    
+    # Get list of teams
+    teams_response = requests.get(f"{api_url}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Error getting teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json()["teams"]
+    if not teams:
+        print("❌ No teams found in database")
+        return False
+    
+    # Test with first 3 teams
+    test_teams = teams[:3]
+    all_passed = True
+    
+    for team in test_teams:
+        print(f"\nTesting team performance for: {team}")
+        response = requests.get(f"{api_url}/team-performance/{team}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Check home stats
+            home_stats = data.get("home_stats", {})
+            if home_stats:
+                print("\nHome Stats:")
+                print(f"  - Fouls Committed: {home_stats.get('fouls_committed', 'N/A')}")
+                print(f"  - Fouls Drawn: {home_stats.get('fouls_drawn', 'N/A')}")
+                print(f"  - Penalties Awarded: {home_stats.get('penalties_awarded', 'N/A')}")
+                print(f"  - Possession: {home_stats.get('possession_percentage', 'N/A')}%")
+                print(f"  - xG: {home_stats.get('xg', 'N/A')}")
+                print(f"  - xG Difference: {home_stats.get('xg_difference', 'N/A')}")
+                
+                # Verify field mappings work correctly
+                if ('fouls_committed' in home_stats and 
+                    'possession_percentage' in home_stats and
+                    'xg_difference' in home_stats):
+                    print("\n✅ Field mappings work correctly")
+                else:
+                    print("\n❌ Field mappings are incomplete")
+                    all_passed = False
+                
+                # Verify values are not zero
+                if (home_stats.get('fouls_committed', 0) > 0 and 
+                    home_stats.get('possession_percentage', 0) > 0):
+                    print("✅ Values are not zero")
+                else:
+                    print("❌ Some values are still zero")
+                    all_passed = False
+            else:
+                print("\n❌ No home stats found for team")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {response.status_code}")
+            print(response.text)
+            all_passed = False
+    
+    return all_passed
+
+def test_rbs_calculation_with_real_data():
+    """Test RBS calculation with real data"""
+    print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
+    
+    # Get backend URL from frontend .env
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                backend_url = line.strip().split('=')[1].strip('"\'')
+                break
+    
+    api_url = f"{backend_url}/api"
+    print(f"Using backend URL: {api_url}")
+    
+    print_separator("RBS CALCULATION WITH REAL DATA")
+    
+    # Get list of teams and referees
+    teams_response = requests.get(f"{api_url}/teams")
+    referees_response = requests.get(f"{api_url}/referees")
+    
+    if teams_response.status_code != 200 or referees_response.status_code != 200:
+        print(f"\n❌ Error getting teams or referees")
+        return False
+    
+    teams = teams_response.json()["teams"]
+    referees = referees_response.json()["referees"]
+    
+    if not teams or not referees:
+        print("\n❌ No teams or referees found in database")
+        return False
+    
+    # Test overall RBS results
+    print("\nTesting overall RBS results:")
+    response = requests.get(f"{api_url}/rbs-results")
+    
+    all_passed = True
+    
+    if response.status_code == 200:
+        data = response.json()
+        results = data.get("results", [])
+        
+        if results:
+            print(f"Total RBS results: {len(results)}")
+            
+            # Check first 3 results
+            for i, result in enumerate(results[:3]):
+                print(f"\nResult {i+1}:")
+                print(f"  - Team: {result.get('team_name', 'N/A')}")
+                print(f"  - Referee: {result.get('referee', 'N/A')}")
+                print(f"  - RBS Score: {result.get('rbs_score', 'N/A')}")
+                print(f"  - Confidence Level: {result.get('confidence_level', 'N/A')}")
+                
+                # Verify RBS score is between -1 and +1
+                rbs_score = result.get('rbs_score', 0)
+                if -1 <= rbs_score <= 1:
+                    print("  ✅ RBS score is between -1 and +1")
+                else:
+                    print(f"  ❌ RBS score {rbs_score} is outside the range [-1, 1]")
+                    all_passed = False
+                
+                # Check stats breakdown
+                stats_breakdown = result.get("stats_breakdown", {})
+                if stats_breakdown:
+                    print("\n  Stats Breakdown:")
+                    for stat, value in stats_breakdown.items():
+                        print(f"    - {stat}: {value}")
+                    
+                    # Verify xG difference calculation works
+                    if 'xg_difference' in stats_breakdown:
+                        print("  ✅ xG difference calculation works")
+                    else:
+                        print("  ❌ xG difference calculation is missing")
+                        all_passed = False
+            
+            # Check if scores are meaningful (not all zeros)
+            zero_scores = sum(1 for r in results if r.get('rbs_score', 0) == 0)
+            if zero_scores < len(results):
+                print("\n✅ RBS scores are meaningful (not all zeros)")
+            else:
+                print("\n❌ All RBS scores are zero")
+                all_passed = False
+        else:
+            print("\n❌ No RBS results found")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    return all_passed
+
+def test_regression_analysis_with_real_data():
+    """Test regression analysis with real data"""
+    print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
+    
+    # Get backend URL from frontend .env
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                backend_url = line.strip().split('=')[1].strip('"\'')
+                break
+    
+    api_url = f"{backend_url}/api"
+    print(f"Using backend URL: {api_url}")
+    
+    print_separator("REGRESSION ANALYSIS WITH REAL DATA")
+    
+    # Test regression stats endpoint
+    print("\nTesting regression stats endpoint:")
+    response = requests.get(f"{api_url}/regression-stats")
+    
+    all_passed = True
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if data.get("success", False):
+            available_stats = data.get("available_stats", [])
+            categories = data.get("categories", {})
+            
+            print(f"Available stats: {len(available_stats)}")
+            print("\nStat categories:")
+            for category, stats in categories.items():
+                print(f"  - {category}: {len(stats)} stats")
+                print(f"    {', '.join(stats)}")
+            
+            # Verify advanced statistics are included
+            advanced_stats = categories.get("advanced_stats", [])
+            if "xg_per_shot" in advanced_stats and "conversion_rate" in advanced_stats:
+                print("\n✅ Advanced statistics are included")
+            else:
+                print("\n❌ Some advanced statistics are missing")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {data.get('message', 'Unknown error')}")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    # Test regression analysis with basic statistics
+    print("\nTesting regression analysis with basic statistics:")
+    basic_stats_payload = {
+        "selected_stats": ["yellow_cards", "red_cards", "fouls_committed", "possession_percentage"],
+        "target": "points_per_game",
+        "test_size": 0.2,
+        "random_state": 42
+    }
+    
+    response = requests.post(f"{api_url}/regression-analysis", json=basic_stats_payload)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if data.get("success", False):
+            print(f"Model type: {data.get('model_type', 'N/A')}")
+            print(f"Sample size: {data.get('sample_size', 'N/A')}")
+            print(f"R² score: {data.get('results', {}).get('r2_score', 'N/A')}")
+            
+            # Print coefficients
+            coefficients = data.get("results", {}).get("coefficients", {})
+            if coefficients:
+                print("\nCoefficients:")
+                for stat, coef in coefficients.items():
+                    print(f"  - {stat}: {coef}")
+            
+            basic_r2 = data.get("results", {}).get("r2_score", 0)
+        else:
+            print(f"\n❌ Error: {data.get('message', 'Unknown error')}")
+            all_passed = False
+            basic_r2 = 0
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+        basic_r2 = 0
+    
+    # Test regression analysis with advanced statistics
+    print("\nTesting regression analysis with advanced statistics:")
+    advanced_stats_payload = {
+        "selected_stats": ["xg_per_shot", "goals_per_xg", "conversion_rate", "shot_accuracy", "xg_difference"],
+        "target": "points_per_game",
+        "test_size": 0.2,
+        "random_state": 42
+    }
+    
+    response = requests.post(f"{api_url}/regression-analysis", json=advanced_stats_payload)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if data.get("success", False):
+            print(f"Model type: {data.get('model_type', 'N/A')}")
+            print(f"Sample size: {data.get('sample_size', 'N/A')}")
+            print(f"R² score: {data.get('results', {}).get('r2_score', 'N/A')}")
+            
+            # Print coefficients
+            coefficients = data.get("results", {}).get("coefficients", {})
+            if coefficients:
+                print("\nCoefficients:")
+                for stat, coef in coefficients.items():
+                    print(f"  - {stat}: {coef}")
+            
+            # Compare R² scores
+            advanced_r2 = data.get("results", {}).get("r2_score", 0)
+            print(f"\nBasic stats R² score: {basic_r2}")
+            print(f"Advanced stats R² score: {advanced_r2}")
+            
+            if advanced_r2 > basic_r2:
+                print("\n✅ Advanced statistics provide better R² score than basic statistics")
+            else:
+                print("\n❌ Advanced statistics do not provide better R² score than basic statistics")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {data.get('message', 'Unknown error')}")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    # Test config suggestion endpoint
+    print("\nTesting config suggestion endpoint:")
+    response = requests.post(f"{api_url}/suggest-prediction-config")
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if data.get("success", False):
+            print(f"R² score: {data.get('r2_score', 'N/A')}")
+            print(f"Sample size: {data.get('sample_size', 'N/A')}")
+            
+            # Print suggestions
+            suggestions = data.get("suggestions", {})
+            if suggestions:
+                print("\nSuggestions:")
+                for category, items in suggestions.items():
+                    print(f"  {category}:")
+                    for item in items:
+                        print(f"    - {item.get('description', 'N/A')}")
+                        print(f"      Confidence: {item.get('confidence', 'N/A')}")
+                
+                print("\n✅ Config suggestion endpoint provides actionable insights")
+            else:
+                print("\n❌ No suggestions provided")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {data.get('message', 'Unknown error')}")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    return all_passed
+
+def test_rbs_configuration_system():
+    """Test RBS configuration system"""
+    print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
+    
+    # Get backend URL from frontend .env
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                backend_url = line.strip().split('=')[1].strip('"\'')
+                break
+    
+    api_url = f"{backend_url}/api"
+    print(f"Using backend URL: {api_url}")
+    
+    print_separator("RBS CONFIGURATION SYSTEM")
+    
+    all_passed = True
+    
+    # Test creating a new RBS config
+    print("\nTesting RBS config creation:")
+    import time
+    new_config = {
+        "config_name": f"test_config_{int(time.time())}",
+        "yellow_cards_weight": 0.4,
+        "red_cards_weight": 0.6,
+        "fouls_committed_weight": 0.2,
+        "fouls_drawn_weight": 0.2,
+        "penalties_awarded_weight": 0.6,
+        "xg_difference_weight": 0.5,
+        "possession_percentage_weight": 0.3
+    }
+    
+    response = requests.post(f"{api_url}/rbs-config", json=new_config)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if data.get("success", False):
+            print(f"✅ Successfully created new RBS config: {new_config['config_name']}")
+            
+            # Calculate RBS using the new config
+            print("\nCalculating RBS with new config:")
+            calc_response = requests.post(f"{api_url}/calculate-rbs", params={"config_name": new_config['config_name']})
+            
+            if calc_response.status_code == 200:
+                calc_data = calc_response.json()
+                
+                if calc_data.get("success", False):
+                    print(f"✅ Successfully calculated RBS with new config")
+                    print(f"Results count: {calc_data.get('results_count', 'N/A')}")
+                    
+                    # Get RBS results with the new config
+                    results_response = requests.get(f"{api_url}/rbs-results")
+                    
+                    if results_response.status_code == 200:
+                        results_data = results_response.json()
+                        results = results_data.get("results", [])
+                        
+                        if results:
+                            # Check if any results use the new config
+                            new_config_results = [r for r in results if r.get("config_used") == new_config['config_name']]
+                            
+                            if new_config_results:
+                                print(f"\n✅ Found {len(new_config_results)} results using new config")
+                                
+                                # Check first result
+                                result = new_config_results[0]
+                                print(f"\nSample result:")
+                                print(f"  - Team: {result.get('team_name', 'N/A')}")
+                                print(f"  - Referee: {result.get('referee', 'N/A')}")
+                                print(f"  - RBS Score: {result.get('rbs_score', 'N/A')}")
+                                print(f"  - Config Used: {result.get('config_used', 'N/A')}")
+                                
+                                # Verify tanh normalization works correctly
+                                rbs_score = result.get('rbs_score', 0)
+                                if -1 <= rbs_score <= 1:
+                                    print("\n✅ Tanh normalization works correctly (score between -1 and +1)")
+                                else:
+                                    print(f"\n❌ RBS score {rbs_score} is outside the range [-1, 1]")
+                                    all_passed = False
+                            else:
+                                print(f"\n❌ No results found using new config")
+                                all_passed = False
+                        else:
+                            print("\n❌ No RBS results found")
+                            all_passed = False
+                    else:
+                        print(f"\n❌ Error getting RBS results: {results_response.status_code}")
+                        all_passed = False
+                else:
+                    print(f"\n❌ Error calculating RBS: {calc_data.get('message', 'Unknown error')}")
+                    all_passed = False
+            else:
+                print(f"\n❌ Error: {calc_response.status_code}")
+                print(calc_response.text)
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {data.get('message', 'Unknown error')}")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    return all_passed
+
+def test_database_data_verification():
+    """Test database data verification"""
+    print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
+    
+    # Get backend URL from frontend .env
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                backend_url = line.strip().split('=')[1].strip('"\'')
+                break
+    
+    api_url = f"{backend_url}/api"
+    print(f"Using backend URL: {api_url}")
+    
+    print_separator("DATABASE DATA VERIFICATION")
+    
+    all_passed = True
+    
+    # Test stats endpoint to check if collections exist and have data
+    response = requests.get(f"{api_url}/stats")
+    if response.status_code == 200:
+        data = response.json()
+        print("Stats endpoint response:")
+        print(json.dumps(data, indent=2))
+        
+        # Check if collections have data
+        if data.get("success", False):
+            print("\n✅ Collections exist and have data")
+            for collection, count in data.get("collection_counts", {}).items():
+                print(f"  - {collection}: {count} documents")
+                
+                # Check if we have team_stats, matches, and rbs_results
+                if collection in ["team_stats", "matches", "rbs_results"] and count == 0:
+                    print(f"  ❌ No data in {collection} collection")
+                    all_passed = False
+        else:
+            print("\n❌ Error retrieving stats")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    # Test team stats for a specific team
+    print("\nChecking team stats for a specific team...")
+    
+    # Get list of teams first
+    teams_response = requests.get(f"{api_url}/teams")
+    if teams_response.status_code != 200:
+        print(f"\n❌ Error getting teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json()["teams"]
+    if not teams:
+        print("\n❌ No teams found in database")
+        return False
+    
+    # Select first team for testing
+    test_team = teams[0]
+    print(f"Testing with team: {test_team}")
+    
+    # Get team performance data
+    team_response = requests.get(f"{api_url}/team-performance/{test_team}")
+    if team_response.status_code == 200:
+        team_data = team_response.json()
+        print("\nTeam performance data:")
+        
+        # Check home stats
+        home_stats = team_data.get("home_stats", {})
+        if home_stats:
+            print("\nHome Stats:")
+            print(f"  - Fouls Committed: {home_stats.get('fouls_committed', 'N/A')}")
+            print(f"  - Fouls Drawn: {home_stats.get('fouls_drawn', 'N/A')}")
+            print(f"  - Penalties Awarded: {home_stats.get('penalties_awarded', 'N/A')}")
+            print(f"  - Possession: {home_stats.get('possession_percentage', 'N/A')}%")
+            print(f"  - xG: {home_stats.get('xg', 'N/A')}")
+            print(f"  - xG Difference: {home_stats.get('xg_difference', 'N/A')}")
+            
+            # Verify field values are not zero
+            if (home_stats.get('fouls_committed', 0) > 0 and 
+                home_stats.get('possession_percentage', 0) > 0):
+                print("\n✅ Team stats have proper field values")
+            else:
+                print("\n❌ Some team stats still have zero values")
+                all_passed = False
+                
+            # Check if fouls_drawn and penalties_awarded have realistic data
+            if home_stats.get('fouls_drawn', 0) > 0:
+                print("✅ fouls_drawn has realistic data")
+            else:
+                print("❌ fouls_drawn is still zero")
+                all_passed = False
+                
+            if home_stats.get('penalties_awarded', 0) > 0:
+                print("✅ penalties_awarded has realistic data")
+            else:
+                print("❌ penalties_awarded is still zero")
+                # This might be realistic for some teams, so don't fail the test
+                print("Note: Some teams might legitimately have zero penalties awarded")
+        else:
+            print("\n❌ No home stats found for team")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {team_response.status_code}")
+        print(team_response.text)
+        all_passed = False
+    
+    return all_passed
+
+def run_comprehensive_tests():
+    """Run all comprehensive tests"""
+    print("\n=== RUNNING COMPREHENSIVE BACKEND TESTS ===\n")
+    
+    # Dictionary to store test results
+    test_results = {}
+    
+    # Test database data verification
+    test_results["Database Data Verification"] = test_database_data_verification()
+    
+    # Test field mapping fixes
+    test_results["Field Mapping Fixes"] = test_field_mapping_fixes()
+    
+    # Test RBS calculation with real data
+    test_results["RBS Calculation with Real Data"] = test_rbs_calculation_with_real_data()
+    
+    # Test regression analysis with real data
+    test_results["Regression Analysis with Real Data"] = test_regression_analysis_with_real_data()
+    
+    # Test RBS configuration system
+    test_results["RBS Configuration System"] = test_rbs_configuration_system()
+    
+    # Print summary of test results
+    print("\n=== TEST RESULTS SUMMARY ===\n")
+    all_passed = True
+    for test_name, result in test_results.items():
+        status = "✅ PASSED" if result else "❌ FAILED"
+        print(f"{test_name}: {status}")
+        if not result:
+            all_passed = False
+    
+    print(f"\nOverall Test Result: {'✅ ALL TESTS PASSED' if all_passed else '❌ SOME TESTS FAILED'}")
+    
+    return 0 if all_passed else 1
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run_comprehensive_tests())
