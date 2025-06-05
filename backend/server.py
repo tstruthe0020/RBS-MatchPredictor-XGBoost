@@ -879,12 +879,23 @@ class RegressionAnalyzer:
             'penalty_conversion_rate', 'points_per_game', 'rbs_score'
         ]
     
-    async def prepare_match_data(self):
-        """Prepare match data for regression analysis"""
+    async def prepare_match_data(self, include_rbs=True):
+        """Prepare match data for regression analysis with comprehensive variables"""
         try:
             # Get all matches and team stats
             matches = await db.matches.find().to_list(10000)
             team_stats = await db.team_stats.find().to_list(10000)
+            
+            # Get RBS results if requested
+            rbs_results = {}
+            if include_rbs:
+                rbs_data = await db.rbs_results.find().to_list(10000)
+                for rbs in rbs_data:
+                    key = f"{rbs['team_name']}_{rbs['referee']}"
+                    rbs_results[key] = rbs['rbs_score']
+            
+            # Get player stats for additional calculations
+            player_stats = await db.player_stats.find().to_list(50000)
             
             # Create a comprehensive dataset
             match_data = []
@@ -898,9 +909,25 @@ class RegressionAnalyzer:
                     home_stat = home_stats[0]
                     away_stat = away_stats[0]
                     
+                    # Get player stats for this match
+                    home_players = [p for p in player_stats if p['match_id'] == match['match_id'] and p['team_name'] == match['home_team']]
+                    away_players = [p for p in player_stats if p['match_id'] == match['match_id'] and p['team_name'] == match['away_team']]
+                    
+                    # Calculate aggregated player stats
+                    home_player_xg = sum(p.get('xg', 0) for p in home_players)
+                    away_player_xg = sum(p.get('xg', 0) for p in away_players)
+                    home_fouls_drawn_players = sum(p.get('fouls_drawn', 0) for p in home_players)
+                    away_fouls_drawn_players = sum(p.get('fouls_drawn', 0) for p in away_players)
+                    home_penalties_players = sum(p.get('penalty_attempts', 0) for p in home_players)
+                    away_penalties_players = sum(p.get('penalty_attempts', 0) for p in away_players)
+                    
+                    # Use player stats for xG if available, otherwise team stats
+                    home_xg = home_player_xg if home_player_xg > 0 else home_stat.get('xg', 0)
+                    away_xg = away_player_xg if away_player_xg > 0 else away_stat.get('xg', 0)
+                    
                     # Calculate xG difference
-                    home_xg_diff = home_stat.get('xg', 0) - away_stat.get('xg', 0)
-                    away_xg_diff = away_stat.get('xg', 0) - home_stat.get('xg', 0)
+                    home_xg_diff = home_xg - away_xg
+                    away_xg_diff = away_xg - home_xg
                     
                     # Calculate match results and points
                     home_score = match['home_score']
@@ -922,6 +949,18 @@ class RegressionAnalyzer:
                         home_points = 1
                         away_points = 1
                     
+                    # Get RBS scores
+                    home_rbs_key = f"{match['home_team']}_{match['referee']}"
+                    away_rbs_key = f"{match['away_team']}_{match['referee']}"
+                    home_rbs = rbs_results.get(home_rbs_key, 0.0)
+                    away_rbs = rbs_results.get(away_rbs_key, 0.0)
+                    
+                    # Calculate additional advanced metrics
+                    home_fouls_drawn = home_fouls_drawn_players if home_fouls_drawn_players > 0 else home_stat.get('fouls_drawn', 0)
+                    away_fouls_drawn = away_fouls_drawn_players if away_fouls_drawn_players > 0 else away_stat.get('fouls_drawn', 0)
+                    home_penalties = home_penalties_players if home_penalties_players > 0 else home_stat.get('penalties_awarded', 0)
+                    away_penalties = away_penalties_players if away_penalties_players > 0 else away_stat.get('penalties_awarded', 0)
+                    
                     # Add home team data
                     home_data = {
                         'team': match['home_team'],
@@ -929,27 +968,47 @@ class RegressionAnalyzer:
                         'referee': match['referee'],
                         'match_result': home_result,
                         'points_per_game': home_points,
+                        'season': match.get('season', 'Unknown'),
+                        'competition': match.get('competition', 'Unknown'),
+                        
+                        # Basic RBS variables
                         'yellow_cards': home_stat.get('yellow_cards', 0),
                         'red_cards': home_stat.get('red_cards', 0),
                         'fouls_committed': home_stat.get('fouls', 0),
-                        'fouls_drawn': home_stat.get('fouls_drawn', 0),
-                        'penalties_awarded': home_stat.get('penalties_awarded', 0),
+                        'fouls_drawn': home_fouls_drawn,
+                        'penalties_awarded': home_penalties,
                         'xg_difference': home_xg_diff,
                         'possession_percentage': home_stat.get('possession_pct', 0),
-                        'xg': home_stat.get('xg', 0),
+                        
+                        # Match Predictor variables
+                        'xg': home_xg,
                         'shots_total': home_stat.get('shots_total', 0),
                         'shots_on_target': home_stat.get('shots_on_target', 0),
                         'is_home': True,
+                        
                         # Advanced derived stats
                         'goals': home_score,
                         'goals_conceded': away_score,
-                        'xg_per_shot': home_stat.get('xg', 0) / max(home_stat.get('shots_total', 1), 1),
-                        'goals_per_xg': home_score / max(home_stat.get('xg', 0.1), 0.1),
+                        'xg_per_shot': home_xg / max(home_stat.get('shots_total', 1), 1),
+                        'goals_per_xg': home_score / max(home_xg, 0.1),
                         'shot_accuracy': home_stat.get('shots_on_target', 0) / max(home_stat.get('shots_total', 1), 1),
                         'conversion_rate': home_score / max(home_stat.get('shots_on_target', 1), 1),
                         'penalty_attempts': home_stat.get('penalty_attempts', 0),
                         'penalty_goals': home_stat.get('penalty_goals', 0),
-                        'penalty_conversion_rate': home_stat.get('penalty_goals', 0) / max(home_stat.get('penalty_attempts', 1), 1) if home_stat.get('penalty_attempts', 0) > 0 else 0
+                        'penalty_conversion_rate': home_stat.get('penalty_goals', 0) / max(home_stat.get('penalty_attempts', 1), 1) if home_stat.get('penalty_attempts', 0) > 0 else 0,
+                        
+                        # Additional variables for comprehensive analysis
+                        'rbs_score': home_rbs,
+                        'home_advantage': 1,  # Home team gets advantage
+                        'goal_difference': home_score - away_score,
+                        'clean_sheets_rate': 1 if away_score == 0 else 0,
+                        'scoring_rate': 1 if home_score > 0 else 0,
+                        
+                        # Team quality ratings (derived from averages)
+                        'team_quality_rating': home_points,  # Simple proxy for team quality
+                        'attacking_rating': home_xg,
+                        'defensive_rating': max(0, 3 - away_xg),  # Inverse of opponent xG
+                        'form_rating': home_points,  # Will be enhanced with recent form
                     }
                     
                     # Add away team data
@@ -959,27 +1018,47 @@ class RegressionAnalyzer:
                         'referee': match['referee'],
                         'match_result': away_result,
                         'points_per_game': away_points,
+                        'season': match.get('season', 'Unknown'),
+                        'competition': match.get('competition', 'Unknown'),
+                        
+                        # Basic RBS variables
                         'yellow_cards': away_stat.get('yellow_cards', 0),
                         'red_cards': away_stat.get('red_cards', 0),
                         'fouls_committed': away_stat.get('fouls', 0),
-                        'fouls_drawn': away_stat.get('fouls_drawn', 0),
-                        'penalties_awarded': away_stat.get('penalties_awarded', 0),
+                        'fouls_drawn': away_fouls_drawn,
+                        'penalties_awarded': away_penalties,
                         'xg_difference': away_xg_diff,
                         'possession_percentage': away_stat.get('possession_pct', 0),
-                        'xg': away_stat.get('xg', 0),
+                        
+                        # Match Predictor variables
+                        'xg': away_xg,
                         'shots_total': away_stat.get('shots_total', 0),
                         'shots_on_target': away_stat.get('shots_on_target', 0),
                         'is_home': False,
+                        
                         # Advanced derived stats
                         'goals': away_score,
                         'goals_conceded': home_score,
-                        'xg_per_shot': away_stat.get('xg', 0) / max(away_stat.get('shots_total', 1), 1),
-                        'goals_per_xg': away_score / max(away_stat.get('xg', 0.1), 0.1),
+                        'xg_per_shot': away_xg / max(away_stat.get('shots_total', 1), 1),
+                        'goals_per_xg': away_score / max(away_xg, 0.1),
                         'shot_accuracy': away_stat.get('shots_on_target', 0) / max(away_stat.get('shots_total', 1), 1),
                         'conversion_rate': away_score / max(away_stat.get('shots_on_target', 1), 1),
                         'penalty_attempts': away_stat.get('penalty_attempts', 0),
                         'penalty_goals': away_stat.get('penalty_goals', 0),
-                        'penalty_conversion_rate': away_stat.get('penalty_goals', 0) / max(away_stat.get('penalty_attempts', 1), 1) if away_stat.get('penalty_attempts', 0) > 0 else 0
+                        'penalty_conversion_rate': away_stat.get('penalty_goals', 0) / max(away_stat.get('penalty_attempts', 1), 1) if away_stat.get('penalty_attempts', 0) > 0 else 0,
+                        
+                        # Additional variables for comprehensive analysis
+                        'rbs_score': away_rbs,
+                        'home_advantage': 0,  # Away team gets no home advantage
+                        'goal_difference': away_score - home_score,
+                        'clean_sheets_rate': 1 if home_score == 0 else 0,
+                        'scoring_rate': 1 if away_score > 0 else 0,
+                        
+                        # Team quality ratings (derived from averages)
+                        'team_quality_rating': away_points,  # Simple proxy for team quality
+                        'attacking_rating': away_xg,
+                        'defensive_rating': max(0, 3 - home_xg),  # Inverse of opponent xG
+                        'form_rating': away_points,  # Will be enhanced with recent form
                     }
                     
                     match_data.append(home_data)
