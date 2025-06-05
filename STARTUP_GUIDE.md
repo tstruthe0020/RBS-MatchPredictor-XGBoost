@@ -1,13 +1,16 @@
 # 🚀 Soccer Referee Bias Analysis Platform - Startup Guide
 
 ## Overview
-This platform analyzes referee bias in soccer matches and provides sophisticated match predictions using xG-based algorithms. It consists of a React frontend, FastAPI backend, and MongoDB database.
+This platform analyzes referee bias in soccer matches and provides sophisticated match predictions using **Machine Learning algorithms**. It consists of a React frontend, FastAPI backend, MongoDB database, and trained ML models for match prediction.
 
 ## 🏗️ System Architecture
 
 ```
 Frontend (React) ←→ Backend (FastAPI) ←→ Database (MongoDB)
      :3000              :8001              :27017
+                          ↓
+                   ML Models (joblib)
+                 /app/backend/models/
 ```
 
 ## 📋 Prerequisites
@@ -16,6 +19,7 @@ Frontend (React) ←→ Backend (FastAPI) ←→ Database (MongoDB)
 - Python 3.8+
 - Node.js 18+
 - MongoDB
+- Scikit-learn for ML models
 
 ## 🚀 Quick Start
 
@@ -54,6 +58,35 @@ tail -f /var/log/supervisor/frontend.*.log
 
 # MongoDB logs
 tail -f /var/log/supervisor/mongodb.*.log
+```
+
+## 🤖 ML Model Setup (First Time Only)
+
+### 1. Check ML Model Status
+Navigate to the **Match Prediction** tab in the frontend to check if models are trained.
+
+### 2. Train ML Models (Required on First Run)
+```bash
+# Via API
+curl -X POST "http://localhost:8001/api/train-ml-models"
+
+# Or use the frontend button "🧠 Train ML Models"
+```
+
+### 3. Verify Model Training
+The system will train 5 models:
+- **Classification**: Win/Draw/Loss prediction (~75% accuracy)
+- **4 Regression models**: Home/Away goals and xG prediction
+
+Models are saved in `/app/backend/models/` directory.
+
+### 4. Model Management Commands
+```bash
+# Check model status
+curl -X GET "http://localhost:8001/api/ml-models/status"
+
+# Reload models from disk
+curl -X POST "http://localhost:8001/api/ml-models/reload"
 ```
 
 ## 📊 Data Upload Process
