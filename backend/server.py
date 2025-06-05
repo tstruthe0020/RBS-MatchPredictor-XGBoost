@@ -67,6 +67,7 @@ class TeamStats(BaseModel):
     penalty_goals: Optional[int] = 0
     penalty_conversion_rate: Optional[float] = 0.0
     xg: Optional[float] = 0.0
+    dataset_name: str = "default"  # New field for dataset management
 
 class PlayerStats(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
