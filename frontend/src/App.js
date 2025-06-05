@@ -52,6 +52,11 @@ function App() {
   const [trainingModels, setTrainingModels] = useState(false);
   const [trainingResults, setTrainingResults] = useState(null);
 
+  // ML Training state
+  const [mlStatus, setMlStatus] = useState(null);
+  const [trainingModels, setTrainingModels] = useState(false);
+  const [trainingResults, setTrainingResults] = useState(null);
+
   // Configuration state
   const [configName, setConfigName] = useState('default');
   const [configs, setConfigs] = useState([]);
