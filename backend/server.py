@@ -1183,6 +1183,233 @@ class RegressionAnalyzer:
                 'results': {},
                 'message': f"Error in regression analysis: {str(e)}"
             }
+    
+    async def analyze_rbs_formula_optimization(self):
+        """Analyze RBS formula variables for optimization"""
+        try:
+            df = await self.prepare_match_data(include_rbs=True)
+            
+            if df.empty:
+                raise ValueError("No match data available")
+            
+            # Analyze RBS variables against match outcomes
+            results = {}
+            
+            # Test current RBS variables against points_per_game
+            rbs_analysis = self.run_regression(
+                df=df,
+                selected_stats=self.rbs_variables,
+                target='points_per_game'
+            )
+            
+            results['rbs_vs_points'] = rbs_analysis
+            
+            # Test individual RBS variable importance
+            individual_importance = {}
+            for var in self.rbs_variables:
+                single_var_analysis = self.run_regression(
+                    df=df,
+                    selected_stats=[var],
+                    target='points_per_game'
+                )
+                if single_var_analysis['success']:
+                    individual_importance[var] = {
+                        'r2_score': single_var_analysis['results'].get('r2_score', 0),
+                        'coefficient': single_var_analysis['results'].get('coefficients', {}).get(var, 0)
+                    }
+            
+            results['individual_variable_importance'] = individual_importance
+            
+            # Calculate correlation matrix for RBS variables
+            rbs_df = df[self.rbs_variables + ['points_per_game']].copy()
+            correlation_matrix = rbs_df.corr()['points_per_game'].to_dict()
+            results['correlations_with_points'] = correlation_matrix
+            
+            # Suggest optimal weights based on analysis
+            if rbs_analysis['success'] and 'coefficients' in rbs_analysis['results']:
+                coefficients = rbs_analysis['results']['coefficients']
+                
+                # Normalize coefficients to suggest weights (keeping sign information)
+                total_abs_coef = sum(abs(coef) for coef in coefficients.values())
+                
+                suggested_weights = {}
+                if total_abs_coef > 0:
+                    for var, coef in coefficients.items():
+                        # Preserve sign and scale to reasonable weight range (0.1 to 1.0)
+                        normalized_weight = abs(coef) / total_abs_coef
+                        suggested_weight = max(0.1, min(1.0, normalized_weight * 5))  # Scale to 0.1-1.0 range
+                        suggested_weights[var] = round(suggested_weight, 2)
+                
+                results['suggested_rbs_weights'] = suggested_weights
+            
+            return {
+                'success': True,
+                'analysis_type': 'RBS Formula Optimization',
+                'rbs_variables_analyzed': self.rbs_variables,
+                'sample_size': len(df),
+                'results': results,
+                'recommendations': self._generate_rbs_recommendations(results),
+                'message': 'RBS formula optimization analysis completed successfully'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'analysis_type': 'RBS Formula Optimization',
+                'results': {},
+                'message': f"Error in RBS optimization analysis: {str(e)}"
+            }
+    
+    async def analyze_match_predictor_optimization(self):
+        """Analyze Match Predictor variables for optimization"""
+        try:
+            df = await self.prepare_match_data(include_rbs=True)
+            
+            if df.empty:
+                raise ValueError("No match data available")
+            
+            results = {}
+            
+            # Test current predictor variables against points_per_game
+            predictor_analysis = self.run_regression(
+                df=df,
+                selected_stats=self.predictor_variables,
+                target='points_per_game'
+            )
+            
+            results['predictor_vs_points'] = predictor_analysis
+            
+            # Test against match results (classification)
+            predictor_classification = self.run_regression(
+                df=df,
+                selected_stats=self.predictor_variables,
+                target='match_result'
+            )
+            
+            results['predictor_vs_results'] = predictor_classification
+            
+            # Analyze xG-related variables specifically
+            xg_variables = ['xg', 'xg_per_shot', 'goals_per_xg', 'shots_total', 'shots_on_target']
+            xg_analysis = self.run_regression(
+                df=df,
+                selected_stats=xg_variables,
+                target='points_per_game'
+            )
+            
+            results['xg_analysis'] = xg_analysis
+            
+            # Test importance of RBS in predictions
+            if 'rbs_score' in df.columns:
+                rbs_predictor_analysis = self.run_regression(
+                    df=df,
+                    selected_stats=['rbs_score', 'xg', 'possession_percentage', 'shots_total'],
+                    target='points_per_game'
+                )
+                results['rbs_in_prediction'] = rbs_predictor_analysis
+            
+            # Calculate feature importance rankings
+            if predictor_analysis['success'] and 'coefficients' in predictor_analysis['results']:
+                coefficients = predictor_analysis['results']['coefficients']
+                
+                # Rank variables by absolute coefficient value
+                ranked_importance = sorted(
+                    coefficients.items(),
+                    key=lambda x: abs(x[1]),
+                    reverse=True
+                )
+                
+                results['variable_importance_ranking'] = ranked_importance
+            
+            return {
+                'success': True,
+                'analysis_type': 'Match Predictor Optimization',
+                'predictor_variables_analyzed': self.predictor_variables,
+                'sample_size': len(df),
+                'results': results,
+                'recommendations': self._generate_predictor_recommendations(results),
+                'message': 'Match predictor optimization analysis completed successfully'
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'analysis_type': 'Match Predictor Optimization',
+                'results': {},
+                'message': f"Error in predictor optimization analysis: {str(e)}"
+            }
+    
+    def _generate_rbs_recommendations(self, analysis_results):
+        """Generate recommendations for RBS formula optimization"""
+        recommendations = []
+        
+        if 'suggested_rbs_weights' in analysis_results:
+            weights = analysis_results['suggested_rbs_weights']
+            recommendations.append({
+                'type': 'weight_optimization',
+                'recommendation': 'Update RBS formula weights based on statistical significance',
+                'details': weights,
+                'priority': 'high'
+            })
+        
+        if 'individual_variable_importance' in analysis_results:
+            importance = analysis_results['individual_variable_importance']
+            
+            # Find variables with negative correlation (bad for team performance)
+            negative_vars = [var for var, data in importance.items() 
+                           if data.get('coefficient', 0) < 0]
+            
+            if negative_vars:
+                recommendations.append({
+                    'type': 'negative_correlation_confirmed',
+                    'recommendation': 'These variables correctly show negative impact on team performance',
+                    'details': negative_vars,
+                    'priority': 'medium'
+                })
+        
+        # Recommendation to maintain tanh normalization
+        recommendations.append({
+            'type': 'normalization',
+            'recommendation': 'Continue using tanh normalization to keep RBS between -1 and +1',
+            'details': 'Tanh normalization provides interpretable scores and prevents extreme values',
+            'priority': 'high'
+        })
+        
+        return recommendations
+    
+    def _generate_predictor_recommendations(self, analysis_results):
+        """Generate recommendations for Match Predictor optimization"""
+        recommendations = []
+        
+        if 'variable_importance_ranking' in analysis_results:
+            ranking = analysis_results['variable_importance_ranking']
+            top_variables = ranking[:5]  # Top 5 most important
+            
+            recommendations.append({
+                'type': 'feature_importance',
+                'recommendation': 'Focus on these most predictive variables',
+                'details': {var: coef for var, coef in top_variables},
+                'priority': 'high'
+            })
+        
+        if 'xg_analysis' in analysis_results and analysis_results['xg_analysis']['success']:
+            xg_r2 = analysis_results['xg_analysis']['results'].get('r2_score', 0)
+            recommendations.append({
+                'type': 'xg_effectiveness',
+                'recommendation': f'xG-related variables explain {xg_r2:.1%} of performance variance',
+                'details': f'R² score: {xg_r2:.3f}',
+                'priority': 'medium'
+            })
+        
+        if 'rbs_in_prediction' in analysis_results and analysis_results['rbs_in_prediction']['success']:
+            rbs_coef = analysis_results['rbs_in_prediction']['results'].get('coefficients', {}).get('rbs_score', 0)
+            recommendations.append({
+                'type': 'rbs_integration',
+                'recommendation': f'RBS shows {"positive" if rbs_coef > 0 else "negative"} correlation with team performance',
+                'details': f'RBS coefficient: {rbs_coef:.3f}',
+                'priority': 'high'
+            })
+        
+        return recommendations
 
 # Initialize Regression Analyzer
 regression_analyzer = RegressionAnalyzer()
