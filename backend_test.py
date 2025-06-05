@@ -502,6 +502,48 @@ def verify_dataset_name_in_records(dataset_name):
 
 def run_tests():
     """Run all tests"""
+    # Test enhanced regression analysis functionality
+    print("\n\n========== TESTING ENHANCED REGRESSION ANALYSIS FUNCTIONALITY ==========\n")
+    
+    # Test regression-stats endpoint
+    regression_stats_data = test_regression_stats_endpoint()
+    
+    # Test RBS optimization analysis endpoint
+    rbs_optimization_data = test_rbs_optimization_endpoint()
+    
+    # Test Match Predictor optimization endpoint
+    predictor_optimization_data = test_predictor_optimization_endpoint()
+    
+    # Test comprehensive regression analysis endpoint
+    comprehensive_regression_data = test_comprehensive_regression_endpoint()
+    
+    # Print summary of regression analysis tests
+    print("\n\n========== REGRESSION ANALYSIS TESTS SUMMARY ==========\n")
+    
+    if regression_stats_data:
+        categories = regression_stats_data.get('categories', {})
+        print(f"✅ Regression Stats Endpoint: {len(categories)} categories, {len(regression_stats_data.get('available_stats', []))} variables")
+    else:
+        print("❌ Regression Stats Endpoint: Failed")
+    
+    if rbs_optimization_data and rbs_optimization_data.get('success'):
+        print(f"✅ RBS Optimization Endpoint: {len(rbs_optimization_data.get('rbs_variables_analyzed', []))} variables analyzed, {len(rbs_optimization_data.get('recommendations', []))} recommendations")
+    else:
+        print("❌ RBS Optimization Endpoint: Failed")
+    
+    if predictor_optimization_data and predictor_optimization_data.get('success'):
+        print(f"✅ Predictor Optimization Endpoint: {len(predictor_optimization_data.get('predictor_variables_analyzed', []))} variables analyzed, {len(predictor_optimization_data.get('recommendations', []))} recommendations")
+    else:
+        print("❌ Predictor Optimization Endpoint: Failed")
+    
+    if comprehensive_regression_data and comprehensive_regression_data.get('success'):
+        print(f"✅ Comprehensive Regression Endpoint: {len(comprehensive_regression_data.get('selected_stats', []))} variables analyzed, R² score: {comprehensive_regression_data.get('results', {}).get('r2_score', 'N/A')}")
+    else:
+        print("❌ Comprehensive Regression Endpoint: Failed")
+    
+    # Test dataset management functionality
+    print("\n\n========== TESTING DATASET MANAGEMENT FUNCTIONALITY ==========\n")
+    
     # Initial dataset list
     print("Initial dataset list:")
     test_list_datasets()
