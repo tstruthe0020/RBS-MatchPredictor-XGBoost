@@ -2115,8 +2115,8 @@ async def calculate_comprehensive_team_stats():
             goals_conceded = match['away_score'] if is_home else match['home_score']
             
             # Calculate comprehensive statistics
-            shots_total = max(team_stat.get('shots_total', 0), 1)  # Avoid division by zero
-            shots_on_target = team_stat.get('shots_on_target', 0)
+            shots_total = max(final_shots_total, 1)  # Use aggregated shots, avoid division by zero
+            shots_on_target = final_shots_on_target  # Use aggregated shots on target
             possession_pct = team_stat.get('possession_pct', 50.0)
             
             # Calculate derived metrics with proper fallbacks and bounds checking
