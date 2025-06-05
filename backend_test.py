@@ -1340,9 +1340,15 @@ def test_regression_analysis_with_real_data():
                 print("\nSuggestions:")
                 for category, items in suggestions.items():
                     print(f"  {category}:")
-                    for item in items:
-                        print(f"    - {item.get('description', 'N/A')}")
-                        print(f"      Confidence: {item.get('confidence', 'N/A')}")
+                    if isinstance(items, list):
+                        for item in items:
+                            if isinstance(item, dict):
+                                print(f"    - {item.get('description', 'N/A')}")
+                                print(f"      Confidence: {item.get('confidence', 'N/A')}")
+                            else:
+                                print(f"    - {item}")
+                    else:
+                        print(f"    {items}")
                 
                 print("\n✅ Config suggestion endpoint provides actionable insights")
             else:
