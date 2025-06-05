@@ -27,3 +27,7 @@
       - working: true
         agent: "testing"
         comment: "Successfully tested the new config suggestion endpoint. The endpoint correctly performs regression analysis on key statistics and generates meaningful configuration suggestions. The response includes R² score (0.422), sample size (758), and specific recommendations for adjusting weights based on statistical correlations. The suggestions are organized into categories (xg_calculation, adjustments) with explanations and confidence level. The endpoint provides actionable insights that can directly improve the match prediction algorithm's default configuration."
+
+agent_communication:
+  - agent: "testing"
+    message: "I have tested the enhanced regression analysis functionality. The GET /api/regression-stats endpoint now correctly returns 20 available statistics organized into categories (basic_stats, advanced_stats, outcome_stats) with comprehensive descriptions. The advanced stats like xg_per_shot, goals_per_xg, shot_accuracy, and conversion_rate are properly included and work correctly in regression analysis. Testing with advanced stats showed a much higher R² score (0.425) compared to basic stats (-0.013), indicating these derived metrics are more predictive of match outcomes. The new POST /api/suggest-prediction-config endpoint also works correctly, providing actionable suggestions for optimizing prediction configuration based on statistical correlations. All tests passed successfully."
