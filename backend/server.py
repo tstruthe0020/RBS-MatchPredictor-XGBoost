@@ -3921,6 +3921,52 @@ async def analyze_rbs_optimization():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in RBS optimization analysis: {str(e)}")
 
+@api_router.get("/enhanced-rbs-analysis/{team_name}/{referee_name}")
+async def get_enhanced_rbs_analysis(team_name: str, referee_name: str):
+    """
+    Get comprehensive RBS analysis including:
+    1. Performance differential (team stats with vs without referee)
+    2. Referee decision variance analysis (consistency for this team vs overall)
+    """
+    try:
+        rbs_calculator = RBSCalculator()
+        
+        # Get standard RBS calculation
+        matches = await db.matches.find().to_list(10000)
+        team_stats = await db.team_stats.find().to_list(10000)
+        
+        standard_rbs = await rbs_calculator.calculate_rbs_for_team_referee(
+            team_name, referee_name, team_stats, matches
+        )
+        
+        # Get variance analysis
+        variance_analysis = await rbs_calculator.calculate_referee_variance_analysis(
+            team_name, referee_name
+        )
+        
+        if not standard_rbs:
+            return {
+                "success": False,
+                "message": "Insufficient data for RBS calculation",
+                "team_name": team_name,
+                "referee_name": referee_name
+            }
+        
+        return {
+            "success": True,
+            "team_name": team_name,
+            "referee_name": referee_name,
+            "standard_rbs": standard_rbs,
+            "variance_analysis": variance_analysis,
+            "interpretation": {
+                "rbs_explanation": f"Team performance differential: {standard_rbs['rbs_score']} (higher = better performance with this referee)",
+                "variance_explanation": "Variance ratios show how consistently referee treats this team vs overall patterns (>1.5 = more variable/inconsistent treatment)"
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in enhanced RBS analysis: {str(e)}")
+
 @api_router.post("/analyze-predictor-optimization")
 async def analyze_predictor_optimization():
     """Analyze Match Predictor variables for optimization based on statistical significance"""
