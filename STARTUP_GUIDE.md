@@ -220,6 +220,21 @@ tail -n 50 /var/log/supervisor/backend.*.log
 # Common fixes
 sudo supervisorctl restart backend
 pip install -r /app/backend/requirements.txt
+
+# Check ML model directory
+ls -la /app/backend/models/
+```
+
+#### ML Models Not Working
+```bash
+# Check model status
+curl -X GET "http://localhost:8001/api/ml-models/status"
+
+# Retrain models if needed
+curl -X POST "http://localhost:8001/api/train-ml-models"
+
+# Check model files exist
+ls -la /app/backend/models/*.pkl
 ```
 
 #### Frontend Build Errors
@@ -248,12 +263,24 @@ sudo supervisorctl restart mongodb
 - Ensure match_id consistency across files
 - Upload files in correct order (Player → Team → Match)
 
+#### Prediction Errors
+- Ensure ML models are trained (check Match Prediction tab)
+- Verify teams and referees exist in database
+- Check that sufficient historical data is available
+- Retrain models if dataset has changed significantly
+
 ### Performance Optimization
 
 #### For Large Datasets
 - Upload data in smaller batches
-- Monitor memory usage during processing
-- Consider indexing frequently queried fields
+- Monitor memory usage during ML training
+- Consider training models overnight for large datasets
+- Use model reload instead of retraining for temporary issues
+
+#### ML Model Performance
+- Retrain models when adding significant new data
+- Monitor model accuracy metrics in training results
+- Consider feature selection for improved performance
 
 ## 📚 Next Steps
 
