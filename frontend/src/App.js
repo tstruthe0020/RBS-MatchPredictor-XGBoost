@@ -2748,6 +2748,305 @@ function App() {
           </div>
         )}
 
+        {/* Formula Optimization Tab */}
+        {activeTab === 'optimization' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">🧪 Formula Optimization</h2>
+              <p className="text-gray-600 mb-6">
+                Use regression analysis to optimize your RBS formula weights and Match Predictor algorithm parameters based on statistical correlations with match outcomes.
+              </p>
+
+              {/* Analysis Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-lg border border-orange-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">🎯 RBS Formula Optimization</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Analyze which RBS variables have the strongest correlation with match outcomes and get suggested weight adjustments.
+                  </p>
+                  <button
+                    onClick={analyzeRBSOptimization}
+                    disabled={analyzingFormulas}
+                    className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {analyzingFormulas ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📊</span>
+                        <span>Analyze RBS Formula</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">⚽ Match Predictor Optimization</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Analyze which predictor variables are most important for match outcomes and optimize algorithm parameters.
+                  </p>
+                  <button
+                    onClick={analyzePredictorOptimization}
+                    disabled={analyzingFormulas}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {analyzingFormulas ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🔮</span>
+                        <span>Analyze Match Predictor</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* RBS Optimization Results */}
+              {optimizationResults.rbs && (
+                <div className="bg-orange-50 p-6 rounded-lg border border-orange-200 mb-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-semibold text-orange-900">🎯 RBS Formula Analysis Results</h3>
+                    <span className="text-sm text-orange-600">
+                      Sample Size: {optimizationResults.rbs.sample_size}
+                    </span>
+                  </div>
+
+                  {optimizationResults.rbs.success ? (
+                    <>
+                      {/* Current vs Suggested Weights */}
+                      {optimizationResults.rbs.results.suggested_rbs_weights && (
+                        <div className="bg-white p-4 rounded-lg mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">Suggested Weight Adjustments</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {Object.entries(optimizationResults.rbs.results.suggested_rbs_weights).map(([variable, weight]) => (
+                              <div key={variable} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 capitalize">
+                                  {variable.replace('_', ' ')}:
+                                </span>
+                                <span className="font-medium text-orange-700">{weight}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-4">
+                            <button
+                              onClick={() => applyRBSWeights(optimizationResults.rbs.results.suggested_rbs_weights)}
+                              disabled={applyingWeights}
+                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                            >
+                              {applyingWeights ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span>Applying...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>✅</span>
+                                  <span>Apply Suggested Weights</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Variable Correlations */}
+                      {optimizationResults.rbs.results.correlations_with_points && (
+                        <div className="bg-white p-4 rounded-lg mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">Variable Correlations with Match Outcomes</h4>
+                          <div className="space-y-2">
+                            {Object.entries(optimizationResults.rbs.results.correlations_with_points)
+                              .sort(([,a], [,b]) => Math.abs(b) - Math.abs(a))
+                              .map(([variable, correlation]) => (
+                                <div key={variable} className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-700 capitalize">
+                                    {variable.replace('_', ' ')}:
+                                  </span>
+                                  <span className={`font-medium ${correlation > 0 ? 'text-green-600' : correlation < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                    {correlation > 0 ? '+' : ''}{(correlation * 100).toFixed(1)}%
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {optimizationResults.rbs.recommendations && optimizationResults.rbs.recommendations.length > 0 && (
+                        <div className="bg-white p-4 rounded-lg">
+                          <h4 className="font-semibold text-gray-900 mb-3">Recommendations</h4>
+                          <div className="space-y-2">
+                            {optimizationResults.rbs.recommendations.map((rec, index) => (
+                              <div key={index} className="border-l-4 border-orange-400 pl-3">
+                                <div className="text-sm font-medium text-gray-900">{rec.recommendation}</div>
+                                <div className="text-xs text-gray-600">Priority: {rec.priority}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <p className="text-red-800">{optimizationResults.rbs.message}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Match Predictor Optimization Results */}
+              {optimizationResults.predictor && (
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-semibold text-blue-900">⚽ Match Predictor Analysis Results</h3>
+                    <span className="text-sm text-blue-600">
+                      Sample Size: {optimizationResults.predictor.sample_size}
+                    </span>
+                  </div>
+
+                  {optimizationResults.predictor.success ? (
+                    <>
+                      {/* Variable Importance Ranking */}
+                      {optimizationResults.predictor.results.variable_importance_ranking && (
+                        <div className="bg-white p-4 rounded-lg mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">Variable Importance Ranking</h4>
+                          <div className="space-y-2">
+                            {optimizationResults.predictor.results.variable_importance_ranking.slice(0, 8).map(([variable, coefficient], index) => (
+                              <div key={variable} className="flex justify-between items-center">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">#{index + 1}</span>
+                                  <span className="text-sm text-gray-700 capitalize">
+                                    {variable.replace('_', ' ')}
+                                  </span>
+                                </div>
+                                <span className={`font-medium ${coefficient > 0 ? 'text-green-600' : coefficient < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                  {coefficient > 0 ? '+' : ''}{coefficient.toFixed(3)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Performance Metrics */}
+                      {optimizationResults.predictor.results.predictor_vs_points && (
+                        <div className="bg-white p-4 rounded-lg mb-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">Model Performance</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {(optimizationResults.predictor.results.predictor_vs_points.results?.r2_score * 100 || 0).toFixed(1)}%
+                              </div>
+                              <div className="text-sm text-gray-600">R² Score</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {optimizationResults.predictor.results.predictor_vs_points.sample_size || 0}
+                              </div>
+                              <div className="text-sm text-gray-600">Samples</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {optimizationResults.predictor.predictor_variables_analyzed?.length || 0}
+                              </div>
+                              <div className="text-sm text-gray-600">Variables</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Apply Optimizations */}
+                      <div className="bg-white p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-3">Apply Optimizations</h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Create a new prediction configuration based on the analysis results.
+                        </p>
+                        <button
+                          onClick={() => applyPredictorWeights(optimizationResults.predictor)}
+                          disabled={applyingWeights}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                        >
+                          {applyingWeights ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              <span>Applying...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>✅</span>
+                              <span>Apply Optimized Configuration</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Recommendations */}
+                      {optimizationResults.predictor.recommendations && optimizationResults.predictor.recommendations.length > 0 && (
+                        <div className="bg-white p-4 rounded-lg mt-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">Recommendations</h4>
+                          <div className="space-y-2">
+                            {optimizationResults.predictor.recommendations.map((rec, index) => (
+                              <div key={index} className="border-l-4 border-blue-400 pl-3">
+                                <div className="text-sm font-medium text-gray-900">{rec.recommendation}</div>
+                                {rec.details && typeof rec.details === 'string' && (
+                                  <div className="text-xs text-gray-600">{rec.details}</div>
+                                )}
+                                <div className="text-xs text-gray-600">Priority: {rec.priority}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <p className="text-red-800">{optimizationResults.predictor.message}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Instructions */}
+              {!optimizationResults.rbs && !optimizationResults.predictor && (
+                <div className="bg-gray-50 p-6 rounded-lg border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">📚 How to Use Formula Optimization</h3>
+                  <div className="space-y-3 text-sm text-gray-700">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-orange-600 font-bold">1.</span>
+                      <div>
+                        <strong>RBS Formula Optimization:</strong> Analyzes which RBS variables (yellow cards, red cards, fouls, etc.) have the strongest correlation with match outcomes. Provides suggested weight adjustments to improve RBS accuracy.
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-blue-600 font-bold">2.</span>
+                      <div>
+                        <strong>Match Predictor Optimization:</strong> Evaluates which variables are most important for predicting match results. Helps optimize algorithm parameters for better prediction accuracy.
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-green-600 font-bold">3.</span>
+                      <div>
+                        <strong>Apply Changes:</strong> Once analysis is complete, you can apply the suggested optimizations to create new, improved configurations for your algorithms.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Note:</strong> Optimization analysis requires existing match data and RBS calculations. Make sure you have uploaded data and calculated RBS scores before running optimization.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Results Tab */}
         {activeTab === 'results' && (
           <div className="space-y-6">
