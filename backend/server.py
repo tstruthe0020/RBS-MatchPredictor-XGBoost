@@ -498,18 +498,16 @@ class MatchPredictor:
             home_base_xg *= possession_factor_home
             away_base_xg *= possession_factor_away
             
-            # Fouls drawn factor (teams that draw more fouls get more set pieces and penalties)
-            fouls_factor_home = 1 + (home_stats['fouls_drawn'] - 10) * 0.02  # Baseline 10 fouls drawn per match
-            fouls_factor_away = 1 + (away_stats['fouls_drawn'] - 10) * 0.02
+            # Fouls drawn factor (configurable baseline and factor)
+            fouls_factor_home = 1 + (home_stats['fouls_drawn'] - config.fouls_drawn_baseline) * config.fouls_drawn_factor
+            fouls_factor_away = 1 + (away_stats['fouls_drawn'] - config.fouls_drawn_baseline) * config.fouls_drawn_factor
             
-            home_base_xg *= max(0.8, min(1.3, fouls_factor_home))  # Cap between 0.8x and 1.3x
-            away_base_xg *= max(0.8, min(1.3, fouls_factor_away))
+            home_base_xg *= max(config.fouls_drawn_min_multiplier, min(config.fouls_drawn_max_multiplier, fouls_factor_home))
+            away_base_xg *= max(config.fouls_drawn_min_multiplier, min(config.fouls_drawn_max_multiplier, fouls_factor_away))
             
-            # Enhanced penalties factor using conversion rates
-            # Each penalty attempt adds potential xG, weighted by team's conversion rate
-            # Using penalties_awarded (average penalty attempts per match)
-            home_penalty_xg = home_stats['penalties_awarded'] * 0.79 * home_stats['penalty_conversion_rate']
-            away_penalty_xg = away_stats['penalties_awarded'] * 0.79 * away_stats['penalty_conversion_rate']
+            # Penalties factor (configurable penalty xG value)
+            home_penalty_xg = home_stats['penalties_awarded'] * config.penalty_xg_value * home_stats['penalty_conversion_rate']
+            away_penalty_xg = away_stats['penalties_awarded'] * config.penalty_xg_value * away_stats['penalty_conversion_rate']
             
             home_base_xg += home_penalty_xg
             away_base_xg += away_penalty_xg
