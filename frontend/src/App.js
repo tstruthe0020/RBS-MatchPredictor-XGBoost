@@ -201,7 +201,11 @@ function App() {
 
     setPredicting(true);
     try {
-      const response = await axios.post(`${API}/predict-match`, predictionForm);
+      const requestData = {
+        ...predictionForm,
+        config_name: configName
+      };
+      const response = await axios.post(`${API}/predict-match`, requestData);
       setPredictionResult(response.data);
     } catch (error) {
       alert(`❌ Prediction Error: ${error.response?.data?.detail || error.message}`);
@@ -217,6 +221,67 @@ function App() {
       match_date: ''
     });
     setPredictionResult(null);
+  };
+
+  // Configuration functions
+  const fetchConfigs = async () => {
+    try {
+      const response = await axios.get(`${API}/prediction-configs`);
+      setConfigs(response.data.configs);
+    } catch (error) {
+      console.error('Error fetching configs:', error);
+    }
+  };
+
+  const fetchConfig = async (name) => {
+    try {
+      const response = await axios.get(`${API}/prediction-config/${name}`);
+      setCurrentConfig(response.data.config);
+      setConfigForm(response.data.config);
+    } catch (error) {
+      console.error('Error fetching config:', error);
+    }
+  };
+
+  const saveConfig = async () => {
+    try {
+      const response = await axios.post(`${API}/prediction-config`, configForm);
+      alert('✅ Configuration saved successfully!');
+      await fetchConfigs();
+      setConfigEditing(false);
+    } catch (error) {
+      alert(`❌ Error saving configuration: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleConfigFormChange = (field, value) => {
+    setConfigForm(prev => ({
+      ...prev,
+      [field]: parseFloat(value) || value
+    }));
+  };
+
+  const resetConfigForm = () => {
+    setConfigForm({
+      config_name: 'custom',
+      xg_shot_based_weight: 0.4,
+      xg_historical_weight: 0.4,
+      xg_opponent_defense_weight: 0.2,
+      ppg_adjustment_factor: 0.15,
+      possession_adjustment_per_percent: 0.01,
+      fouls_drawn_factor: 0.02,
+      fouls_drawn_baseline: 10.0,
+      fouls_drawn_min_multiplier: 0.8,
+      fouls_drawn_max_multiplier: 1.3,
+      penalty_xg_value: 0.79,
+      rbs_scaling_factor: 0.2,
+      min_conversion_rate: 0.5,
+      max_conversion_rate: 2.0,
+      min_xg_per_match: 0.1,
+      confidence_matches_multiplier: 4,
+      max_confidence: 90,
+      min_confidence: 20
+    });
   };
 
   // Apply filters when team/referee selection changes  
