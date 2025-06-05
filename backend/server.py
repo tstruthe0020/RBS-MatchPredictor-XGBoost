@@ -3299,7 +3299,7 @@ async def get_available_regression_stats():
             "available_stats": regression_analyzer.available_stats,
             "targets": ["points_per_game", "match_result"],
             "descriptions": {
-                # Basic team stats
+                # Basic team stats (RBS variables)
                 "yellow_cards": "Number of yellow cards received by team",
                 "red_cards": "Number of red cards received by team", 
                 "fouls_committed": "Number of fouls committed by team",
@@ -3321,12 +3321,31 @@ async def get_available_regression_stats():
                 "conversion_rate": "Goals per shot on target ratio",
                 "penalty_attempts": "Number of penalty attempts",
                 "penalty_goals": "Number of penalty goals scored",
-                "penalty_conversion_rate": "Penalty goals / penalty attempts ratio"
+                "penalty_conversion_rate": "Penalty goals / penalty attempts ratio",
+                
+                # Additional comprehensive variables
+                "rbs_score": "Referee Bias Score for team-referee combination",
+                "home_advantage": "Home field advantage indicator (1=home, 0=away)",
+                "team_quality_rating": "Overall team quality based on performance",
+                "defensive_rating": "Defensive performance rating",
+                "attacking_rating": "Attacking performance rating",
+                "form_rating": "Recent form and momentum rating",
+                "goal_difference": "Goal difference for the match",
+                "clean_sheets_rate": "Clean sheet indicator (1=clean sheet, 0=not)",
+                "scoring_rate": "Scoring indicator (1=scored, 0=did not score)",
+                "is_home": "Home/away status (1=home, 0=away)"
             },
             "categories": {
+                "rbs_variables": ["yellow_cards", "red_cards", "fouls_committed", "fouls_drawn", "penalties_awarded", "xg_difference", "possession_percentage"],
+                "match_predictor_variables": ["xg", "shots_total", "shots_on_target", "xg_per_shot", "goals_per_xg", "shot_accuracy", "conversion_rate", "possession_percentage", "fouls_drawn", "penalties_awarded", "penalty_conversion_rate", "points_per_game", "rbs_score"],
                 "basic_stats": ["yellow_cards", "red_cards", "fouls_committed", "fouls_drawn", "penalties_awarded", "xg_difference", "possession_percentage", "xg", "shots_total", "shots_on_target"],
-                "advanced_stats": ["goals", "goals_conceded", "xg_per_shot", "goals_per_xg", "shot_accuracy", "conversion_rate", "penalty_attempts", "penalty_goals", "penalty_conversion_rate"],
-                "outcome_stats": ["points_per_game"]
+                "advanced_stats": ["goals", "goals_conceded", "xg_per_shot", "goals_per_xg", "shot_accuracy", "conversion_rate", "penalty_attempts", "penalty_goals", "penalty_conversion_rate", "rbs_score", "home_advantage"],
+                "outcome_stats": ["points_per_game", "goal_difference", "clean_sheets_rate", "scoring_rate"],
+                "context_variables": ["is_home", "team_quality_rating", "defensive_rating", "attacking_rating", "form_rating"]
+            },
+            "optimization_endpoints": {
+                "rbs_optimization": "/api/analyze-rbs-optimization",
+                "predictor_optimization": "/api/analyze-predictor-optimization"
             }
         }
     except Exception as e:
