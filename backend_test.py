@@ -24,6 +24,7 @@ class RBSAPITester:
             # Check if the response has the expected structure
             if 'available_stats' in response:
                 print(f"Available stats: {response.get('available_stats', [])}")
+                print(f"Total stats count: {len(response.get('available_stats', []))}")
             else:
                 print("⚠️ Response is missing 'available_stats' field")
                 
@@ -36,6 +37,24 @@ class RBSAPITester:
                 print(f"Stat descriptions included: {len(response.get('descriptions', {}))}")
             else:
                 print("⚠️ Response is missing 'descriptions' field")
+                
+            # Check for categories structure
+            if 'categories' in response:
+                categories = response.get('categories', {})
+                print(f"Categories included: {list(categories.keys())}")
+                
+                # Check for specific categories
+                if 'basic_stats' in categories:
+                    print(f"Basic stats count: {len(categories.get('basic_stats', []))}")
+                
+                if 'advanced_stats' in categories:
+                    print(f"Advanced stats count: {len(categories.get('advanced_stats', []))}")
+                    print(f"Advanced stats: {categories.get('advanced_stats', [])}")
+                
+                if 'outcome_stats' in categories:
+                    print(f"Outcome stats count: {len(categories.get('outcome_stats', []))}")
+            else:
+                print("⚠️ Response is missing 'categories' field")
                 
             return success, response
         return False, None
