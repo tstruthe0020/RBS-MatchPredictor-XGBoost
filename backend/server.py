@@ -786,6 +786,8 @@ class MatchPredictor:
                 "ppg_adjustment": round(ppg_adjustment, 2),
                 "home_ref_adjustment": round(home_ref_adjustment, 2),
                 "away_ref_adjustment": round(away_ref_adjustment, 2),
+                
+                # Core team statistics used in calculation
                 "home_shots_avg": round(home_stats['shots_total'], 1),
                 "away_shots_avg": round(away_stats['shots_total'], 1),
                 "home_xg_per_shot": round(home_stats['xg_per_shot'], 3),
@@ -804,6 +806,17 @@ class MatchPredictor:
                 "away_goals_avg": round(away_stats['goals'], 2),
                 "home_conversion_rate": round(home_conversion, 2),
                 "away_conversion_rate": round(away_conversion, 2),
+                
+                # Adjustment factors used in calculation
+                "home_possession_factor": round(possession_factor_home, 3),
+                "away_possession_factor": round(possession_factor_away, 3),
+                "home_fouls_factor": round(fouls_factor_home, 3),
+                "away_fouls_factor": round(fouls_factor_away, 3),
+                "home_penalty_xg": round(home_penalty_xg, 3),
+                "away_penalty_xg": round(away_penalty_xg, 3),
+                "home_ppg": round(home_ppg, 2),
+                "away_ppg": round(away_ppg, 2),
+                
                 "config_used": config_name
             }
             
