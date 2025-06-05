@@ -1873,6 +1873,126 @@ async def get_teams():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching teams: {str(e)}")
 
+@api_router.post("/prediction-config", response_model=dict)
+async def create_prediction_config(config_request: PredictionConfigRequest):
+    """Create or update a prediction configuration"""
+    try:
+        # Validate that xG weights sum to 1.0
+        total_xg_weight = (config_request.xg_shot_based_weight + 
+                          config_request.xg_historical_weight + 
+                          config_request.xg_opponent_defense_weight)
+        
+        if abs(total_xg_weight - 1.0) > 0.01:  # Allow small rounding errors
+            raise HTTPException(
+                status_code=400, 
+                detail=f"xG weights must sum to 1.0. Current sum: {total_xg_weight}"
+            )
+        
+        # Create config object
+        config = PredictionConfig(
+            config_name=config_request.config_name,
+            xg_shot_based_weight=config_request.xg_shot_based_weight,
+            xg_historical_weight=config_request.xg_historical_weight,
+            xg_opponent_defense_weight=config_request.xg_opponent_defense_weight,
+            ppg_adjustment_factor=config_request.ppg_adjustment_factor,
+            possession_adjustment_per_percent=config_request.possession_adjustment_per_percent,
+            fouls_drawn_factor=config_request.fouls_drawn_factor,
+            fouls_drawn_baseline=config_request.fouls_drawn_baseline,
+            fouls_drawn_min_multiplier=config_request.fouls_drawn_min_multiplier,
+            fouls_drawn_max_multiplier=config_request.fouls_drawn_max_multiplier,
+            penalty_xg_value=config_request.penalty_xg_value,
+            rbs_scaling_factor=config_request.rbs_scaling_factor,
+            min_conversion_rate=config_request.min_conversion_rate,
+            max_conversion_rate=config_request.max_conversion_rate,
+            min_xg_per_match=config_request.min_xg_per_match,
+            confidence_matches_multiplier=config_request.confidence_matches_multiplier,
+            max_confidence=config_request.max_confidence,
+            min_confidence=config_request.min_confidence,
+            updated_at=datetime.now().isoformat()
+        )
+        
+        # Upsert configuration (update if exists, create if doesn't)
+        await db.prediction_configs.update_one(
+            {"config_name": config_request.config_name},
+            {"$set": config.dict()},
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "message": f"Configuration '{config_request.config_name}' saved successfully",
+            "config": config.dict()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving configuration: {str(e)}")
+
+@api_router.get("/prediction-configs")
+async def list_prediction_configs():
+    """List all prediction configurations"""
+    try:
+        configs = await db.prediction_configs.find().to_list(100)
+        
+        # Convert ObjectId to string and clean up
+        for config in configs:
+            if '_id' in config:
+                config.pop('_id')
+        
+        return {
+            "success": True,
+            "configs": configs
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching configurations: {str(e)}")
+
+@api_router.get("/prediction-config/{config_name}")
+async def get_prediction_config(config_name: str):
+    """Get a specific prediction configuration"""
+    try:
+        config = await db.prediction_configs.find_one({"config_name": config_name})
+        
+        if not config:
+            # Return default configuration if not found
+            default_config = PredictionConfig(config_name="default")
+            return {
+                "success": True,
+                "config": default_config.dict(),
+                "is_default": True
+            }
+        
+        # Remove MongoDB _id
+        config.pop('_id', None)
+        
+        return {
+            "success": True,
+            "config": config,
+            "is_default": False
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching configuration: {str(e)}")
+
+@api_router.delete("/prediction-config/{config_name}")
+async def delete_prediction_config(config_name: str):
+    """Delete a prediction configuration"""
+    try:
+        if config_name == "default":
+            raise HTTPException(status_code=400, detail="Cannot delete default configuration")
+        
+        result = await db.prediction_configs.delete_one({"config_name": config_name})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail=f"Configuration '{config_name}' not found")
+        
+        return {
+            "success": True,
+            "message": f"Configuration '{config_name}' deleted successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting configuration: {str(e)}")
+
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
     """Predict match outcome using xG-based algorithm"""
