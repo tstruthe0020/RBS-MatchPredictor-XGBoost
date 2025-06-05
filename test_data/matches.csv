@@ -1,0 +1,11 @@
+match_id,referee,home_team,away_team,home_score,away_score,result,season,competition,match_date
+1,Andrew Kitchen,Arsenal,Aston Villa,3,1,Home Win,2022/23,Premier League,2023-02-18
+2,Andrew Kitchen,Chelsea,Arsenal,1,2,Away Win,2022/23,Premier League,2023-03-05
+3,Andrew Kitchen,Manchester United,Chelsea,2,2,Draw,2022/23,Premier League,2023-03-12
+4,Michael Oliver,Arsenal,Manchester United,3,2,Home Win,2022/23,Premier League,2023-01-22
+5,Michael Oliver,Aston Villa,Chelsea,2,0,Home Win,2022/23,Premier League,2023-02-11
+6,Anthony Taylor,Chelsea,Manchester United,1,1,Draw,2022/23,Premier League,2023-04-02
+7,Anthony Taylor,Arsenal,Chelsea,3,1,Home Win,2022/23,Premier League,2023-04-23
+8,Anthony Taylor,Aston Villa,Arsenal,1,4,Away Win,2022/23,Premier League,2023-05-06
+9,Stuart Attwell,Manchester United,Aston Villa,3,1,Home Win,2022/23,Premier League,2023-04-30
+10,Stuart Attwell,Chelsea,Aston Villa,2,2,Draw,2022/23,Premier League,2023-05-13
