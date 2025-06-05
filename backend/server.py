@@ -195,6 +195,21 @@ class RBSConfigRequest(BaseModel):
     confidence_threshold_medium: int = 5
     confidence_threshold_high: int = 10
 
+class RegressionAnalysisRequest(BaseModel):
+    selected_stats: List[str]
+    target: str  # 'points_per_game' or 'match_result'
+    test_size: Optional[float] = 0.2
+    random_state: Optional[int] = 42
+
+class RegressionAnalysisResponse(BaseModel):
+    success: bool
+    target: str
+    selected_stats: List[str]
+    sample_size: int
+    model_type: str
+    results: Dict
+    message: str
+
 class MatchPredictionRequest(BaseModel):
     home_team: str
     away_team: str
