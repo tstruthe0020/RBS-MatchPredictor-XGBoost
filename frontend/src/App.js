@@ -63,7 +63,7 @@ function App() {
     fetchStats();
     fetchTeams();
     fetchReferees();
-    fetchRefereeSummary();
+    fetchConfigs();
   }, []);
 
   const fetchStats = async () => {
