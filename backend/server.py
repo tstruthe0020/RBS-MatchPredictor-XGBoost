@@ -730,9 +730,16 @@ match_predictor = MatchPredictor()
 class RegressionAnalyzer:
     def __init__(self):
         self.available_stats = [
+            # Basic team stats
             'yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn',
             'penalties_awarded', 'xg_difference', 'possession_percentage',
-            'xg', 'shots_total', 'shots_on_target'
+            'xg', 'shots_total', 'shots_on_target',
+            
+            # Advanced derived stats used in match prediction
+            'goals', 'goals_conceded', 'points_per_game',
+            'xg_per_shot', 'goals_per_xg', 'shot_accuracy', 
+            'conversion_rate', 'penalty_conversion_rate',
+            'penalty_attempts', 'penalty_goals'
         ]
     
     async def prepare_match_data(self):
