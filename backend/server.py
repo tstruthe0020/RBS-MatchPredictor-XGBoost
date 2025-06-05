@@ -802,7 +802,17 @@ class RegressionAnalyzer:
                         'xg': home_stat.get('xg', 0),
                         'shots_total': home_stat.get('shots_total', 0),
                         'shots_on_target': home_stat.get('shots_on_target', 0),
-                        'is_home': True
+                        'is_home': True,
+                        # Advanced derived stats
+                        'goals': home_score,
+                        'goals_conceded': away_score,
+                        'xg_per_shot': home_stat.get('xg', 0) / max(home_stat.get('shots_total', 1), 1),
+                        'goals_per_xg': home_score / max(home_stat.get('xg', 0.1), 0.1),
+                        'shot_accuracy': home_stat.get('shots_on_target', 0) / max(home_stat.get('shots_total', 1), 1),
+                        'conversion_rate': home_score / max(home_stat.get('shots_on_target', 1), 1),
+                        'penalty_attempts': home_stat.get('penalty_attempts', 0),
+                        'penalty_goals': home_stat.get('penalty_goals', 0),
+                        'penalty_conversion_rate': home_stat.get('penalty_goals', 0) / max(home_stat.get('penalty_attempts', 1), 1) if home_stat.get('penalty_attempts', 0) > 0 else 0
                     }
                     
                     # Add away team data
@@ -822,7 +832,17 @@ class RegressionAnalyzer:
                         'xg': away_stat.get('xg', 0),
                         'shots_total': away_stat.get('shots_total', 0),
                         'shots_on_target': away_stat.get('shots_on_target', 0),
-                        'is_home': False
+                        'is_home': False,
+                        # Advanced derived stats
+                        'goals': away_score,
+                        'goals_conceded': home_score,
+                        'xg_per_shot': away_stat.get('xg', 0) / max(away_stat.get('shots_total', 1), 1),
+                        'goals_per_xg': away_score / max(away_stat.get('xg', 0.1), 0.1),
+                        'shot_accuracy': away_stat.get('shots_on_target', 0) / max(away_stat.get('shots_total', 1), 1),
+                        'conversion_rate': away_score / max(away_stat.get('shots_on_target', 1), 1),
+                        'penalty_attempts': away_stat.get('penalty_attempts', 0),
+                        'penalty_goals': away_stat.get('penalty_goals', 0),
+                        'penalty_conversion_rate': away_stat.get('penalty_goals', 0) / max(away_stat.get('penalty_attempts', 1), 1) if away_stat.get('penalty_attempts', 0) > 0 else 0
                     }
                     
                     match_data.append(home_data)
