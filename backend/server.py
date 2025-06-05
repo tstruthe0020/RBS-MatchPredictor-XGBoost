@@ -262,6 +262,22 @@ class RBSCalculator:
         
         # Get team stats for these matches and calculate averages
         team_stats_for_matches = []
+        match_ids_for_team = [match['match_id'] for match in team_matches]
+        
+        # Get player stats for fouls_drawn and penalties_awarded aggregation
+        player_stats = await db.player_stats.find({
+            "match_id": {"$in": match_ids_for_team},
+            "team_name": team_name
+        }).to_list(10000)
+        
+        # Group player stats by match_id for aggregation
+        player_stats_by_match = {}
+        for pstat in player_stats:
+            match_id = pstat['match_id']
+            if match_id not in player_stats_by_match:
+                player_stats_by_match[match_id] = []
+            player_stats_by_match[match_id].append(pstat)
+        
         for match in team_matches:
             match_stats = [s for s in all_team_stats if s['match_id'] == match['match_id'] and s['team_name'] == team_name]
             for stat in match_stats:
@@ -280,9 +296,10 @@ class RBSCalculator:
                 stat['fouls_committed'] = stat.get('fouls', 0)
                 stat['possession_percentage'] = stat.get('possession_pct', 0)
                 
-                # Ensure penalties_awarded is properly mapped (should already exist in database)
-                if 'penalties_awarded' not in stat:
-                    stat['penalties_awarded'] = stat.get('penalty_attempts', 0)  # Fallback mapping
+                # Aggregate fouls_drawn and penalties_awarded from player stats for this match
+                match_player_stats = player_stats_by_match.get(match['match_id'], [])
+                stat['fouls_drawn'] = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
+                stat['penalties_awarded'] = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
                 
                 team_stats_for_matches.append(stat)
         
