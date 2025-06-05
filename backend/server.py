@@ -2101,7 +2101,9 @@ async def calculate_comprehensive_team_stats():
             aggregated_shots_total = sum(ps.get('shots_total', 0) for ps in match_player_stats)
             aggregated_shots_on_target = sum(ps.get('shots_on_target', 0) for ps in match_player_stats)
             
-            # Use aggregated values if available, otherwise fall back to team stats
+            # DATA SOURCE PRIORITY: Use aggregated player stats if available, otherwise use team stats
+            # This ensures we use the most granular data available (individual player contributions)
+            # while falling back to team-level data when player-level data is unavailable
             final_xg = aggregated_xg if aggregated_xg > 0 else team_stat.get('xg', 0)
             final_fouls_drawn = aggregated_fouls_drawn if aggregated_fouls_drawn > 0 else team_stat.get('fouls_drawn', 0)
             final_penalties = aggregated_penalties if aggregated_penalties > 0 else team_stat.get('penalties_awarded', 0)
