@@ -2090,6 +2090,143 @@ async def delete_prediction_config(config_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting configuration: {str(e)}")
 
+# RBS Configuration Endpoints
+@api_router.post("/initialize-default-rbs-config")
+async def initialize_default_rbs_config():
+    """Initialize default RBS configuration"""
+    try:
+        # Check if default config already exists
+        existing = await db.rbs_configs.find_one({"config_name": "default"})
+        
+        if not existing:
+            default_config = RBSConfig(config_name="default")
+            await db.rbs_configs.insert_one(default_config.dict())
+            return {
+                "success": True,
+                "message": "Default RBS configuration created",
+                "config": default_config.dict()
+            }
+        else:
+            return {
+                "success": True,
+                "message": "Default RBS configuration already exists",
+                "config": {k: v for k, v in existing.items() if k != '_id'}
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error initializing default RBS config: {str(e)}")
+
+@api_router.post("/rbs-config", response_model=dict)
+async def create_rbs_config(config_request: RBSConfigRequest):
+    """Create or update an RBS configuration"""
+    try:
+        # Validate that weights are reasonable (no need to sum to 1.0 for RBS)
+        total_weight = (config_request.yellow_cards_weight + 
+                       config_request.red_cards_weight + 
+                       config_request.fouls_committed_weight + 
+                       config_request.fouls_drawn_weight + 
+                       config_request.penalties_awarded_weight + 
+                       config_request.xg_difference_weight + 
+                       config_request.possession_percentage_weight)
+        
+        if total_weight <= 0:
+            raise HTTPException(status_code=400, detail="At least one weight must be positive")
+        
+        # Create config object
+        config = RBSConfig(
+            config_name=config_request.config_name,
+            yellow_cards_weight=config_request.yellow_cards_weight,
+            red_cards_weight=config_request.red_cards_weight,
+            fouls_committed_weight=config_request.fouls_committed_weight,
+            fouls_drawn_weight=config_request.fouls_drawn_weight,
+            penalties_awarded_weight=config_request.penalties_awarded_weight,
+            xg_difference_weight=config_request.xg_difference_weight,
+            possession_percentage_weight=config_request.possession_percentage_weight,
+            confidence_matches_multiplier=config_request.confidence_matches_multiplier,
+            max_confidence=config_request.max_confidence,
+            min_confidence=config_request.min_confidence,
+            confidence_threshold_low=config_request.confidence_threshold_low,
+            confidence_threshold_medium=config_request.confidence_threshold_medium,
+            confidence_threshold_high=config_request.confidence_threshold_high,
+            updated_at=datetime.now().isoformat()
+        )
+        
+        # Upsert configuration (update if exists, create if doesn't)
+        await db.rbs_configs.update_one(
+            {"config_name": config_request.config_name},
+            {"$set": config.dict()},
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "message": f"RBS Configuration '{config_request.config_name}' saved successfully",
+            "config": config.dict()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving RBS configuration: {str(e)}")
+
+@api_router.get("/rbs-configs")
+async def list_rbs_configs():
+    """List all RBS configurations"""
+    try:
+        configs = await db.rbs_configs.find().to_list(100)
+        
+        # Remove MongoDB _id field from each config
+        for config in configs:
+            if '_id' in config:
+                config.pop('_id')
+        
+        return {
+            "success": True,
+            "configs": configs
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching RBS configurations: {str(e)}")
+
+@api_router.get("/rbs-config/{config_name}")
+async def get_rbs_config(config_name: str):
+    """Get a specific RBS configuration"""
+    try:
+        config = await db.rbs_configs.find_one({"config_name": config_name})
+        
+        if not config:
+            # Return default configuration if not found
+            default_config = RBSConfig(config_name="default")
+            return {
+                "success": True,
+                "config": default_config.dict(),
+                "message": f"Configuration '{config_name}' not found, returning default"
+            }
+        
+        config.pop('_id', None)
+        
+        return {
+            "success": True,
+            "config": config,
+            "message": f"Configuration '{config_name}' found"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching RBS configuration: {str(e)}")
+
+@api_router.delete("/rbs-config/{config_name}")
+async def delete_rbs_config(config_name: str):
+    """Delete an RBS configuration"""
+    try:
+        if config_name == "default":
+            raise HTTPException(status_code=400, detail="Cannot delete default RBS configuration")
+        
+        result = await db.rbs_configs.delete_one({"config_name": config_name})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail=f"RBS Configuration '{config_name}' not found")
+        
+        return {
+            "success": True,
+            "message": f"RBS Configuration '{config_name}' deleted successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting RBS configuration: {str(e)}")
+
 @api_router.post("/predict-match", response_model=MatchPredictionResponse)
 async def predict_match(request: MatchPredictionRequest):
     """Predict match outcome using xG-based algorithm with configurable weights"""
