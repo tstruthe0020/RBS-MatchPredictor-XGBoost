@@ -243,8 +243,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Match Prediction Endpoint"
-    - "Team Performance Endpoint"
+    - "Updated RBS Calculator with New Formula"
+    - "RBS Configuration System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -254,3 +254,5 @@ agent_communication:
     message: "I will test the new match prediction algorithm endpoints. First, I'll check what teams and referees are available in the database, then test both the prediction endpoint and team performance endpoint with valid and invalid data."
   - agent: "testing"
     message: "Testing completed. Both endpoints are working correctly. The Match Prediction endpoint properly handles valid and invalid inputs, returning detailed prediction breakdowns. The Team Performance endpoint returns comprehensive team stats. Minor improvement suggestion: The Team Performance endpoint could return a more explicit error for non-existent teams rather than empty stats with success=true."
+  - agent: "main"
+    message: "Updated RBS calculation logic with new formula: 1) New weights for 7 statistics 2) xG difference now calculated as (team xG - opponent xG) 3) tanh normalization for RBS scores between -1 and +1 4) Added RBS configuration system with endpoints similar to prediction config. Need to test the updated RBS calculation and new config endpoints."
