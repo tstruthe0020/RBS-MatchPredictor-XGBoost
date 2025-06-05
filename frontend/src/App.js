@@ -58,6 +58,28 @@ function App() {
     min_confidence: 20
   });
 
+  // RBS Configuration state
+  const [rbsConfigName, setRbsConfigName] = useState('default');
+  const [rbsConfigs, setRbsConfigs] = useState([]);
+  const [currentRbsConfig, setCurrentRbsConfig] = useState(null);
+  const [rbsConfigEditing, setRbsConfigEditing] = useState(false);
+  const [rbsConfigForm, setRbsConfigForm] = useState({
+    config_name: 'default',
+    yellow_cards_weight: 0.3,
+    red_cards_weight: 0.5,
+    fouls_committed_weight: 0.1,
+    fouls_drawn_weight: 0.1,
+    penalties_awarded_weight: 0.5,
+    xg_difference_weight: 0.4,
+    possession_percentage_weight: 0.2,
+    confidence_matches_multiplier: 4,
+    max_confidence: 95,
+    min_confidence: 10,
+    confidence_threshold_low: 2,
+    confidence_threshold_medium: 5,
+    confidence_threshold_high: 10
+  });
+
   // Fetch initial data
   useEffect(() => {
     fetchStats();
