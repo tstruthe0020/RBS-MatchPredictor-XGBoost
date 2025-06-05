@@ -2145,6 +2145,8 @@ async def calculate_comprehensive_team_stats():
             team_stat.update({
                 # Core statistics (updated with aggregated values)
                 'xg': final_xg,
+                'shots_total': final_shots_total,  # Use aggregated shots total
+                'shots_on_target': final_shots_on_target,  # Use aggregated shots on target
                 'fouls_drawn': final_fouls_drawn,
                 'penalties_awarded': final_penalties,
                 'penalty_goals': final_penalty_goals,
