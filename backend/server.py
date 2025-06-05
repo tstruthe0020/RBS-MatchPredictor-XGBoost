@@ -3143,6 +3143,51 @@ async def delete_prediction_config(config_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting configuration: {str(e)}")
 
+@api_router.post("/prediction-configs")
+async def create_prediction_config(config: PredictionConfigRequest):
+    """Create a new prediction configuration"""
+    try:
+        # Check if config name already exists
+        existing = await db.prediction_configs.find_one({"config_name": config.config_name})
+        
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Configuration '{config.config_name}' already exists")
+        
+        # Create new configuration
+        new_config = PredictionConfig(
+            config_name=config.config_name,
+            xg_shot_based_weight=config.xg_shot_based_weight,
+            xg_historical_weight=config.xg_historical_weight,
+            xg_opponent_defense_weight=config.xg_opponent_defense_weight,
+            ppg_adjustment_factor=config.ppg_adjustment_factor,
+            possession_adjustment_per_percent=config.possession_adjustment_per_percent,
+            fouls_drawn_factor=config.fouls_drawn_factor,
+            fouls_drawn_baseline=config.fouls_drawn_baseline,
+            fouls_drawn_min_multiplier=config.fouls_drawn_min_multiplier,
+            fouls_drawn_max_multiplier=config.fouls_drawn_max_multiplier,
+            penalty_xg_value=config.penalty_xg_value,
+            rbs_scaling_factor=config.rbs_scaling_factor,
+            min_conversion_rate=config.min_conversion_rate,
+            max_conversion_rate=config.max_conversion_rate,
+            min_xg_per_match=config.min_xg_per_match,
+            confidence_matches_multiplier=config.confidence_matches_multiplier,
+            max_confidence=config.max_confidence,
+            min_confidence=config.min_confidence
+        )
+        
+        await db.prediction_configs.insert_one(new_config.dict())
+        
+        return {
+            "success": True,
+            "message": f"Prediction configuration '{config.config_name}' created successfully",
+            "config": new_config.dict()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating configuration: {str(e)}")
+
 # RBS Configuration Endpoints
 @api_router.post("/initialize-default-rbs-config")
 async def initialize_default_rbs_config():
