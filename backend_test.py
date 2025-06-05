@@ -1470,6 +1470,287 @@ def test_rbs_configuration_system():
     
     return all_passed
 
+def test_player_stats_aggregation():
+    """Test player stats aggregation for fouls_drawn and penalties_awarded fields"""
+    print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
+    
+    # Get backend URL from frontend .env
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                backend_url = line.strip().split('=')[1].strip('"\'')
+                break
+    
+    api_url = f"{backend_url}/api"
+    print(f"Using backend URL: {api_url}")
+    
+    print_separator("PLAYER STATS AGGREGATION VERIFICATION")
+    
+    all_passed = True
+    
+    # Get list of teams
+    teams_response = requests.get(f"{api_url}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Error getting teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json()["teams"]
+    if not teams:
+        print("❌ No teams found in database")
+        return False
+    
+    # Test with Arsenal and a few other teams
+    test_teams = ["Arsenal"]
+    if "Arsenal" not in teams:
+        test_teams = teams[:3]  # Use first 3 teams if Arsenal not found
+    
+    print(f"Testing teams: {', '.join(test_teams)}")
+    
+    # 1. Team Performance Aggregation Verification
+    print("\n1. Team Performance Aggregation Verification:")
+    for team in test_teams:
+        print(f"\nTesting team performance for: {team}")
+        response = requests.get(f"{api_url}/team-performance/{team}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Check home stats
+            home_stats = data.get("home_stats", {})
+            if home_stats:
+                print("\nHome Stats:")
+                print(f"  - Fouls Drawn: {home_stats.get('fouls_drawn', 'N/A')}")
+                print(f"  - Penalties Awarded: {home_stats.get('penalties_awarded', 'N/A')}")
+                
+                # Verify values are not zero
+                fouls_drawn = home_stats.get('fouls_drawn', 0)
+                penalties_awarded = home_stats.get('penalties_awarded', 0)
+                
+                if fouls_drawn > 0:
+                    print("✅ Fouls drawn is non-zero")
+                else:
+                    print("❌ Fouls drawn is still zero")
+                    all_passed = False
+                
+                if penalties_awarded > 0:
+                    print("✅ Penalties awarded is non-zero")
+                else:
+                    print("❌ Penalties awarded is still zero or very low")
+                    # Not failing the test for this as penalties are rare
+            else:
+                print("\n❌ No home stats found for team")
+                all_passed = False
+                
+            # Check away stats
+            away_stats = data.get("away_stats", {})
+            if away_stats:
+                print("\nAway Stats:")
+                print(f"  - Fouls Drawn: {away_stats.get('fouls_drawn', 'N/A')}")
+                print(f"  - Penalties Awarded: {away_stats.get('penalties_awarded', 'N/A')}")
+                
+                # Verify values are not zero
+                fouls_drawn = away_stats.get('fouls_drawn', 0)
+                penalties_awarded = away_stats.get('penalties_awarded', 0)
+                
+                if fouls_drawn > 0:
+                    print("✅ Fouls drawn is non-zero")
+                else:
+                    print("❌ Fouls drawn is still zero")
+                    all_passed = False
+                
+                if penalties_awarded > 0:
+                    print("✅ Penalties awarded is non-zero")
+                else:
+                    print("❌ Penalties awarded is still zero or very low")
+                    # Not failing the test for this as penalties are rare
+            else:
+                print("\n❌ No away stats found for team")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {response.status_code}")
+            print(response.text)
+            all_passed = False
+    
+    # 2. RBS Calculation with Aggregated Data
+    print("\n2. RBS Calculation with Aggregated Data:")
+    
+    # Get RBS results for the test teams
+    for team in test_teams:
+        print(f"\nTesting RBS results for: {team}")
+        response = requests.get(f"{api_url}/rbs-results", params={"team": team})
+        
+        if response.status_code == 200:
+            data = response.json()
+            results = data.get("results", [])
+            
+            if results:
+                print(f"Found {len(results)} RBS results for {team}")
+                
+                # Check first result
+                result = results[0]
+                print(f"\nSample RBS result:")
+                print(f"  - Team: {result.get('team_name', 'N/A')}")
+                print(f"  - Referee: {result.get('referee', 'N/A')}")
+                print(f"  - RBS Score: {result.get('rbs_score', 'N/A')}")
+                
+                # Check stats breakdown
+                stats_breakdown = result.get("stats_breakdown", {})
+                if stats_breakdown:
+                    print("\nStats Breakdown:")
+                    for stat, value in stats_breakdown.items():
+                        print(f"  - {stat}: {value}")
+                    
+                    # Verify fouls_drawn and penalties_awarded are included
+                    if 'fouls_drawn' in stats_breakdown:
+                        print("✅ Fouls drawn is included in RBS calculation")
+                    else:
+                        print("❌ Fouls drawn is missing from RBS calculation")
+                        all_passed = False
+                    
+                    if 'penalties_awarded' in stats_breakdown:
+                        print("✅ Penalties awarded is included in RBS calculation")
+                    else:
+                        print("❌ Penalties awarded is missing from RBS calculation")
+                        all_passed = False
+                    
+                    # Check if values are non-zero
+                    if stats_breakdown.get('fouls_drawn', 0) != 0:
+                        print("✅ Fouls drawn has non-zero value in RBS calculation")
+                    else:
+                        print("❌ Fouls drawn has zero value in RBS calculation")
+                        all_passed = False
+                    
+                    # Penalties might be zero as they're rare
+                    if stats_breakdown.get('penalties_awarded', 0) != 0:
+                        print("✅ Penalties awarded has non-zero value in RBS calculation")
+                    else:
+                        print("⚠️ Penalties awarded has zero value in RBS calculation (may be normal)")
+                else:
+                    print("\n❌ No stats breakdown found in RBS result")
+                    all_passed = False
+            else:
+                print(f"\n❌ No RBS results found for {team}")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {response.status_code}")
+            print(response.text)
+            all_passed = False
+    
+    # 3. Data Aggregation Logic Check
+    print("\n3. Data Aggregation Logic Check:")
+    
+    # Get stats to check player_stats collection
+    response = requests.get(f"{api_url}/stats")
+    if response.status_code == 200:
+        data = response.json()
+        player_stats_count = data.get("player_stats", 0)
+        
+        print(f"Player stats count: {player_stats_count}")
+        
+        if player_stats_count > 0:
+            print("✅ Player stats collection has data")
+            
+            # Verify aggregation logic by checking team performance again
+            for team in test_teams:
+                print(f"\nVerifying aggregation logic for: {team}")
+                response = requests.get(f"{api_url}/team-performance/{team}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    home_stats = data.get("home_stats", {})
+                    away_stats = data.get("away_stats", {})
+                    
+                    if home_stats and away_stats:
+                        # Check that home and away stats are different
+                        home_fouls_drawn = home_stats.get('fouls_drawn', 0)
+                        away_fouls_drawn = away_stats.get('fouls_drawn', 0)
+                        
+                        print(f"Home fouls drawn: {home_fouls_drawn}")
+                        print(f"Away fouls drawn: {away_fouls_drawn}")
+                        
+                        if home_fouls_drawn != away_fouls_drawn:
+                            print("✅ Home and away fouls drawn are different (context-aware)")
+                        else:
+                            print("⚠️ Home and away fouls drawn are the same (might be coincidence)")
+                        
+                        # Check that values are reasonable (typically 8-15 fouls per match)
+                        if 0 < home_fouls_drawn < 20:
+                            print("✅ Home fouls drawn is in a reasonable range")
+                        else:
+                            print(f"⚠️ Home fouls drawn ({home_fouls_drawn}) is outside the expected range")
+                        
+                        if 0 < away_fouls_drawn < 20:
+                            print("✅ Away fouls drawn is in a reasonable range")
+                        else:
+                            print(f"⚠️ Away fouls drawn ({away_fouls_drawn}) is outside the expected range")
+                    else:
+                        print("\n❌ Missing home or away stats")
+                        all_passed = False
+                else:
+                    print(f"\n❌ Error: {response.status_code}")
+                    print(response.text)
+                    all_passed = False
+        else:
+            print("❌ No player stats data found")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    # 4. Regression Analysis with Aggregated Stats
+    print("\n4. Regression Analysis with Aggregated Stats:")
+    
+    # Test regression analysis with fouls_drawn and penalties_awarded
+    regression_payload = {
+        "selected_stats": ["fouls_drawn", "penalties_awarded", "xg_difference", "possession_percentage"],
+        "target": "points_per_game",
+        "test_size": 0.2,
+        "random_state": 42
+    }
+    
+    response = requests.post(f"{api_url}/regression-analysis", json=regression_payload)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if data.get("success", False):
+            print("✅ Regression analysis with aggregated stats successful")
+            print(f"Sample size: {data.get('sample_size', 'N/A')}")
+            print(f"R² score: {data.get('results', {}).get('r2_score', 'N/A')}")
+            
+            # Print coefficients
+            coefficients = data.get("results", {}).get("coefficients", {})
+            if coefficients:
+                print("\nCoefficients:")
+                for stat, coef in coefficients.items():
+                    print(f"  - {stat}: {coef}")
+                
+                # Check if fouls_drawn and penalties_awarded have non-zero coefficients
+                if 'fouls_drawn' in coefficients and coefficients['fouls_drawn'] != 0:
+                    print("✅ Fouls drawn has non-zero coefficient in regression")
+                else:
+                    print("❌ Fouls drawn has zero coefficient or is missing from regression")
+                    all_passed = False
+                
+                if 'penalties_awarded' in coefficients and coefficients['penalties_awarded'] != 0:
+                    print("✅ Penalties awarded has non-zero coefficient in regression")
+                else:
+                    print("❌ Penalties awarded has zero coefficient or is missing from regression")
+                    all_passed = False
+            else:
+                print("\n❌ No coefficients found in regression results")
+                all_passed = False
+        else:
+            print(f"\n❌ Error: {data.get('message', 'Unknown error')}")
+            all_passed = False
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(response.text)
+        all_passed = False
+    
+    return all_passed
+
 def test_database_data_verification():
     """Test database data verification"""
     print_separator = lambda title: print("\n" + "=" * 80 + f"\n {title} \n" + "=" * 80)
