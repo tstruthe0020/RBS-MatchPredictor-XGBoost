@@ -382,7 +382,9 @@ function App() {
 
     setApplyingWeights(true);
     try {
-      const configName = `predictor_optimized_${new Date().toISOString().split('T')[0]}`;
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19); // Format: 2024-06-05T14-30-45
+      const configName = `predictor_optimized_${timestamp}`;
       
       // Extract insights from predictor analysis to suggest configuration
       const predictorAnalysis = analysisResults.results.predictor_vs_points;
