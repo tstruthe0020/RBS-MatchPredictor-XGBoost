@@ -1012,7 +1012,7 @@ async def recalculate_all_stats():
         
         rbs_results = []
         for team_name, referee in team_referee_pairs:
-            result = rbs_calculator.calculate_rbs_for_team_referee(
+            result = await rbs_calculator.calculate_rbs_for_team_referee(
                 team_name, referee, team_stats, matches
             )
             if result:
