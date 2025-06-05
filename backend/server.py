@@ -281,25 +281,31 @@ class RBSCalculator:
         for match in team_matches:
             match_stats = [s for s in all_team_stats if s['match_id'] == match['match_id'] and s['team_name'] == team_name]
             for stat in match_stats:
+                # Get player stats for this match to aggregate xG, fouls_drawn, and penalties_awarded
+                match_player_stats = player_stats_by_match.get(match['match_id'], [])
+                match_xg = sum(ps.get('xg', 0) for ps in match_player_stats)
+                match_fouls_drawn = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
+                match_penalties_awarded = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
+                
+                # Override xG with aggregated value from player stats
+                stat['xg'] = match_xg
+                
                 # Calculate xG difference (team xG - opponent xG) for this match
                 opponent_name = match['away_team'] if match['home_team'] == team_name else match['home_team']
                 opponent_stats = [s for s in all_team_stats if s['match_id'] == match['match_id'] and s['team_name'] == opponent_name]
                 
-                if opponent_stats:
-                    opponent_xg = opponent_stats[0].get('xg', 0)
-                    team_xg = stat.get('xg', 0)
-                    stat['xg_difference'] = team_xg - opponent_xg
-                else:
-                    stat['xg_difference'] = stat.get('xg', 0)  # Fallback to team xG only
+                # Get opponent player stats for xG calculation
+                opponent_player_stats = []
+                for pstat in player_stats:
+                    if pstat['match_id'] == match['match_id'] and pstat['team_name'] == opponent_name:
+                        opponent_player_stats.append(pstat)
+                
+                opponent_xg = sum(ps.get('xg', 0) for ps in opponent_player_stats)
+                stat['xg_difference'] = match_xg - opponent_xg
                 
                 # Rename fields to match new specification
                 stat['fouls_committed'] = stat.get('fouls', 0)
                 stat['possession_percentage'] = stat.get('possession_pct', 0)
-                
-                # Aggregate fouls_drawn and penalties_awarded from player stats for this match
-                match_player_stats = player_stats_by_match.get(match['match_id'], [])
-                match_fouls_drawn = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
-                match_penalties_awarded = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
                 
                 # Override with aggregated values if they exist, otherwise use team stat values
                 stat['fouls_drawn'] = match_fouls_drawn if match_fouls_drawn > 0 else stat.get('fouls_drawn', 0)
