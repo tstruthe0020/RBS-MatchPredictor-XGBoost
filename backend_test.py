@@ -859,8 +859,229 @@ def test_end_to_end_workflow():
         print("❌ Complete workflow test failed")
         return False
 
+def test_match_prediction_fix():
+    """Test the match prediction fix specifically for the 'points_per_game' error"""
+    print("\n\n========== TESTING MATCH PREDICTION FIX ==========\n")
+    
+    # Step 1: Get teams and referees from the system
+    print("Step 1: Getting teams and referees from the system")
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    print(f"Found {len(teams)} teams: {', '.join(teams[:5])}{'...' if len(teams) > 5 else ''}")
+    
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    if referees_response.status_code != 200:
+        print(f"❌ Failed to get referees: {referees_response.status_code}")
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    print(f"Found {len(referees)} referees: {', '.join(referees[:5])}{'...' if len(referees) > 5 else ''}")
+    
+    # Step 2: Test match prediction with actual team names and referee
+    print("\nStep 2: Testing match prediction with actual team names and referee")
+    home_team = teams[0]
+    away_team = teams[1]
+    referee = referees[0]
+    
+    print(f"Testing prediction for {home_team} vs {away_team} with referee {referee}")
+    
+    request_data = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee
+    }
+    
+    response = requests.post(f"{BASE_URL}/predict-match", json=request_data)
+    
+    if response.status_code != 200:
+        print(f"❌ Match prediction request failed with status code {response.status_code}")
+        print(response.text)
+        return False
+    
+    prediction_data = response.json()
+    
+    if not prediction_data.get('success'):
+        error_message = prediction_data.get('prediction_breakdown', {}).get('error', 'Unknown error')
+        print(f"❌ Match prediction failed: {error_message}")
+        
+        # Check specifically for the 'points_per_game' error
+        if "points_per_game" in error_message:
+            print("❌ The 'Prediction Failed 'points_per_game'' error is still present!")
+        else:
+            print(f"❌ Failed with a different error: {error_message}")
+        
+        return False
+    
+    print("✅ Match prediction successful!")
+    print(f"Predicted Home Goals: {prediction_data['predicted_home_goals']}")
+    print(f"Predicted Away Goals: {prediction_data['predicted_away_goals']}")
+    print(f"Home xG: {prediction_data['home_xg']}")
+    print(f"Away xG: {prediction_data['away_xg']}")
+    
+    # Step 3: Verify all required fields in the prediction breakdown
+    print("\nStep 3: Verifying all required fields in the prediction breakdown")
+    
+    breakdown = prediction_data.get('prediction_breakdown', {})
+    required_fields = [
+        'home_xg_per_shot', 'away_xg_per_shot',
+        'home_shots_avg', 'away_shots_avg',
+        'home_goals_avg', 'away_goals_avg',
+        'home_conversion_rate', 'away_conversion_rate',
+        'home_penalty_conversion', 'away_penalty_conversion',
+        'home_fouls_drawn_avg', 'away_fouls_drawn_avg',
+        'home_penalties_avg', 'away_penalties_avg'
+    ]
+    
+    missing_fields = []
+    zero_fields = []
+    
+    for field in required_fields:
+        if field not in breakdown:
+            missing_fields.append(field)
+        elif breakdown[field] == 0:
+            zero_fields.append(field)
+    
+    if missing_fields:
+        print(f"❌ Missing fields in prediction breakdown: {', '.join(missing_fields)}")
+    else:
+        print("✅ All required fields are present in the prediction breakdown")
+    
+    if zero_fields:
+        print(f"⚠️ Fields with zero values in prediction breakdown: {', '.join(zero_fields)}")
+    else:
+        print("✅ All fields have non-zero values in the prediction breakdown")
+    
+    # Print the actual values for key metrics
+    print("\nKey metrics in prediction breakdown:")
+    for field in required_fields:
+        if field in breakdown:
+            print(f"  - {field}: {breakdown[field]}")
+    
+    # Step 4: Test team performance to verify comprehensive team stats
+    print("\nStep 4: Testing team performance to verify comprehensive team stats")
+    
+    home_team_response = requests.get(f"{BASE_URL}/team-performance/{home_team}")
+    if home_team_response.status_code != 200:
+        print(f"❌ Failed to get team performance for {home_team}: {home_team_response.status_code}")
+        print(home_team_response.text)
+        return False
+    
+    home_team_data = home_team_response.json()
+    
+    # Check for required fields in team stats
+    required_team_stats = [
+        'points_per_game', 'xg_per_shot', 'shots_total', 'goals',
+        'penalties_awarded', 'fouls_drawn', 'penalty_conversion_rate'
+    ]
+    
+    home_stats = home_team_data.get('home_stats', {})
+    away_stats = home_team_data.get('away_stats', {})
+    
+    missing_home_stats = [stat for stat in required_team_stats if stat not in home_stats]
+    missing_away_stats = [stat for stat in required_team_stats if stat not in away_stats]
+    
+    zero_home_stats = [stat for stat in required_team_stats if stat in home_stats and home_stats[stat] == 0]
+    zero_away_stats = [stat for stat in required_team_stats if stat in away_stats and away_stats[stat] == 0]
+    
+    if missing_home_stats or missing_away_stats:
+        print(f"❌ Missing stats in team performance:")
+        if missing_home_stats:
+            print(f"  - Home: {', '.join(missing_home_stats)}")
+        if missing_away_stats:
+            print(f"  - Away: {', '.join(missing_away_stats)}")
+    else:
+        print("✅ All required stats are present in team performance")
+    
+    if zero_home_stats or zero_away_stats:
+        print(f"⚠️ Stats with zero values in team performance:")
+        if zero_home_stats:
+            print(f"  - Home: {', '.join(zero_home_stats)}")
+        if zero_away_stats:
+            print(f"  - Away: {', '.join(zero_away_stats)}")
+    
+    # Print the actual values for key team stats
+    print(f"\nKey stats for {home_team}:")
+    print("Home stats:")
+    for stat in required_team_stats:
+        if stat in home_stats:
+            print(f"  - {stat}: {home_stats[stat]}")
+    
+    print("Away stats:")
+    for stat in required_team_stats:
+        if stat in away_stats:
+            print(f"  - {stat}: {away_stats[stat]}")
+    
+    # Step 5: Test end-to-end workflow
+    print("\nStep 5: Testing end-to-end workflow")
+    
+    # Calculate comprehensive team stats
+    comp_stats_response = requests.post(f"{BASE_URL}/calculate-comprehensive-team-stats")
+    if comp_stats_response.status_code != 200 or not comp_stats_response.json().get('success'):
+        print("❌ Failed to calculate comprehensive team stats")
+        return False
+    
+    print("✅ Comprehensive team stats calculated successfully")
+    
+    # Calculate RBS
+    rbs_response = requests.post(f"{BASE_URL}/calculate-rbs")
+    if rbs_response.status_code != 200 or not rbs_response.json().get('success'):
+        print("❌ Failed to calculate RBS")
+        return False
+    
+    print("✅ RBS calculated successfully")
+    
+    # Perform match prediction again after calculations
+    print("\nPerforming match prediction after calculations:")
+    response = requests.post(f"{BASE_URL}/predict-match", json=request_data)
+    
+    if response.status_code != 200:
+        print(f"❌ Match prediction request failed with status code {response.status_code}")
+        return False
+    
+    prediction_data = response.json()
+    
+    if not prediction_data.get('success'):
+        error_message = prediction_data.get('prediction_breakdown', {}).get('error', 'Unknown error')
+        print(f"❌ Match prediction failed: {error_message}")
+        return False
+    
+    print("✅ End-to-end workflow test passed successfully")
+    print(f"Predicted Home Goals: {prediction_data['predicted_home_goals']}")
+    print(f"Predicted Away Goals: {prediction_data['predicted_away_goals']}")
+    
+    # Final summary
+    print("\n========== MATCH PREDICTION FIX TEST SUMMARY ==========")
+    if (not missing_fields and 
+        not missing_home_stats and 
+        not missing_away_stats and
+        prediction_data.get('success')):
+        print("✅ Match prediction fix has been successfully implemented")
+        print("✅ The 'Prediction Failed 'points_per_game'' error has been resolved")
+        print("✅ All required fields are properly available in the team averages")
+        print("✅ Comprehensive team stats are properly calculated")
+        print("✅ End-to-end workflow is working correctly")
+        return True
+    else:
+        print("❌ Match prediction fix test failed")
+        return False
+
 def run_tests():
     """Run all tests"""
+    # Test the match prediction fix specifically
+    test_match_prediction_fix()
+    
     print("\n\n========== TESTING FIXED RBS CALCULATION AND MATCH PREDICTION WORKFLOW ==========\n")
     
     # Test comprehensive team stats calculation
