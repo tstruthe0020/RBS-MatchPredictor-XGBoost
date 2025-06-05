@@ -39,14 +39,15 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
 - **Frontend**: React with Tailwind CSS
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **Analytics**: NumPy, SciPy, Scikit-learn
+- **Machine Learning**: Scikit-learn (Random Forest), joblib model persistence
+- **Analytics**: NumPy, SciPy, Pandas for feature engineering
 - **Deployment**: Docker with Supervisor
 
 ## 📚 Documentation
 
 - **[Startup Guide](STARTUP_GUIDE.md)** - Complete setup and usage instructions
 - **[RBS Algorithm Guide](RBS_ALGORITHM_GUIDE.md)** - Detailed referee bias calculation methodology  
-- **[Match Prediction Guide](MATCH_PREDICTION_ALGORITHM_GUIDE.md)** - Step-by-step algorithm explanation
+- **[ML Match Prediction Guide](MATCH_PREDICTION_ALGORITHM_GUIDE.md)** - Machine Learning model architecture and training
 
 ## 🚀 Quick Start
 
@@ -64,29 +65,40 @@ A comprehensive platform for analyzing referee bias in soccer matches and genera
    - Team statistics CSV  
    - Match results CSV
 
-4. **Start analyzing:**
+4. **Train ML models (first time only):**
+   - Navigate to Match Prediction tab
+   - Click "🧠 Train ML Models"
+   - Wait for training completion
+
+5. **Start analyzing:**
    - Calculate comprehensive team stats
    - Analyze referee bias patterns
-   - Generate match predictions
+   - Generate ML-powered match predictions
 
 ## 📈 Key Algorithms
 
 ### Referee Bias Score (RBS)
 ```
-RBS = Σ(Actual_Points - Expected_Points) / Total_Matches
+RBS = tanh(Σ weighted_statistical_differences)
+Normalized score between -1 (negative bias) and +1 (positive bias)
 ```
 
-### Match Prediction Pipeline
+### ML Match Prediction Pipeline
 ```
-Base xG → Possession → Fouls → Penalties → PPG → Referee → Final xG → Goals → Probabilities
+Feature Engineering (45+ features) → 
+Standard Scaling → 
+Random Forest Models → 
+Predictions + Probabilities
 ```
 
-### Probability Calculation
+### Model Architecture
 ```python
-# Poisson distribution for match outcomes
-P(home_win) = Σ P(home_goals > away_goals)
-P(draw) = Σ P(home_goals = away_goals)  
-P(away_win) = Σ P(home_goals < away_goals)
+# 5 trained models working together:
+- Classification: Win/Draw/Loss probabilities
+- Regression: Home goals prediction  
+- Regression: Away goals prediction
+- Regression: Home xG prediction
+- Regression: Away xG prediction
 ```
 
 ## 🎯 Use Cases
