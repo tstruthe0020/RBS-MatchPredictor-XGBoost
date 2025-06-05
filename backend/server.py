@@ -1260,7 +1260,8 @@ async def upload_player_stats(file: UploadFile = File(...)):
                     fouls_drawn=safe_int(row.get('fouls_drawn', 0)),
                     xg=safe_float(row.get('xg', 0)),
                     penalty_attempts=safe_int(row.get('penalty_attempts', 0)),
-                    penalty_goals=safe_int(row.get('penalty_goals', 0))
+                    penalty_goals=safe_int(row.get('penalty_goals', 0)),
+                    dataset_name="default"  # Default dataset for single uploads
                 )
                 player_stats_batch.append(stats.dict())
             
