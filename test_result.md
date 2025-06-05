@@ -241,16 +241,30 @@ backend:
         agent: "testing"
         comment: "All RBS configuration endpoints tested successfully. Can create custom configs, list all configs, retrieve specific configs, delete custom configs (prevents deletion of default), and calculate RBS using different configurations. Configuration system working as expected."
 
+  - task: "Regression Analysis System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented regression analysis system with RegressionAnalyzer class, RegressionAnalysisRequest and RegressionAnalysisResponse models, and endpoints: GET /api/regression-stats and POST /api/regression-analysis."
+      - working: true
+        agent: "testing"
+        comment: "Regression analysis system is working correctly. The GET /api/regression-stats endpoint successfully returns a list of available statistics with descriptions and available targets (points_per_game, match_result). The POST /api/regression-analysis endpoint correctly performs both linear regression (for points_per_game target) and classification (for match_result target) with different combinations of statistics. Linear regression returns coefficients, R² score, RMSE, and intercept. Classification returns accuracy, feature importance, and classification report. The system properly validates inputs and returns appropriate error messages for invalid or empty statistics lists."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Updated RBS Calculator with New Formula"
-    - "RBS Configuration System"
+    - "Regression Analysis System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -264,3 +278,7 @@ agent_communication:
     message: "Updated RBS calculation logic with new formula: 1) New weights for 7 statistics 2) xG difference now calculated as (team xG - opponent xG) 3) tanh normalization for RBS scores between -1 and +1 4) Added RBS configuration system with endpoints similar to prediction config. Need to test the updated RBS calculation and new config endpoints."
   - agent: "testing"
     message: "Successfully tested the updated RBS calculation system and configuration endpoints. The RBS calculator correctly implements the new formula with team-level statistics, xG difference calculation, specified weights, and tanh normalization. All RBS scores are properly normalized between -1 and +1. The RBS configuration system works correctly, allowing creation of custom configs, listing all configs, retrieving specific configs, and preventing deletion of the default config. The calculate-rbs endpoint correctly accepts the config_name parameter and applies different configurations as expected."
+  - agent: "main"
+    message: "Implemented a new regression analysis system to determine which team statistics correlate most strongly with match outcomes. Added GET /api/regression-stats endpoint to retrieve available statistics and POST /api/regression-analysis endpoint to perform regression analysis. Please test both endpoints with different configurations."
+  - agent: "testing"
+    message: "Successfully tested the regression analysis system. The GET /api/regression-stats endpoint correctly returns available statistics with descriptions and targets. The POST /api/regression-analysis endpoint works for both linear regression (points_per_game) and classification (match_result) with different combinations of statistics. The system properly validates inputs and handles errors appropriately. All tests passed with expected results."
