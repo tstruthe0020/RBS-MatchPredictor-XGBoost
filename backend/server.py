@@ -92,11 +92,70 @@ class UploadResponse(BaseModel):
     message: str
     records_processed: int
 
+class PredictionConfig(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    config_name: str = "default"
+    
+    # xG Calculation Method Weights (should sum to 1.0)
+    xg_shot_based_weight: float = 0.4
+    xg_historical_weight: float = 0.4
+    xg_opponent_defense_weight: float = 0.2
+    
+    # Team Performance Adjustments
+    ppg_adjustment_factor: float = 0.15
+    possession_adjustment_per_percent: float = 0.01
+    fouls_drawn_factor: float = 0.02
+    fouls_drawn_baseline: float = 10.0
+    fouls_drawn_min_multiplier: float = 0.8
+    fouls_drawn_max_multiplier: float = 1.3
+    
+    # Penalty Calculations
+    penalty_xg_value: float = 0.79
+    
+    # Referee Bias
+    rbs_scaling_factor: float = 0.2
+    
+    # Goal Conversion Bounds
+    min_conversion_rate: float = 0.5
+    max_conversion_rate: float = 2.0
+    
+    # xG Bounds
+    min_xg_per_match: float = 0.1
+    
+    # Confidence Calculation
+    confidence_matches_multiplier: float = 4
+    max_confidence: float = 90
+    min_confidence: float = 20
+    
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+class PredictionConfigRequest(BaseModel):
+    config_name: str
+    xg_shot_based_weight: float = 0.4
+    xg_historical_weight: float = 0.4
+    xg_opponent_defense_weight: float = 0.2
+    ppg_adjustment_factor: float = 0.15
+    possession_adjustment_per_percent: float = 0.01
+    fouls_drawn_factor: float = 0.02
+    fouls_drawn_baseline: float = 10.0
+    fouls_drawn_min_multiplier: float = 0.8
+    fouls_drawn_max_multiplier: float = 1.3
+    penalty_xg_value: float = 0.79
+    rbs_scaling_factor: float = 0.2
+    min_conversion_rate: float = 0.5
+    max_conversion_rate: float = 2.0
+    min_xg_per_match: float = 0.1
+    confidence_matches_multiplier: float = 4
+    max_confidence: float = 90
+    min_confidence: float = 20
+
 class MatchPredictionRequest(BaseModel):
     home_team: str
     away_team: str
     referee_name: str
     match_date: Optional[str] = None
+    config_name: Optional[str] = "default"  # Allow custom config selection
 
 class MatchPredictionResponse(BaseModel):
     success: bool
