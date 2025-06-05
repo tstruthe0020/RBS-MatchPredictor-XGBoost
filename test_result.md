@@ -248,7 +248,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Formula Optimization Frontend"
+    - "Comprehensive Regression Analysis"
   stuck_tasks:
     - "Comprehensive Regression Analysis"
   test_all: false
