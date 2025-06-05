@@ -248,12 +248,6 @@ class RBSCalculator:
     
     async def calculate_team_avg_stats(self, team_name, all_team_stats, all_matches, with_referee=None, exclude_referee=None):
         """Calculate average stats for a team, optionally filtered by referee"""
-        # Get database reference
-        from motor.motor_asyncio import AsyncIOMotorClient
-        mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/referee_bias_db')
-        client = AsyncIOMotorClient(mongo_url)
-        db = client.referee_bias_db
-        
         # Get all matches for this team
         team_matches = [m for m in all_matches if m['home_team'] == team_name or m['away_team'] == team_name]
         
