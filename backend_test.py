@@ -549,6 +549,43 @@ def main():
         prediction_success = False
         team_performance_success = False
     
+    # Test RBS Configuration System
+    print("\n=== Testing RBS Configuration System ===")
+    
+    # Initialize default RBS config
+    init_default_success, default_config = tester.test_initialize_default_rbs_config()
+    
+    # Create custom RBS config
+    custom_config_name = "test_custom_rbs_config"
+    create_custom_success, custom_config = tester.test_create_custom_rbs_config(custom_config_name)
+    
+    # List all RBS configs
+    list_configs_success, configs = tester.test_list_rbs_configs()
+    
+    # Get specific RBS configs
+    get_default_success, default_config_details = tester.test_get_specific_rbs_config("default")
+    get_custom_success, custom_config_details = tester.test_get_specific_rbs_config(custom_config_name)
+    
+    # Try to delete default config (should fail)
+    delete_default_success, delete_default_response = tester.test_delete_default_rbs_config()
+    
+    # Delete custom config
+    delete_custom_success, delete_custom_response = tester.test_delete_rbs_config(custom_config_name)
+    
+    # Test RBS Calculation with Default Config
+    print("\n=== Testing RBS Calculation ===")
+    calculate_rbs_success, calculate_rbs_response = tester.test_calculate_rbs()
+    
+    # Create another custom config for testing calculation with custom config
+    another_config_name = "another_test_config"
+    create_another_success, another_config = tester.test_create_custom_rbs_config(another_config_name)
+    
+    # Calculate RBS with custom config
+    calculate_custom_rbs_success, calculate_custom_rbs_response = tester.test_calculate_rbs(another_config_name)
+    
+    # Clean up by deleting the second custom config
+    delete_another_success, delete_another_response = tester.test_delete_rbs_config(another_config_name)
+    
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
     
@@ -578,6 +615,65 @@ def main():
         print("✅ Team performance endpoint is working correctly")
     else:
         print("❌ Team performance endpoint is not working correctly")
+    
+    # RBS Configuration System Summary
+    print("\n=== RBS Configuration System Summary ===")
+    
+    if init_default_success:
+        print("✅ Default RBS configuration initialized successfully")
+    else:
+        print("❌ Failed to initialize default RBS configuration")
+        
+    if create_custom_success:
+        print("✅ Custom RBS configuration created successfully")
+    else:
+        print("❌ Failed to create custom RBS configuration")
+        
+    if list_configs_success:
+        print(f"✅ Successfully listed {len(configs)} RBS configurations")
+    else:
+        print("❌ Failed to list RBS configurations")
+        
+    if get_default_success:
+        print("✅ Successfully retrieved default RBS configuration")
+    else:
+        print("❌ Failed to retrieve default RBS configuration")
+        
+    if get_custom_success:
+        print("✅ Successfully retrieved custom RBS configuration")
+    else:
+        print("❌ Failed to retrieve custom RBS configuration")
+        
+    if delete_default_success:
+        print("✅ Correctly prevented deletion of default RBS configuration")
+    else:
+        print("❌ Failed to prevent deletion of default RBS configuration")
+        
+    if delete_custom_success:
+        print("✅ Successfully deleted custom RBS configuration")
+    else:
+        print("❌ Failed to delete custom RBS configuration")
+    
+    # RBS Calculation Summary
+    print("\n=== RBS Calculation Summary ===")
+    
+    if calculate_rbs_success:
+        print("✅ Successfully calculated RBS scores with default configuration")
+        if calculate_rbs_response and calculate_rbs_response.get('success', False):
+            print(f"✅ Generated {calculate_rbs_response.get('results_count', 0)} RBS results")
+        else:
+            print("⚠️ RBS calculation returned an error - this might be due to insufficient data")
+    else:
+        print("❌ Failed to calculate RBS scores with default configuration")
+        
+    if calculate_custom_rbs_success:
+        print("✅ Successfully calculated RBS scores with custom configuration")
+        if calculate_custom_rbs_response and calculate_custom_rbs_response.get('success', False):
+            print(f"✅ Generated {calculate_custom_rbs_response.get('results_count', 0)} RBS results")
+        else:
+            print("⚠️ RBS calculation with custom config returned an error")
+    else:
+        print("❌ Failed to calculate RBS scores with custom configuration")
     
     return 0 if tester.tests_passed == tester.tests_run else 1
 
