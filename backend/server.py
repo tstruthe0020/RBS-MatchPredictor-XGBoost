@@ -438,12 +438,14 @@ class MatchPredictor:
             'xg': sum(stat.get('xg', 0) for stat in team_stats) / total_matches,
             'fouls': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
             'fouls_drawn': sum(stat.get('fouls_drawn', 0) for stat in team_stats) / total_matches,
-            'penalties_awarded': sum(stat.get('penalty_attempts', 0) for stat in team_stats) / total_matches,  # Average penalty attempts per match
+            'penalties_awarded': sum(stat.get('penalties_awarded', 0) for stat in team_stats) / total_matches,  # Correct field mapping
             'penalty_attempts': sum(stat.get('penalty_attempts', 0) for stat in team_stats) / total_matches,
             'penalty_goals': sum(stat.get('penalty_goals', 0) for stat in team_stats) / total_matches,
             'yellow_cards': sum(stat.get('yellow_cards', 0) for stat in team_stats) / total_matches,
             'red_cards': sum(stat.get('red_cards', 0) for stat in team_stats) / total_matches,
             'possession_pct': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,
+            'possession_percentage': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,  # Add mapped field
+            'fouls_committed': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,  # Add mapped field
             'goals': 0,  # Will calculate from matches
             'goals_conceded': 0,  # Will calculate from matches
             'matches_count': total_matches,
