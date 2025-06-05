@@ -463,9 +463,14 @@ class MatchPredictor:
         # Get team stats
         team_stats = await db.team_stats.find(query).to_list(1000)
         
+        if not team_stats:
+            return None
+        
+        # Always create match_ids list
+        match_ids = [stat['match_id'] for stat in team_stats]
+        
         # Get corresponding matches to filter by season/opponent if needed
         if exclude_opponent or season_filter:
-            match_ids = [stat['match_id'] for stat in team_stats]
             match_query = {"match_id": {"$in": match_ids}}
             if season_filter:
                 match_query["season"] = season_filter
@@ -483,6 +488,8 @@ class MatchPredictor:
             
             # Filter team stats by valid matches
             team_stats = [stat for stat in team_stats if stat['match_id'] in valid_match_ids]
+            # Update match_ids after filtering
+            match_ids = [stat['match_id'] for stat in team_stats]
         
         if not team_stats:
             return None
