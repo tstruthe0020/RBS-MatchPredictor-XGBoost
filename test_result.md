@@ -213,15 +213,18 @@ backend:
 
   - task: "Updated RBS Calculator with New Formula"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Updated RBSCalculator class with new formula: 1) Uses team-level statistics only 2) Calculates xg_difference as (team xG - opponent xG) per match 3) Applies new weights: yellow_cards(0.3), red_cards(0.5), fouls_committed(0.1), fouls_drawn(0.1), penalties_awarded(0.5), xg_difference(0.4), possession_percentage(0.2) 4) Uses tanh normalization for RBS scores between -1 and +1 5) Made calculate_rbs_for_team_referee async"
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the updated RBS calculator with new formula. Verified that the calculation correctly uses team-level statistics only, calculates xg_difference as (team xG - opponent xG) per match, applies the specified weights, and uses tanh normalization to get RBS scores between -1 and +1. Tested with sample data and confirmed that RBS scores are properly normalized between -1 and +1 (observed values: -0.998, -0.993, 0.973, 0.691, -0.18). The calculation method is properly implemented as async."
 
   - task: "RBS Configuration System"
     implemented: true
