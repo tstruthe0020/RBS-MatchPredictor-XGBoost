@@ -489,14 +489,17 @@ class MatchPredictor:
         # Aggregate player stats for team-level metrics
         total_fouls_drawn_from_players = sum(stat.get('fouls_drawn', 0) for stat in player_stats)
         total_penalties_from_players = sum(stat.get('penalty_attempts', 0) for stat in player_stats)
+        total_xg_from_players = sum(stat.get('xg', 0) for stat in player_stats)
         
         # Calculate per-match averages from player aggregation
         if total_matches > 0:
             averages['fouls_drawn'] = total_fouls_drawn_from_players / total_matches
             averages['penalties_awarded'] = total_penalties_from_players / total_matches
+            averages['xg'] = total_xg_from_players / total_matches
         else:
             averages['fouls_drawn'] = 0
             averages['penalties_awarded'] = 0
+            averages['xg'] = 0
         
         total_goals = 0
         total_goals_conceded = 0
