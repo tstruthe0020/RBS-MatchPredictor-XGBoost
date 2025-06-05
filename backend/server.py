@@ -501,11 +501,22 @@ class MatchPredictor:
             'yellow_cards': sum(stat.get('yellow_cards', 0) for stat in team_stats) / total_matches,
             'red_cards': sum(stat.get('red_cards', 0) for stat in team_stats) / total_matches,
             'possession_pct': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,
-            'possession_percentage': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,  # Add mapped field
-            'fouls_committed': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,  # Add mapped field
-            'goals': 0,  # Will calculate from matches
-            'goals_conceded': 0,  # Will calculate from matches
+            'possession_percentage': sum(stat.get('possession_pct', 0) for stat in team_stats) / total_matches,
+            'fouls_committed': sum(stat.get('fouls', 0) for stat in team_stats) / total_matches,
+            'goals': sum(stat.get('goals_scored', 0) for stat in team_stats) / total_matches,
+            'goals_conceded': sum(stat.get('goals_conceded', 0) for stat in team_stats) / total_matches,
+            'points': sum(stat.get('points_earned', 0) for stat in team_stats) / total_matches,
             'matches_count': total_matches,
+            
+            # Add comprehensive derived statistics that are now calculated
+            'xg_per_shot': sum(stat.get('xg_per_shot', 0) for stat in team_stats) / total_matches,
+            'goals_per_xg': sum(stat.get('goals_per_xg', 0) for stat in team_stats) / total_matches,
+            'shot_accuracy': sum(stat.get('shot_accuracy', 0) for stat in team_stats) / total_matches,
+            'conversion_rate': sum(stat.get('conversion_rate', 0) for stat in team_stats) / total_matches,
+            'penalty_conversion_rate': sum(stat.get('penalty_conversion_rate', 0) for stat in team_stats) / total_matches,
+            'goal_difference': sum(stat.get('goal_difference', 0) for stat in team_stats) / total_matches,
+            'clean_sheets': sum(stat.get('clean_sheet', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
+            'scoring_rate': sum(stat.get('scored_goals', 0) for stat in team_stats) / total_matches * 100,  # Convert to percentage
         }
         
         # Calculate actual goals scored and conceded from matches
