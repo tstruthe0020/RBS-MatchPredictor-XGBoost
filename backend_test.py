@@ -138,6 +138,64 @@ class RBSAPITester:
                 
             return success, response
         return False, None
+        
+    def test_suggest_prediction_config(self):
+        """Test the suggest-prediction-config endpoint"""
+        success, response = self.run_test(
+            "Suggest Prediction Config",
+            "POST",
+            "suggest-prediction-config",
+            200
+        )
+        
+        if success:
+            print(f"Config suggestion successful: {response.get('success', False)}")
+            if response.get('success', False):
+                suggestions = response.get('suggestions', {})
+                
+                # Check if the response has the expected structure
+                if 'suggested_config_name' in suggestions:
+                    print(f"Suggested config name: {suggestions.get('suggested_config_name', '')}")
+                else:
+                    print("⚠️ Response is missing 'suggested_config_name' field")
+                
+                if 'analysis_basis' in suggestions:
+                    analysis_basis = suggestions.get('analysis_basis', {})
+                    print(f"R² score: {analysis_basis.get('r2_score', 0)}")
+                    print(f"Sample size: {analysis_basis.get('sample_size', 0)}")
+                    print(f"Stats analyzed: {analysis_basis.get('stats_analyzed', [])}")
+                else:
+                    print("⚠️ Response is missing 'analysis_basis' field")
+                
+                if 'suggestions' in suggestions:
+                    suggestion_details = suggestions.get('suggestions', {})
+                    print(f"Suggestion categories: {list(suggestion_details.keys())}")
+                    
+                    # Check for xg_calculation suggestions
+                    if 'xg_calculation' in suggestion_details:
+                        xg_calc = suggestion_details.get('xg_calculation', {})
+                        print(f"xG calculation explanation: {xg_calc.get('explanation', '')}")
+                        print(f"Current default weights: {xg_calc.get('current_default', {})}")
+                    
+                    # Check for adjustments suggestions
+                    if 'adjustments' in suggestion_details:
+                        adjustments = suggestion_details.get('adjustments', {})
+                        if adjustments:
+                            print(f"Adjustment recommendations: {list(adjustments.keys())}")
+                            for adj_name, adj_details in adjustments.items():
+                                print(f"  {adj_name}: {adj_details.get('recommendation', '')}")
+                                print(f"    Reason: {adj_details.get('reason', '')}")
+                    
+                    # Check confidence level
+                    if 'confidence_level' in suggestion_details:
+                        print(f"Confidence level: {suggestion_details.get('confidence_level', '')}")
+                else:
+                    print("⚠️ Response is missing 'suggestions' field")
+            else:
+                print(f"Config suggestion failed with error: {response.get('message', 'Unknown error')}")
+                
+            return success, response
+        return False, None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
