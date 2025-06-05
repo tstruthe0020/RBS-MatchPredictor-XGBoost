@@ -407,6 +407,8 @@ function App() {
                   if (tab === 'config') {
                     fetchConfigs();
                     fetchConfig(configName);
+                    fetchRbsConfigs();
+                    fetchRbsConfig(rbsConfigName);
                   }
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
