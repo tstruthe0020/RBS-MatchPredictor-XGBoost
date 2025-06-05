@@ -2116,16 +2116,20 @@ async def calculate_comprehensive_team_stats():
                 team_shots = team_stat.get('shots_total', 0)
                 team_shots_ot = team_stat.get('shots_on_target', 0)
                 
-                # If team shot data is unreasonably low compared to xG, estimate based on xG
-                if team_shots > 0:
+                # Check if shot data is reasonable relative to xG
+                reasonable_xg_per_shot = final_xg / max(team_shots, 1) if team_shots > 0 else 999
+                
+                if team_shots > 0 and reasonable_xg_per_shot <= 1.0:
+                    # Team shot data seems reasonable
                     final_shots_total = team_shots
                     final_shots_on_target = team_shots_ot
                 else:
-                    # Estimate shots based on xG (assume average 0.15 xG per shot for realistic estimation)
+                    # Team shot data is missing or unreasonable, estimate based on xG
+                    # Assume average 0.15 xG per shot for realistic estimation
                     estimated_shots = max(int(final_xg / 0.15), 1) if final_xg > 0 else 1
                     final_shots_total = estimated_shots
                     final_shots_on_target = max(int(estimated_shots * 0.4), 0)  # Assume 40% shot accuracy
-                    print(f"Note: Estimating shots for {team_name} in match {match_id}: {estimated_shots} shots based on xG {final_xg}")
+                    print(f"Note: Estimating shots for {team_name} in match {match_id}: {estimated_shots} shots based on xG {final_xg} (team had {team_shots} shots)")
             
             
             # Get actual goals from match result
