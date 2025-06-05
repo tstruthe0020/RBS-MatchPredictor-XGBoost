@@ -1496,6 +1496,316 @@ function App() {
           </div>
         )}
 
+        {/* Regression Analysis Tab */}
+        {activeTab === 'analysis' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">📈 Regression Analysis</h2>
+              <p className="text-gray-600 mb-6">
+                Analyze how different team-level statistics correlate with match outcomes using machine learning models.
+              </p>
+
+              {!regressionResult ? (
+                /* Analysis Form */
+                <div className="space-y-6">
+                  {/* Analysis Configuration */}
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-3">📊 Analysis Configuration</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-800">
+                      <div>
+                        <h4 className="font-medium mb-2">🎯 Analysis Types</h4>
+                        <div className="space-y-1 text-xs">
+                          <div><strong>Points Per Game:</strong> Linear regression to predict match points (0, 1, 3)</div>
+                          <div><strong>Match Result:</strong> Classification to predict Win/Draw/Loss</div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">🔬 Model Details</h4>
+                        <div className="space-y-1 text-xs">
+                          <div><strong>Linear Regression:</strong> Shows coefficient relationships and R² score</div>
+                          <div><strong>Random Forest:</strong> Shows feature importance and classification metrics</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Target Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Analysis Target
+                      </label>
+                      <select
+                        value={regressionTarget}
+                        onChange={(e) => setRegressionTarget(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      >
+                        <option value="points_per_game">Points Per Game (Linear Regression)</option>
+                        <option value="match_result">Match Result (Classification)</option>
+                      </select>
+                    </div>
+
+                    {/* Statistics Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Selected Statistics ({selectedStats.length})
+                      </label>
+                      <div className="text-sm text-gray-600">
+                        {selectedStats.length > 0 ? selectedStats.join(', ') : 'None selected'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Statistics Grid */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Select Statistics for Analysis</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {availableStats.map(stat => (
+                        <button
+                          key={stat}
+                          onClick={() => toggleStat(stat)}
+                          className={`p-3 text-sm rounded-lg border-2 transition-colors ${
+                            selectedStats.includes(stat)
+                              ? 'border-purple-500 bg-purple-50 text-purple-800'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50'
+                          }`}
+                        >
+                          <div className="font-medium">{stat.replace('_', ' ')}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {stat === 'xg_difference' && 'Team xG - Opponent xG'}
+                            {stat === 'yellow_cards' && 'Cards received'}
+                            {stat === 'red_cards' && 'Red cards received'}
+                            {stat === 'fouls_committed' && 'Fouls by team'}
+                            {stat === 'fouls_drawn' && 'Fouls against team'}
+                            {stat === 'penalties_awarded' && 'Penalties for team'}
+                            {stat === 'possession_percentage' && 'Ball possession %'}
+                            {stat === 'xg' && 'Expected goals'}
+                            {stat === 'shots_total' && 'Total shots'}
+                            {stat === 'shots_on_target' && 'Shots on target'}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Analysis Button */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={runRegressionAnalysis}
+                      disabled={analyzing || selectedStats.length === 0}
+                      className="px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {analyzing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>📊</span>
+                          <span>Run Analysis</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={resetAnalysis}
+                      className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Help Text */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-md font-semibold text-gray-900 mb-2">How to Use</h4>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p>1. <strong>Select your target:</strong> Choose whether to predict points per game or match results</p>
+                      <p>2. <strong>Choose statistics:</strong> Click on the statistics you want to include in your analysis</p>
+                      <p>3. <strong>Run analysis:</strong> The system will train a model and show you the results</p>
+                      <p>4. <strong>Interpret results:</strong> See which statistics have the strongest correlation with match outcomes</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Analysis Results */
+                <div className="space-y-6">
+                  {regressionResult.success ? (
+                    <>
+                      {/* Header with analysis details */}
+                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-200">
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">Analysis Results</h3>
+                          <div className="text-2xl font-bold text-gray-900 mb-2">
+                            {regressionResult.model_type}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Target: {regressionResult.target} | Sample Size: {regressionResult.sample_size}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Statistics: {regressionResult.selected_stats.join(', ')}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Results Content */}
+                      {regressionTarget === 'points_per_game' ? (
+                        /* Linear Regression Results */
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-md font-semibold text-gray-900 mb-3">Model Performance</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">R² Score:</span>
+                                <span className="font-medium text-blue-600">{regressionResult.results.r2_score?.toFixed(4)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">RMSE:</span>
+                                <span className="font-medium">{regressionResult.results.rmse?.toFixed(4)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Intercept:</span>
+                                <span className="font-medium">{regressionResult.results.intercept?.toFixed(4)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Train/Test Split:</span>
+                                <span className="font-medium">{regressionResult.results.train_samples}/{regressionResult.results.test_samples}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-md font-semibold text-gray-900 mb-3">Coefficients</h4>
+                            <div className="space-y-2 text-sm">
+                              {Object.entries(regressionResult.results.coefficients || {}).map(([stat, coef]) => (
+                                <div key={stat} className="flex justify-between">
+                                  <span className="text-gray-600">{stat.replace('_', ' ')}:</span>
+                                  <span className={`font-medium ${coef > 0 ? 'text-green-600' : coef < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                    {coef > 0 ? '+' : ''}{coef.toFixed(4)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Classification Results */
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-md font-semibold text-gray-900 mb-3">Model Performance</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Accuracy:</span>
+                                <span className="font-medium text-blue-600">{(regressionResult.results.accuracy * 100)?.toFixed(2)}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Train/Test Split:</span>
+                                <span className="font-medium">{regressionResult.results.train_samples}/{regressionResult.results.test_samples}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Classes:</span>
+                                <span className="font-medium">{regressionResult.results.classes?.join(', ')}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-md font-semibold text-gray-900 mb-3">Feature Importance</h4>
+                            <div className="space-y-2 text-sm">
+                              {Object.entries(regressionResult.results.feature_importance || {})
+                                .sort(([,a], [,b]) => b - a)
+                                .map(([stat, importance]) => (
+                                  <div key={stat} className="flex justify-between">
+                                    <span className="text-gray-600">{stat.replace('_', ' ')}:</span>
+                                    <span className="font-medium text-purple-600">{(importance * 100).toFixed(2)}%</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Classification Report for Match Result */}
+                      {regressionTarget === 'match_result' && regressionResult.results.classification_report && (
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="text-md font-semibold text-gray-900 mb-3">Classification Report</h4>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2">Class</th>
+                                  <th className="text-right p-2">Precision</th>
+                                  <th className="text-right p-2">Recall</th>
+                                  <th className="text-right p-2">F1-Score</th>
+                                  <th className="text-right p-2">Support</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(regressionResult.results.classification_report)
+                                  .filter(([key]) => ['W', 'D', 'L'].includes(key))
+                                  .map(([className, metrics]) => (
+                                    <tr key={className} className="border-b">
+                                      <td className="p-2 font-medium">{className}</td>
+                                      <td className="p-2 text-right">{metrics.precision?.toFixed(3)}</td>
+                                      <td className="p-2 text-right">{metrics.recall?.toFixed(3)}</td>
+                                      <td className="p-2 text-right">{metrics['f1-score']?.toFixed(3)}</td>
+                                      <td className="p-2 text-right">{metrics.support}</td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Interpretation */}
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h4 className="text-md font-semibold text-blue-900 mb-3">🧠 Interpretation</h4>
+                        <div className="text-sm text-blue-800 space-y-2">
+                          {regressionTarget === 'points_per_game' ? (
+                            <>
+                              <p><strong>R² Score:</strong> {(regressionResult.results.r2_score * 100)?.toFixed(1)}% of the variance in points per game is explained by these statistics.</p>
+                              <p><strong>Positive coefficients:</strong> Higher values of these stats increase expected points per game.</p>
+                              <p><strong>Negative coefficients:</strong> Higher values of these stats decrease expected points per game.</p>
+                            </>
+                          ) : (
+                            <>
+                              <p><strong>Accuracy:</strong> The model correctly predicts match results {(regressionResult.results.accuracy * 100)?.toFixed(1)}% of the time.</p>
+                              <p><strong>Feature Importance:</strong> Shows which statistics are most useful for predicting match outcomes.</p>
+                              <p><strong>Precision/Recall:</strong> Precision = accuracy when predicting each class; Recall = ability to find all instances of each class.</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={resetAnalysis}
+                          className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                        >
+                          Run New Analysis
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* Error State */
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h3 className="text-lg font-semibold text-red-800 mb-2">Analysis Failed</h3>
+                      <p className="text-red-700">{regressionResult.message}</p>
+                      <button
+                        onClick={resetAnalysis}
+                        className="mt-4 px-4 py-2 bg-red-100 text-red-800 font-medium rounded-lg hover:bg-red-200"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* RBS Configuration Tab */}
         {activeTab === 'rbs-config' && (
           <div className="space-y-6">
