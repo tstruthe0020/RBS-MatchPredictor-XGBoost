@@ -12,6 +12,9 @@
       - working: true
         agent: "testing"
         comment: "Successfully tested the enhanced regression analysis system. The GET /api/regression-stats endpoint now correctly returns 20 available statistics organized into categories (10 basic stats, 9 advanced stats, 1 outcome stat) with comprehensive descriptions. The advanced stats like xg_per_shot, goals_per_xg, shot_accuracy, and conversion_rate are properly included and work correctly in regression analysis. Testing with advanced stats showed a much higher R² score (0.425) compared to basic stats (-0.013), indicating these derived metrics are more predictive of match outcomes."
+      - working: true
+        agent: "testing"
+        comment: "Verified the enhanced regression-stats endpoint returns all required categories (rbs_variables, match_predictor_variables, basic_stats, advanced_stats, outcome_stats, context_variables) with proper variable categorization. The endpoint includes 34 variables total with detailed descriptions for each. All RBS variables (7) and Match Predictor variables (13) are correctly categorized and available for analysis."
 
   - task: "Config Suggestion Endpoint"
     implemented: true
