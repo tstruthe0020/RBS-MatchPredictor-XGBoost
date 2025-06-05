@@ -875,6 +875,296 @@ function App() {
           </div>
         )}
 
+        {/* Configuration Tab */}
+        {activeTab === 'config' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">⚙️ Prediction Algorithm Configuration</h2>
+              <p className="text-gray-600 mb-6">
+                Customize the weights and parameters used in the match prediction algorithm.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Configuration Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Configuration
+                  </label>
+                  <select
+                    value={configName}
+                    onChange={(e) => {
+                      setConfigName(e.target.value);
+                      fetchConfig(e.target.value);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="default">Default Configuration</option>
+                    {configs.map(config => (
+                      <option key={config.config_name} value={config.config_name}>
+                        {config.config_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-end space-x-2">
+                  <button
+                    onClick={() => {
+                      setConfigEditing(true);
+                      resetConfigForm();
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Create New
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfigEditing(true);
+                      setConfigForm(currentConfig);
+                    }}
+                    disabled={!currentConfig}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    Edit Current
+                  </button>
+                </div>
+              </div>
+
+              {/* Configuration Form */}
+              {configEditing && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    {configForm.config_name === 'default' ? 'Edit Configuration' : 'Create Configuration'}
+                  </h3>
+
+                  <div className="space-y-6">
+                    {/* Configuration Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Configuration Name
+                      </label>
+                      <input
+                        type="text"
+                        value={configForm.config_name}
+                        onChange={(e) => handleConfigFormChange('config_name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter configuration name"
+                      />
+                    </div>
+
+                    {/* xG Calculation Weights */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">xG Calculation Weights (must sum to 1.0)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Shot-based Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="1"
+                            value={configForm.xg_shot_based_weight}
+                            onChange={(e) => handleConfigFormChange('xg_shot_based_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Historical Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="1"
+                            value={configForm.xg_historical_weight}
+                            onChange={(e) => handleConfigFormChange('xg_historical_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Opponent Defense Weight</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="1"
+                            value={configForm.xg_opponent_defense_weight}
+                            onChange={(e) => handleConfigFormChange('xg_opponent_defense_weight', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-600">
+                        Current sum: {(configForm.xg_shot_based_weight + configForm.xg_historical_weight + configForm.xg_opponent_defense_weight).toFixed(2)}
+                      </div>
+                    </div>
+
+                    {/* Team Performance Adjustments */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Team Performance Adjustments</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">PPG Adjustment Factor</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={configForm.ppg_adjustment_factor}
+                            onChange={(e) => handleConfigFormChange('ppg_adjustment_factor', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Possession Adjustment (/percent)</label>
+                          <input
+                            type="number"
+                            step="0.001"
+                            value={configForm.possession_adjustment_per_percent}
+                            onChange={(e) => handleConfigFormChange('possession_adjustment_per_percent', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Drawn Factor</label>
+                          <input
+                            type="number"
+                            step="0.001"
+                            value={configForm.fouls_drawn_factor}
+                            onChange={(e) => handleConfigFormChange('fouls_drawn_factor', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Drawn Baseline</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={configForm.fouls_drawn_baseline}
+                            onChange={(e) => handleConfigFormChange('fouls_drawn_baseline', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Penalty & Referee Settings */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Penalty & Referee Settings</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Penalty xG Value</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={configForm.penalty_xg_value}
+                            onChange={(e) => handleConfigFormChange('penalty_xg_value', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">RBS Scaling Factor</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={configForm.rbs_scaling_factor}
+                            onChange={(e) => handleConfigFormChange('rbs_scaling_factor', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bounds & Limits */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Bounds & Limits</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Min Conversion Rate</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={configForm.min_conversion_rate}
+                            onChange={(e) => handleConfigFormChange('min_conversion_rate', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Max Conversion Rate</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={configForm.max_conversion_rate}
+                            onChange={(e) => handleConfigFormChange('max_conversion_rate', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Min xG per Match</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={configForm.min_xg_per_match}
+                            onChange={(e) => handleConfigFormChange('min_xg_per_match', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={saveConfig}
+                        className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700"
+                      >
+                        Save Configuration
+                      </button>
+                      <button
+                        onClick={() => setConfigEditing(false)}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Configuration Display */}
+              {!configEditing && currentConfig && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Configuration: {currentConfig.config_name}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-800">xG Weights</h4>
+                      <div className="text-gray-600">
+                        <div>Shot-based: {currentConfig.xg_shot_based_weight}</div>
+                        <div>Historical: {currentConfig.xg_historical_weight}</div>
+                        <div>Opponent Def: {currentConfig.xg_opponent_defense_weight}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-800">Adjustments</h4>
+                      <div className="text-gray-600">
+                        <div>PPG Factor: {currentConfig.ppg_adjustment_factor}</div>
+                        <div>Possession: {currentConfig.possession_adjustment_per_percent}</div>
+                        <div>Fouls Factor: {currentConfig.fouls_drawn_factor}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-800">Key Values</h4>
+                      <div className="text-gray-600">
+                        <div>Penalty xG: {currentConfig.penalty_xg_value}</div>
+                        <div>RBS Scaling: {currentConfig.rbs_scaling_factor}</div>
+                        <div>Min xG: {currentConfig.min_xg_per_match}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Results Tab */}
         {activeTab === 'results' && (
           <div className="space-y-6">
