@@ -141,28 +141,6 @@ function App() {
     }
   };
 
-  // Enhanced RBS data loading function
-  const loadEnhancedRBSData = async (referee, teams) => {
-    try {
-      const enhancedData = {};
-      for (const team of teams) {
-        try {
-          const response = await axios.get(
-            `${API}/enhanced-rbs-analysis/${encodeURIComponent(team.team_name)}/${encodeURIComponent(referee)}`
-          );
-          if (response.data.success) {
-            enhancedData[team.team_name] = response.data;
-          }
-        } catch (error) {
-          console.warn(`Could not load enhanced RBS data for ${team.team_name}: ${error.message}`);
-        }
-      }
-      setEnhancedRBSData(enhancedData);
-    } catch (error) {
-      console.error('Error loading enhanced RBS data:', error);
-    }
-  };
-
   const fetchRefereeSummary = async () => {
     try {
       console.log('Fetching referee summary...');
