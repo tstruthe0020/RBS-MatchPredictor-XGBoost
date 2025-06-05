@@ -83,6 +83,8 @@ class PlayerStats(BaseModel):
     fouls_committed: int
     fouls_drawn: int
     xg: float
+    shots_total: Optional[int] = 0  # Added for proper shot aggregation
+    shots_on_target: Optional[int] = 0  # Added for proper shot aggregation
     penalty_attempts: Optional[int] = 0
     penalty_goals: Optional[int] = 0
     dataset_name: str = "default"  # New field for dataset management
