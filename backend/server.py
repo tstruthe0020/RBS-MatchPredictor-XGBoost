@@ -577,7 +577,15 @@ class MatchPredictor:
                 "config_used": config_name
             }
             
-            # Enhanced confidence factors
+            # Enhanced confidence factors with configurable calculation
+            overall_confidence = min(
+                config.max_confidence, 
+                max(
+                    config.min_confidence, 
+                    (home_stats['matches_count'] + away_stats['matches_count']) / 2 * config.confidence_matches_multiplier
+                )
+            )
+            
             confidence_factors = {
                 "home_matches_count": home_stats['matches_count'],
                 "away_matches_count": away_stats['matches_count'],
@@ -587,7 +595,8 @@ class MatchPredictor:
                 "away_ppg": round(away_ppg, 2),
                 "home_rbs_score": round(home_rbs, 3),
                 "away_rbs_score": round(away_rbs, 3),
-                "overall_confidence": min(90, max(20, (home_stats['matches_count'] + away_stats['matches_count']) / 2 * 4)),
+                "overall_confidence": round(overall_confidence, 1),
+                "config_used": config_name,
                 "data_quality": {
                     "home_shots_data": "good" if home_stats['shots_total'] > 0 else "estimated",
                     "away_shots_data": "good" if away_stats['shots_total'] > 0 else "estimated",
@@ -619,8 +628,8 @@ class MatchPredictor:
                 predicted_away_goals=0.0,
                 home_xg=0.0,
                 away_xg=0.0,
-                prediction_breakdown={"error": str(e)},
-                confidence_factors={"error": "Insufficient data"}
+                prediction_breakdown={"error": str(e), "config_used": config_name},
+                confidence_factors={"error": "Insufficient data", "config_used": config_name}
             )
 
 # Initialize Match Predictor
