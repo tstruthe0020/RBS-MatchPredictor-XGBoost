@@ -1837,6 +1837,27 @@ function App() {
                         >
                           Run New Analysis
                         </button>
+                        {regressionTarget === 'points_per_game' && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await axios.post(`${API}/suggest-prediction-config`);
+                                if (response.data.success) {
+                                  const suggestions = response.data.suggestions;
+                                  alert(`🎯 Config Suggestions Generated!\n\nR² Score: ${suggestions.analysis_basis.r2_score.toFixed(3)}\nSample Size: ${suggestions.analysis_basis.sample_size}\n\nCheck browser console for detailed suggestions.`);
+                                  console.log('Prediction Config Suggestions:', suggestions);
+                                } else {
+                                  alert(`❌ Failed to generate suggestions: ${response.data.message}`);
+                                }
+                              } catch (error) {
+                                alert(`❌ Error: ${error.response?.data?.detail || error.message}`);
+                              }
+                            }}
+                            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+                          >
+                            Suggest Config Optimizations
+                          </button>
+                        )}
                       </div>
                     </>
                   ) : (
