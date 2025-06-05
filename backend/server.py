@@ -298,8 +298,12 @@ class RBSCalculator:
                 
                 # Aggregate fouls_drawn and penalties_awarded from player stats for this match
                 match_player_stats = player_stats_by_match.get(match['match_id'], [])
-                stat['fouls_drawn'] = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
-                stat['penalties_awarded'] = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
+                match_fouls_drawn = sum(ps.get('fouls_drawn', 0) for ps in match_player_stats)
+                match_penalties_awarded = sum(ps.get('penalty_attempts', 0) for ps in match_player_stats)
+                
+                # Override with aggregated values if they exist, otherwise use team stat values
+                stat['fouls_drawn'] = match_fouls_drawn if match_fouls_drawn > 0 else stat.get('fouls_drawn', 0)
+                stat['penalties_awarded'] = match_penalties_awarded if match_penalties_awarded > 0 else stat.get('penalties_awarded', 0)
                 
                 team_stats_for_matches.append(stat)
         
