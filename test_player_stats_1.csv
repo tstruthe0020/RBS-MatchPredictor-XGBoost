@@ -1,0 +1,19 @@
+match_id,player_name,team_name,is_home,goals,assists,yellow_cards,fouls_committed,fouls_drawn,xg,penalty_attempts,penalty_goals
+1001,Bukayo Saka,Arsenal,True,1,1,0,2,3,0.6,1,1
+1001,Gabriel Jesus,Arsenal,True,1,0,1,3,2,0.8,0,0
+1001,Martin Odegaard,Arsenal,True,0,0,1,1,1,0.2,0,0
+1001,Kai Havertz,Chelsea,False,1,0,0,2,3,0.7,0,0
+1001,Mason Mount,Chelsea,False,0,1,1,3,2,0.3,0,0
+1001,Raheem Sterling,Chelsea,False,0,0,1,2,2,0.2,0,0
+1002,Mohamed Salah,Liverpool,True,1,0,0,1,3,0.9,0,0
+1002,Darwin Nunez,Liverpool,True,0,1,1,2,2,0.7,0,0
+1002,Virgil van Dijk,Liverpool,True,0,0,0,1,0,0.1,0,0
+1002,Erling Haaland,Manchester City,False,1,0,0,1,2,0.8,0,0
+1002,Kevin De Bruyne,Manchester City,False,0,1,1,2,3,0.6,0,0
+1002,Phil Foden,Manchester City,False,0,0,0,1,1,0.3,0,0
+1003,Harry Kane,Tottenham,True,0,0,1,3,2,0.5,0,0
+1003,Son Heung-min,Tottenham,True,0,0,1,2,2,0.3,0,0
+1003,Cristian Romero,Tottenham,True,0,0,1,4,0,0.1,0,0
+1003,Marcus Rashford,Manchester United,False,1,0,0,2,4,0.8,0,0
+1003,Bruno Fernandes,Manchester United,False,1,1,1,3,5,0.7,1,1
+1003,Casemiro,Manchester United,False,0,0,1,2,1,0.1,0,0

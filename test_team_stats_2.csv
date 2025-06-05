@@ -1,0 +1,7 @@
+match_id,team_name,is_home,yellow_cards,red_cards,fouls,possession_pct,shots_total,shots_on_target,fouls_drawn,penalties_awarded,xg
+2001,Aston Villa,True,1,0,9,58.7,16,8,11,1,2.3
+2001,Everton,False,4,1,13,41.3,8,2,9,0,0.7
+2002,Newcastle,True,2,0,10,52.1,14,7,8,1,1.8
+2002,Brighton,False,2,0,8,47.9,13,6,10,1,1.7
+2003,West Ham,True,3,0,11,45.6,12,4,9,0,1.1
+2003,Crystal Palace,False,1,0,7,54.4,13,5,11,0,1.9

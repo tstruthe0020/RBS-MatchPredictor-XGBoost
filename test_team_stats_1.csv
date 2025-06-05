@@ -1,0 +1,7 @@
+match_id,team_name,is_home,yellow_cards,red_cards,fouls,possession_pct,shots_total,shots_on_target,fouls_drawn,penalties_awarded,xg
+1001,Arsenal,True,2,0,10,55.2,15,7,8,1,1.8
+1001,Chelsea,False,3,0,12,44.8,12,5,10,0,1.2
+1002,Liverpool,True,1,0,8,60.5,18,8,9,0,2.1
+1002,Manchester City,False,2,0,7,39.5,14,6,8,0,1.9
+1003,Tottenham,True,4,1,14,48.3,10,3,7,0,0.9
+1003,Manchester United,False,2,0,9,51.7,12,6,14,1,2.2
