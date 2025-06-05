@@ -48,6 +48,7 @@ class Match(BaseModel):
     season: str
     competition: str
     match_date: str
+    dataset_name: str = "default"  # New field for dataset management
 
 class TeamStats(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
