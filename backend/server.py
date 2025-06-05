@@ -151,6 +151,46 @@ class PredictionConfigRequest(BaseModel):
     max_confidence: float = 90
     min_confidence: float = 20
 
+class RBSConfig(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    config_name: str = "default"
+    
+    # Weights for different statistics (based on new RBS formula)
+    yellow_cards_weight: float = 0.3
+    red_cards_weight: float = 0.5
+    fouls_committed_weight: float = 0.1
+    fouls_drawn_weight: float = 0.1
+    penalties_awarded_weight: float = 0.5
+    xg_difference_weight: float = 0.4
+    possession_percentage_weight: float = 0.2
+    
+    # Confidence calculation settings
+    confidence_matches_multiplier: float = 4
+    max_confidence: float = 95
+    min_confidence: float = 10
+    confidence_threshold_low: int = 2   # Minimum matches for any confidence
+    confidence_threshold_medium: int = 5  # Threshold for medium confidence
+    confidence_threshold_high: int = 10   # Threshold for high confidence
+    
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+class RBSConfigRequest(BaseModel):
+    config_name: str
+    yellow_cards_weight: float = 0.3
+    red_cards_weight: float = 0.5
+    fouls_committed_weight: float = 0.1
+    fouls_drawn_weight: float = 0.1
+    penalties_awarded_weight: float = 0.5
+    xg_difference_weight: float = 0.4
+    possession_percentage_weight: float = 0.2
+    confidence_matches_multiplier: float = 4
+    max_confidence: float = 95
+    min_confidence: float = 10
+    confidence_threshold_low: int = 2
+    confidence_threshold_medium: int = 5
+    confidence_threshold_high: int = 10
+
 class MatchPredictionRequest(BaseModel):
     home_team: str
     away_team: str
