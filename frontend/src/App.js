@@ -3713,6 +3713,119 @@ ${Object.entries(response.data.variance_analysis.variance_ratios || {}).map(([st
                       </div>
                     </div>
                   )}
+                  
+                  {/* Detailed Enhanced RBS Analysis Table */}
+                  {Object.keys(enhancedRBSData).length > 0 && (
+                    <div className="mt-8">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Performance Differential Analysis</h4>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Goals Diff</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Shots Diff</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">xG Diff</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Penalties Diff</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Fouls Drawn Diff</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Possession Diff</th>
+                              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Variance Confidence</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {Object.entries(enhancedRBSData).map(([teamName, data]) => (
+                              <tr key={teamName} className="hover:bg-gray-50">
+                                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                  {teamName}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                    (data.standard_rbs?.stats_breakdown?.goals || 0) > 0.1 ? 'bg-green-100 text-green-700' :
+                                    (data.standard_rbs?.stats_breakdown?.goals || 0) < -0.1 ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {(data.standard_rbs?.stats_breakdown?.goals || 0) > 0 ? '+' : ''}
+                                    {(data.standard_rbs?.stats_breakdown?.goals || 0).toFixed(2)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                    (data.standard_rbs?.stats_breakdown?.shots_total || 0) > 0.5 ? 'bg-green-100 text-green-700' :
+                                    (data.standard_rbs?.stats_breakdown?.shots_total || 0) < -0.5 ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {(data.standard_rbs?.stats_breakdown?.shots_total || 0) > 0 ? '+' : ''}
+                                    {(data.standard_rbs?.stats_breakdown?.shots_total || 0).toFixed(1)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                    (data.standard_rbs?.stats_breakdown?.xg_difference || 0) > 0.1 ? 'bg-green-100 text-green-700' :
+                                    (data.standard_rbs?.stats_breakdown?.xg_difference || 0) < -0.1 ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {(data.standard_rbs?.stats_breakdown?.xg_difference || 0) > 0 ? '+' : ''}
+                                    {(data.standard_rbs?.stats_breakdown?.xg_difference || 0).toFixed(2)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                    (data.standard_rbs?.stats_breakdown?.penalties_awarded || 0) > 0.05 ? 'bg-green-100 text-green-700' :
+                                    (data.standard_rbs?.stats_breakdown?.penalties_awarded || 0) < -0.05 ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {(data.standard_rbs?.stats_breakdown?.penalties_awarded || 0) > 0 ? '+' : ''}
+                                    {(data.standard_rbs?.stats_breakdown?.penalties_awarded || 0).toFixed(3)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                    (data.standard_rbs?.stats_breakdown?.fouls_drawn || 0) > 0.1 ? 'bg-green-100 text-green-700' :
+                                    (data.standard_rbs?.stats_breakdown?.fouls_drawn || 0) < -0.1 ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {(data.standard_rbs?.stats_breakdown?.fouls_drawn || 0) > 0 ? '+' : ''}
+                                    {(data.standard_rbs?.stats_breakdown?.fouls_drawn || 0).toFixed(2)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-1 py-0.5 rounded text-xs ${
+                                    (data.standard_rbs?.stats_breakdown?.possession_percentage || 0) > 0.5 ? 'bg-green-100 text-green-700' :
+                                    (data.standard_rbs?.stats_breakdown?.possession_percentage || 0) < -0.5 ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {(data.standard_rbs?.stats_breakdown?.possession_percentage || 0) > 0 ? '+' : ''}
+                                    {(data.standard_rbs?.stats_breakdown?.possession_percentage || 0).toFixed(2)}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-center text-xs">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                    data.variance_analysis?.confidence === 'Very High' ? 'bg-green-100 text-green-800' :
+                                    data.variance_analysis?.confidence === 'High' ? 'bg-blue-100 text-blue-800' :
+                                    data.variance_analysis?.confidence === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {data.variance_analysis?.confidence || 'N/A'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {/* Explanation */}
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <h5 className="text-sm font-semibold text-blue-900 mb-2">📋 Performance Differential Explanation</h5>
+                        <div className="text-xs text-blue-800 space-y-1">
+                          <p><strong>Positive values (green):</strong> Team performs better with this referee</p>
+                          <p><strong>Negative values (red):</strong> Team performs worse with this referee</p>
+                          <p><strong>Variance Confidence:</strong> Statistical reliability of the variance analysis</p>
+                          <p><strong>Calculation:</strong> Each value shows the difference between average performance with this referee vs all other referees</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}}
                 </div>
               </>
             )}
