@@ -1243,36 +1243,247 @@ function App() {
                       </div>
 
                       {/* Detailed Breakdown */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Prediction Components */}
-                        <div className="bg-white p-4 rounded-lg border">
-                          <h4 className="text-md font-semibold text-gray-900 mb-3">Prediction Breakdown</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Base xG (Home):</span>
-                              <span className="font-medium">{predictionResult.prediction_breakdown?.home_base_xg}</span>
+                      <div className="grid grid-cols-1 gap-6">
+                        {/* Algorithm Steps Breakdown */}
+                        <div className="bg-white p-6 rounded-lg border">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4">📊 Detailed Algorithm Breakdown</h4>
+                          
+                          {/* Step 1: Base xG Calculation */}
+                          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                            <h5 className="font-semibold text-blue-900 mb-3">Step 1: Base xG Calculation</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} Shots/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_shots_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} xG per Shot:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_xg_per_shot}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <span className="text-blue-700 font-medium">Base xG (Home):</span>
+                                  <span className="font-bold text-blue-700">{predictionResult.prediction_breakdown?.home_base_xg}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} Shots/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_shots_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} xG per Shot:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_xg_per_shot}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <span className="text-blue-700 font-medium">Base xG (Away):</span>
+                                  <span className="font-bold text-blue-700">{predictionResult.prediction_breakdown?.away_base_xg}</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Base xG (Away):</span>
-                              <span className="font-medium">{predictionResult.prediction_breakdown?.away_base_xg}</span>
+                          </div>
+
+                          {/* Step 2: Possession Adjustment */}
+                          <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                            <h5 className="font-semibold text-green-900 mb-3">Step 2: Possession Adjustment</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} Possession:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_possession_avg}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Possession Factor:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_possession_factor}x</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} Possession:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_possession_avg}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Possession Factor:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_possession_factor}x</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">PPG Adjustment:</span>
-                              <span className={`font-medium ${predictionResult.prediction_breakdown?.ppg_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.ppg_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                                {predictionResult.prediction_breakdown?.ppg_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.ppg_adjustment}
-                              </span>
+                          </div>
+
+                          {/* Step 3: Fouls Drawn Adjustment */}
+                          <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
+                            <h5 className="font-semibold text-yellow-900 mb-3">Step 3: Fouls Drawn Adjustment</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} Fouls Drawn:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_fouls_drawn_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Fouls Factor:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_fouls_factor}x</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} Fouls Drawn:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_fouls_drawn_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Fouls Factor:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_fouls_factor}x</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Referee Bias (Home):</span>
-                              <span className={`font-medium ${predictionResult.prediction_breakdown?.home_ref_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.home_ref_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                                {predictionResult.prediction_breakdown?.home_ref_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.home_ref_adjustment}
-                              </span>
+                          </div>
+
+                          {/* Step 4: Penalty Factor */}
+                          <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+                            <h5 className="font-semibold text-purple-900 mb-3">Step 4: Penalty Factor</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} Penalties/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_penalties_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Penalty Conversion:</span>
+                                  <span className="font-medium">{Math.round((predictionResult.prediction_breakdown?.home_penalty_conversion || 0) * 100)}%</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <span className="text-purple-700 font-medium">Penalty xG Added:</span>
+                                  <span className="font-bold text-purple-700">+{predictionResult.prediction_breakdown?.home_penalty_xg}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} Penalties/Game:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_penalties_avg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Penalty Conversion:</span>
+                                  <span className="font-medium">{Math.round((predictionResult.prediction_breakdown?.away_penalty_conversion || 0) * 100)}%</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <span className="text-purple-700 font-medium">Penalty xG Added:</span>
+                                  <span className="font-bold text-purple-700">+{predictionResult.prediction_breakdown?.away_penalty_xg}</span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Referee Bias (Away):</span>
-                              <span className={`font-medium ${predictionResult.prediction_breakdown?.away_ref_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.away_ref_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                                {predictionResult.prediction_breakdown?.away_ref_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.away_ref_adjustment}
-                              </span>
+                          </div>
+
+                          {/* Step 5: Team Quality Adjustment */}
+                          <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                            <h5 className="font-semibold text-indigo-900 mb-3">Step 5: Team Quality Adjustment (PPG)</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} PPG:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_ppg}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} PPG:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_ppg}</span>
+                                </div>
+                              </div>
+                              <div className="md:col-span-2 border-t pt-2">
+                                <div className="flex justify-between">
+                                  <span className="text-indigo-700 font-medium">PPG Adjustment:</span>
+                                  <span className={`font-bold ${predictionResult.prediction_breakdown?.ppg_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.ppg_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                    {predictionResult.prediction_breakdown?.ppg_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.ppg_adjustment}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Step 6: Referee Bias Adjustment */}
+                          <div className="mb-6 p-4 bg-red-50 rounded-lg">
+                            <h5 className="font-semibold text-red-900 mb-3">Step 6: Referee Bias Adjustment</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.home_team} RBS:</span>
+                                  <span className="font-medium">{predictionResult.confidence_factors?.home_rbs_score}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <span className="text-red-700 font-medium">Referee Adjustment:</span>
+                                  <span className={`font-bold ${predictionResult.prediction_breakdown?.home_ref_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.home_ref_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                    {predictionResult.prediction_breakdown?.home_ref_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.home_ref_adjustment}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">{predictionResult.away_team} RBS:</span>
+                                  <span className="font-medium">{predictionResult.confidence_factors?.away_rbs_score}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <span className="text-red-700 font-medium">Referee Adjustment:</span>
+                                  <span className={`font-bold ${predictionResult.prediction_breakdown?.away_ref_adjustment > 0 ? 'text-green-600' : predictionResult.prediction_breakdown?.away_ref_adjustment < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                                    {predictionResult.prediction_breakdown?.away_ref_adjustment > 0 ? '+' : ''}{predictionResult.prediction_breakdown?.away_ref_adjustment}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Step 7: Final Conversion */}
+                          <div className="mb-6 p-4 bg-gray-800 text-white rounded-lg">
+                            <h5 className="font-semibold mb-3">Step 7: Final Goal Conversion</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-300">Final xG:</span>
+                                  <span className="font-medium">{predictionResult.home_xg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-300">Conversion Rate (goals/xG):</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.home_conversion_rate}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2 border-gray-600">
+                                  <span className="font-bold text-white">Predicted Goals:</span>
+                                  <span className="font-bold text-white">{predictionResult.predicted_home_goals}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-300">Final xG:</span>
+                                  <span className="font-medium">{predictionResult.away_xg}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-300">Conversion Rate (goals/xG):</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown?.away_conversion_rate}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2 border-gray-600">
+                                  <span className="font-bold text-white">Predicted Goals:</span>
+                                  <span className="font-bold text-white">{predictionResult.predicted_away_goals}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Step 8: Probability Calculation */}
+                          <div className="p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
+                            <h5 className="font-semibold text-gray-900 mb-3">Step 8: Probability Calculation</h5>
+                            <div className="text-sm text-gray-700">
+                              <p className="mb-2">Using Poisson distribution with predicted goals ({predictionResult.predicted_home_goals} vs {predictionResult.predicted_away_goals}):</p>
+                              <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="bg-green-200 p-2 rounded">
+                                  <div className="font-bold text-green-800">{predictionResult.home_win_probability}%</div>
+                                  <div className="text-xs text-green-700">{predictionResult.home_team} Win</div>
+                                </div>
+                                <div className="bg-yellow-200 p-2 rounded">
+                                  <div className="font-bold text-yellow-800">{predictionResult.draw_probability}%</div>
+                                  <div className="text-xs text-yellow-700">Draw</div>
+                                </div>
+                                <div className="bg-blue-200 p-2 rounded">
+                                  <div className="font-bold text-blue-800">{predictionResult.away_win_probability}%</div>
+                                  <div className="text-xs text-blue-700">{predictionResult.away_team} Win</div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
