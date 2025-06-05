@@ -102,6 +102,7 @@ function App() {
     fetchReferees();
     fetchConfigs();
     fetchRbsConfigs();
+    fetchDatasets();
   }, []);
 
   const fetchStats = async () => {
