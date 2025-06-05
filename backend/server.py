@@ -83,6 +83,7 @@ class PlayerStats(BaseModel):
     xg: float
     penalty_attempts: Optional[int] = 0
     penalty_goals: Optional[int] = 0
+    dataset_name: str = "default"  # New field for dataset management
 
 class RBSResult(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
