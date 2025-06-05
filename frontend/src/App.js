@@ -117,6 +117,7 @@ function App() {
     fetchConfigs();
     fetchRbsConfigs();
     fetchDatasets();
+    checkMLStatus(); // Load ML status on page load
   }, []);
 
   const fetchStats = async () => {
