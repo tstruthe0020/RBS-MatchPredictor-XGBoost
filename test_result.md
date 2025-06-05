@@ -172,11 +172,11 @@ backend:
 
   - task: "Comprehensive Regression Analysis"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -184,6 +184,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "The POST /api/analyze-comprehensive-regression endpoint is currently failing with a 500 Internal Server Error. The server logs show a 'ValueError: Out of range float values are not JSON compliant' error, which suggests there are NaN or Infinity values in the regression results that cannot be serialized to JSON. This is likely due to division by zero or other mathematical operations on sparse data. The endpoint needs to be updated to handle these edge cases by replacing NaN/Infinity values with null or appropriate default values before JSON serialization."
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/analyze-comprehensive-regression endpoint is now working correctly. The issue with NaN and Infinity values has been fixed, and the endpoint now properly handles these edge cases. Testing with a subset of statistics shows that the endpoint returns a successful response with all expected sections including model_type, coefficients, intercept, r2_score, mse, rmse, train_samples, test_samples, and feature_importance. The endpoint is now able to properly serialize all values to JSON."
 
   - task: "Match Prediction Fix"
     implemented: true
