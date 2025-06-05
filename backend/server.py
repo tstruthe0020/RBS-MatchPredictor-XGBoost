@@ -728,12 +728,12 @@ class MatchPredictor:
             home_base_xg *= possession_factor_home
             away_base_xg *= possession_factor_away
             
-            # Fouls drawn factor (configurable baseline and factor)
+            # Fouls drawn factor (using actual database values without bounds)
             fouls_factor_home = 1 + (home_stats['fouls_drawn'] - config.fouls_drawn_baseline) * config.fouls_drawn_factor
             fouls_factor_away = 1 + (away_stats['fouls_drawn'] - config.fouls_drawn_baseline) * config.fouls_drawn_factor
             
-            home_base_xg *= max(config.fouls_drawn_min_multiplier, min(config.fouls_drawn_max_multiplier, fouls_factor_home))
-            away_base_xg *= max(config.fouls_drawn_min_multiplier, min(config.fouls_drawn_max_multiplier, fouls_factor_away))
+            home_base_xg *= fouls_factor_home
+            away_base_xg *= fouls_factor_away
             
             # Penalties factor (configurable penalty xG value)
             home_penalty_xg = home_stats['penalties_awarded'] * config.penalty_xg_value * home_stats['penalty_conversion_rate']
