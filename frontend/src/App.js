@@ -306,6 +306,63 @@ function App() {
     });
   };
 
+  // RBS Configuration functions
+  const fetchRbsConfigs = async () => {
+    try {
+      const response = await axios.get(`${API}/rbs-configs`);
+      setRbsConfigs(response.data.configs);
+    } catch (error) {
+      console.error('Error fetching RBS configs:', error);
+    }
+  };
+
+  const fetchRbsConfig = async (name) => {
+    try {
+      const response = await axios.get(`${API}/rbs-config/${name}`);
+      setCurrentRbsConfig(response.data.config);
+      setRbsConfigForm(response.data.config);
+    } catch (error) {
+      console.error('Error fetching RBS config:', error);
+    }
+  };
+
+  const saveRbsConfig = async () => {
+    try {
+      const response = await axios.post(`${API}/rbs-config`, rbsConfigForm);
+      alert('✅ RBS Configuration saved successfully!');
+      await fetchRbsConfigs();
+      setRbsConfigEditing(false);
+    } catch (error) {
+      alert(`❌ Error saving RBS configuration: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleRbsConfigFormChange = (field, value) => {
+    setRbsConfigForm(prev => ({
+      ...prev,
+      [field]: parseFloat(value) || value
+    }));
+  };
+
+  const resetRbsConfigForm = () => {
+    setRbsConfigForm({
+      config_name: 'custom_rbs',
+      yellow_cards_weight: 0.3,
+      red_cards_weight: 0.5,
+      fouls_committed_weight: 0.1,
+      fouls_drawn_weight: 0.1,
+      penalties_awarded_weight: 0.5,
+      xg_difference_weight: 0.4,
+      possession_percentage_weight: 0.2,
+      confidence_matches_multiplier: 4,
+      max_confidence: 95,
+      min_confidence: 10,
+      confidence_threshold_low: 2,
+      confidence_threshold_medium: 5,
+      confidence_threshold_high: 10
+    });
+  };
+
   // Apply filters when team/referee selection changes  
   useEffect(() => {
     if (activeTab === 'results') {
