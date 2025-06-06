@@ -224,20 +224,20 @@ tail -n 50 /var/log/supervisor/backend.*.log
 sudo supervisorctl restart backend
 pip install -r /app/backend/requirements.txt
 
-# Check ML model directory
-ls -la /app/backend/models/
+# Check XGBoost model directory
+ls -la /app/backend/models/xgb_*.pkl
 ```
 
-#### ML Models Not Working
+#### XGBoost Models Not Working
 ```bash
-# Check model status
+# Check XGBoost model status
 curl -X GET "http://localhost:8001/api/ml-models/status"
 
-# Retrain models if needed
+# Retrain XGBoost models if needed
 curl -X POST "http://localhost:8001/api/train-ml-models"
 
-# Check model files exist
-ls -la /app/backend/models/*.pkl
+# Check XGBoost model files exist
+ls -la /app/backend/models/xgb_*.pkl
 ```
 
 #### Frontend Build Errors
