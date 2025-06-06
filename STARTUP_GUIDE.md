@@ -190,24 +190,26 @@ yarn install
 
 ### Core Features
 1. **Referee Bias Analysis**: Calculate RBS scores for team-referee combinations
-2. **ML Match Prediction**: Predict match outcomes using trained Random Forest models
+2. **XGBoost + Poisson Match Prediction**: Predict match outcomes using trained XGBoost models with Poisson simulation
 3. **Team Performance Analysis**: Detailed team statistics and trends
 4. **RBS Optimization**: Find optimal referee assignments to minimize bias
-5. **ML Model Management**: Train, reload, and monitor prediction models
+5. **XGBoost Model Management**: Train, reload, and monitor enhanced prediction models
 
 ### Key Metrics
 - **RBS (Referee Bias Score)**: Measures referee favoritism toward specific teams (normalized -1 to +1)
 - **xG (Expected Goals)**: Statistical measure of shot quality
 - **PPG (Points Per Game)**: Team quality indicator
-- **ML Confidence**: Model prediction confidence and feature importance
-- **Feature Engineering**: 45+ features including form, h2h, referee bias, team stats
+- **XGBoost Confidence**: Enhanced model prediction confidence and feature importance
+- **Enhanced Feature Engineering**: 60+ features including differentials, form, h2h, referee bias
+- **Poisson Parameters**: Lambda values used for detailed scoreline probability calculations
 
-### Machine Learning Models
-- **Classification Model**: Predicts Win/Draw/Loss with probability percentages
-- **Home Goals Regression**: Predicts expected goals for home team
-- **Away Goals Regression**: Predicts expected goals for away team  
-- **Home xG Regression**: Predicts expected xG for home team
-- **Away xG Regression**: Predicts expected xG for away team
+### XGBoost + Poisson Machine Learning Models
+- **XGBClassifier**: Predicts Win/Draw/Loss with enhanced accuracy and probability percentages
+- **Home Goals XGBRegressor**: Predicts expected goals for home team using gradient boosting
+- **Away Goals XGBRegressor**: Predicts expected goals for away team using gradient boosting
+- **Home xG XGBRegressor**: Predicts expected xG for home team with enhanced features
+- **Away xG XGBRegressor**: Predicts expected xG for away team with enhanced features
+- **Poisson Simulation**: Converts XGBoost predictions into detailed scoreline probabilities
 
 ## 🔍 Troubleshooting
 
