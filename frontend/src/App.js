@@ -52,6 +52,9 @@ function App() {
   const [trainingModels, setTrainingModels] = useState(false);
   const [trainingResults, setTrainingResults] = useState(null);
 
+  // PDF Export state
+  const [exportingPDF, setExportingPDF] = useState(false);
+
   // Configuration state
   const [configName, setConfigName] = useState('default');
   const [configs, setConfigs] = useState([]);
