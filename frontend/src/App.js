@@ -3169,7 +3169,7 @@ function App() {
                             {predictionResult.home_team} {parseFloat(predictionResult.predicted_home_goals).toFixed(2)} - {parseFloat(predictionResult.predicted_away_goals).toFixed(2)} {predictionResult.away_team}
                           </div>
                           <div className="text-sm text-gray-600">
-                            Expected xG: {parseFloat(predictionResult.home_xg).toFixed(2)} - {predictionResult.away_xg}
+                            Expected xG: {parseFloat(predictionResult.home_xg).toFixed(2)} - {parseFloat(predictionResult.away_xg).toFixed(2)}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             Referee: {predictionResult.referee}
