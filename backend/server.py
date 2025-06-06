@@ -273,6 +273,18 @@ class MatchPredictionResponse(BaseModel):
     confidence_factors: Optional[Dict] = None
     error: Optional[str] = None  # Error message when success=False
 
+class PDFExportRequest(BaseModel):
+    home_team: str
+    away_team: str
+    referee_name: str
+    match_date: Optional[str] = None
+    config_name: Optional[str] = "default"
+
+class PDFExportResponse(BaseModel):
+    success: bool
+    message: str
+    error: Optional[str] = None
+
 # RBS Calculation Engine
 class RBSCalculator:
     def __init__(self):
