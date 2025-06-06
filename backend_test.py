@@ -4,6 +4,8 @@ import json
 import base64
 import time
 import pprint
+import io
+import PyPDF2
 from dotenv import load_dotenv
 
 # Load environment variables
