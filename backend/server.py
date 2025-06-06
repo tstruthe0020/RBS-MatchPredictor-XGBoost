@@ -595,7 +595,7 @@ class RBSCalculator:
 # Initialize RBS Calculator
 rbs_calculator = RBSCalculator()
 
-# ML-Based Match Prediction Engine
+# XGBoost-Based Match Prediction Engine with Poisson Simulation
 class MLMatchPredictor:
     def __init__(self):
         self.models = {}
@@ -604,6 +604,32 @@ class MLMatchPredictor:
         self.models_dir = "/app/backend/models"
         self.ensure_models_dir()
         self.load_models()
+        
+        # XGBoost optimal hyperparameters for football prediction
+        self.xgb_params_classifier = {
+            'n_estimators': 200,
+            'max_depth': 6,
+            'learning_rate': 0.1,
+            'subsample': 0.8,
+            'colsample_bytree': 0.8,
+            'reg_alpha': 0.1,
+            'reg_lambda': 1.0,
+            'random_state': 42,
+            'objective': 'multi:softprob',
+            'num_class': 3
+        }
+        
+        self.xgb_params_regressor = {
+            'n_estimators': 150,
+            'max_depth': 5,
+            'learning_rate': 0.1,
+            'subsample': 0.8,
+            'colsample_bytree': 0.8,
+            'reg_alpha': 0.1,
+            'reg_lambda': 1.0,
+            'random_state': 42,
+            'objective': 'reg:squarederror'
+        }
     
     def ensure_models_dir(self):
         """Ensure models directory exists"""
@@ -612,13 +638,13 @@ class MLMatchPredictor:
     def get_model_paths(self):
         """Get file paths for all models"""
         return {
-            'classifier': os.path.join(self.models_dir, 'match_outcome_classifier.pkl'),
-            'home_goals': os.path.join(self.models_dir, 'home_goals_regressor.pkl'),
-            'away_goals': os.path.join(self.models_dir, 'away_goals_regressor.pkl'),
-            'home_xg': os.path.join(self.models_dir, 'home_xg_regressor.pkl'),
-            'away_xg': os.path.join(self.models_dir, 'away_xg_regressor.pkl'),
-            'scaler': os.path.join(self.models_dir, 'feature_scaler.pkl'),
-            'feature_columns': os.path.join(self.models_dir, 'feature_columns.pkl')
+            'classifier': os.path.join(self.models_dir, 'xgb_match_outcome_classifier.pkl'),
+            'home_goals': os.path.join(self.models_dir, 'xgb_home_goals_regressor.pkl'),
+            'away_goals': os.path.join(self.models_dir, 'xgb_away_goals_regressor.pkl'),
+            'home_xg': os.path.join(self.models_dir, 'xgb_home_xg_regressor.pkl'),
+            'away_xg': os.path.join(self.models_dir, 'xgb_away_xg_regressor.pkl'),
+            'scaler': os.path.join(self.models_dir, 'xgb_feature_scaler.pkl'),
+            'feature_columns': os.path.join(self.models_dir, 'xgb_feature_columns.pkl')
         }
     
     def load_models(self):
