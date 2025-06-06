@@ -588,14 +588,11 @@ function App() {
     setExportingPDF(true);
     try {
       const exportData = {
-        match_details: {
-          home_team: predictionResult.home_team,
-          away_team: predictionResult.away_team,
-          referee: predictionResult.referee,
-          match_date: predictionForm.match_date || 'TBD',
-          config_name: configName
-        },
-        prediction_data: predictionResult
+        home_team: predictionResult.home_team,
+        away_team: predictionResult.away_team,
+        referee_name: predictionResult.referee,
+        match_date: predictionForm.match_date || null,
+        config_name: configName
       };
 
       const response = await axios.post(`${API}/export-prediction-pdf`, exportData, {
