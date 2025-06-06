@@ -1461,10 +1461,10 @@ function App() {
                         <div className="text-center">
                           <h3 className="text-lg font-semibold text-gray-800 mb-2">Predicted Match Result</h3>
                           <div className="text-4xl font-bold text-gray-900 mb-2">
-                            {predictionResult.home_team} {predictionResult.predicted_home_goals} - {predictionResult.predicted_away_goals} {predictionResult.away_team}
+                            {predictionResult.home_team} {parseFloat(predictionResult.predicted_home_goals).toFixed(2)} - {parseFloat(predictionResult.predicted_away_goals).toFixed(2)} {predictionResult.away_team}
                           </div>
                           <div className="text-sm text-gray-600">
-                            Expected xG: {predictionResult.home_xg} - {predictionResult.away_xg}
+                            Expected xG: {parseFloat(predictionResult.home_xg).toFixed(2)} - {parseFloat(predictionResult.away_xg).toFixed(2)}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             Referee: {predictionResult.referee}
