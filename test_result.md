@@ -46,6 +46,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the PDF export functionality. The /api/export-prediction-pdf endpoint works correctly and generates a comprehensive PDF report with all required sections: match details, prediction summary, XGBoost analysis, Poisson distribution analysis, head-to-head stats, and referee bias analysis. The PDF contains multiple pages with detailed information and proper formatting. Team names and referee information are correctly included in the report. The endpoint accepts prediction data and returns a proper PDF file with the correct Content-Type header."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the PDF export functionality in the XGBoost + Poisson prediction tab. The Export PDF button is correctly displayed after making a prediction. When clicked, the button shows a loading state with 'Exporting...' text. The PDF file is successfully downloaded with the correct Content-Type header (application/pdf). The success message '✅ PDF exported successfully!' appears after the export is complete. No errors were encountered during the export process. The test was performed with 'Atlanta United' vs 'Austin FC' with referee 'Allen Chapman', and the PDF export worked flawlessly."
 
 backend:
   - task: "Enhanced Regression Analysis System"
