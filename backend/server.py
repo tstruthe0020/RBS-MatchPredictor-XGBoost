@@ -1449,17 +1449,20 @@ class MLMatchPredictor:
             # Create enhanced prediction breakdown
             prediction_breakdown = {
                 'xgboost_confidence': {
-                    'classifier_confidence': max(outcome_probs),
+                    'classifier_confidence': float(max(outcome_probs)),
                     'features_used': len(self.feature_columns),
                     'training_samples': 'Variable by model'
                 },
                 'feature_importance': {
-                    'top_features': self._get_top_feature_importance(5)
+                    'top_features': {k: float(v) for k, v in self._get_top_feature_importance(5).items()}
                 },
                 'poisson_analysis': {
                     'most_likely_scoreline': poisson_results['most_likely_scoreline'][0],
-                    'scoreline_probability': round(poisson_results['most_likely_scoreline'][1], 2),
-                    'lambda_parameters': poisson_results['poisson_parameters']
+                    'scoreline_probability': float(round(poisson_results['most_likely_scoreline'][1], 2)),
+                    'lambda_parameters': {
+                        'home_lambda': float(poisson_results['poisson_parameters']['home_lambda']),
+                        'away_lambda': float(poisson_results['poisson_parameters']['away_lambda'])
+                    }
                 },
                 'prediction_method': 'XGBoost + Poisson Distribution Simulation'
             }
