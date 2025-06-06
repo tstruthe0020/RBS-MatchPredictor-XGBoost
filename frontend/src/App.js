@@ -55,9 +55,6 @@ function App() {
   // PDF Export state
   const [exportingPDF, setExportingPDF] = useState(false);
 
-  // PDF Export state
-  const [exportingPDF, setExportingPDF] = useState(false);
-
   // Configuration state
   const [configName, setConfigName] = useState('default');
   const [configs, setConfigs] = useState([]);
