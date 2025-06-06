@@ -266,49 +266,52 @@ sudo supervisorctl restart mongodb
 - Ensure match_id consistency across files
 - Upload files in correct order (Player → Team → Match)
 
-#### Prediction Errors
-- Ensure ML models are trained (check Match Prediction tab)
+#### XGBoost Prediction Errors
+- Ensure XGBoost models are trained (check XGBoost + Poisson tab)
 - Verify teams and referees exist in database
 - Check that sufficient historical data is available
-- Retrain models if dataset has changed significantly
+- Retrain XGBoost models if dataset has changed significantly
 
 ### Performance Optimization
 
 #### For Large Datasets
 - Upload data in smaller batches
-- Monitor memory usage during ML training
-- Consider training models overnight for large datasets
+- Monitor memory usage during XGBoost training
+- Consider training XGBoost models overnight for large datasets
 - Use model reload instead of retraining for temporary issues
 
-#### ML Model Performance
-- Retrain models when adding significant new data
-- Monitor model accuracy metrics in training results
-- Consider feature selection for improved performance
+#### XGBoost Model Performance
+- Retrain XGBoost models when adding significant new data
+- Monitor enhanced accuracy metrics in training results
+- Consider feature selection for improved XGBoost performance
+- Review Poisson simulation parameters for optimal scoreline predictions
 
 ## 📚 Next Steps
 
 1. **Upload your data** following the CSV format guidelines
-2. **Train ML models** for match prediction (first time setup)
+2. **Train XGBoost models** for enhanced match prediction (first time setup)
 3. **Explore team performance** to understand your dataset
 4. **Calculate RBS scores** for referee bias analysis
-5. **Make ML predictions** using the trained models
-6. **Optimize referee assignments** using the RBS optimization tool
-7. **Monitor model performance** and retrain as needed
+5. **Make XGBoost + Poisson predictions** using the trained models
+6. **Analyze detailed scoreline probabilities** from Poisson simulation
+7. **Optimize referee assignments** using the RBS optimization tool
+8. **Monitor XGBoost model performance** and retrain as needed
 
 ## 🆘 Support
 
 For technical issues:
 1. Check the logs first
-2. Verify ML models are trained (Match Prediction tab)
+2. Verify XGBoost models are trained (XGBoost + Poisson tab)
 3. Verify data format requirements
 4. Ensure all services are running
 5. Review this startup guide
 
-### ML-Specific Support
+### XGBoost-Specific Support
 - **Model Training Issues**: Check system memory and available data
-- **Prediction Errors**: Verify model status and feature availability
-- **Performance Problems**: Consider model retraining or feature selection
+- **Prediction Errors**: Verify XGBoost model status and feature availability
+- **Performance Problems**: Consider XGBoost model retraining or feature selection
+- **Poisson Simulation Issues**: Check lambda parameter calculations and model outputs
 
 ---
 
-**Important**: Always backup your data before making significant changes to the system. ML model training may take several minutes depending on dataset size.
+**Important**: Always backup your data before making significant changes to the system. XGBoost model training may take several minutes depending on dataset size and provides enhanced accuracy over traditional Random Forest approaches.
