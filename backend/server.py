@@ -21,10 +21,11 @@ import joblib
 import os
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import classification_report, r2_score, mean_squared_error
+from sklearn.metrics import classification_report, r2_score, mean_squared_error, log_loss
 from sklearn.model_selection import train_test_split
 from scipy.stats import poisson
 from sklearn.preprocessing import StandardScaler
+import xgboost as xgb
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
