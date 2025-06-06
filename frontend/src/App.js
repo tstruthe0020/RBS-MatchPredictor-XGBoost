@@ -2043,6 +2043,24 @@ function App() {
                         >
                           Predict Another Match
                         </button>
+                        
+                        <button
+                          onClick={exportPredictionPDF}
+                          disabled={exportingPDF}
+                          className="px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                        >
+                          {exportingPDF ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              <span>Exporting...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📄</span>
+                              <span>Export PDF</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </>
                   ) : (
