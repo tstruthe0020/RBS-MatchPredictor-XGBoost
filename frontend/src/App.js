@@ -1770,7 +1770,7 @@ function App() {
                           <div className="p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
                             <h5 className="font-semibold text-gray-900 mb-3">Step 8: Probability Calculation</h5>
                             <div className="text-sm text-gray-700">
-                              <p className="mb-2">Using Poisson distribution with predicted goals ({predictionResult.predicted_home_goals} vs {predictionResult.predicted_away_goals}):</p>
+                              <p className="mb-2">Using Poisson distribution with predicted goals ({parseFloat(predictionResult.predicted_home_goals).toFixed(2)} vs {parseFloat(predictionResult.predicted_away_goals).toFixed(2)}):</p>
                               <div className="grid grid-cols-3 gap-4 text-center">
                                 <div className="bg-green-200 p-2 rounded">
                                   <div className="font-bold text-green-800">{predictionResult.home_win_probability}%</div>
