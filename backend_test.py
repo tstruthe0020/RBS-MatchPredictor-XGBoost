@@ -2115,8 +2115,11 @@ def test_ml_match_prediction_system():
         return False
 
 if __name__ == "__main__":
+    # Test the PDF export functionality
+    test_pdf_export_endpoint()
+    
     # Test the ML-based match prediction system
-    test_ml_match_prediction_system()
+    # test_ml_match_prediction_system()
     
     # Run other tests
     # run_tests()
