@@ -5435,6 +5435,73 @@ async def predict_match(request: MatchPredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
 
+@api_router.post("/export-prediction-pdf")
+async def export_prediction_pdf(request: PDFExportRequest):
+    """Export match prediction as PDF"""
+    try:
+        # Get prediction data
+        prediction = await ml_predictor.predict_match(
+            home_team=request.home_team,
+            away_team=request.away_team,
+            referee=request.referee_name,
+            match_date=request.match_date
+        )
+        
+        if not prediction.get('success', False):
+            raise HTTPException(status_code=400, detail=f"Prediction failed: {prediction.get('error', 'Unknown error')}")
+        
+        # Get head-to-head data
+        head_to_head_data = await ml_predictor.get_head_to_head_stats(request.home_team, request.away_team)
+        
+        # Get referee bias data for both teams
+        home_rbs_data = None
+        away_rbs_data = None
+        
+        try:
+            # Get all team stats and matches for RBS calculation
+            all_team_stats = await db.team_stats.find().to_list(10000)
+            all_matches = await db.matches.find().to_list(10000)
+            
+            # Calculate RBS for home team
+            home_rbs_result = await rbs_calculator.calculate_rbs_for_team_referee(
+                request.home_team, request.referee_name, all_team_stats, all_matches
+            )
+            
+            # Calculate RBS for away team  
+            away_rbs_result = await rbs_calculator.calculate_rbs_for_team_referee(
+                request.away_team, request.referee_name, all_team_stats, all_matches
+            )
+            
+            referee_data = {
+                'home_rbs': home_rbs_result,
+                'away_rbs': away_rbs_result
+            }
+            
+        except Exception as e:
+            print(f"Error calculating RBS data: {e}")
+            referee_data = None
+        
+        # Generate PDF
+        pdf_buffer = await pdf_exporter.generate_prediction_pdf(
+            prediction_data=prediction,
+            head_to_head_data=head_to_head_data,
+            referee_data=referee_data
+        )
+        
+        # Create filename
+        filename = f"match_prediction_{request.home_team.replace(' ', '_')}_vs_{request.away_team.replace(' ', '_')}.pdf"
+        
+        # Return as streaming response
+        return StreamingResponse(
+            io.BytesIO(pdf_buffer.read()),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"PDF generation error: {str(e)}")
+
 @api_router.post("/train-ml-models")
 async def train_ml_models():
     """Train ML models using all available data"""
