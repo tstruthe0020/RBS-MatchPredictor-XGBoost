@@ -255,15 +255,17 @@ class MatchPredictionResponse(BaseModel):
     home_team: str
     away_team: str
     referee: str
-    predicted_home_goals: float
-    predicted_away_goals: float
-    home_xg: float
-    away_xg: float
-    home_win_probability: float  # Percentage chance of home team winning
-    draw_probability: float      # Percentage chance of draw
-    away_win_probability: float  # Percentage chance of away team winning
-    prediction_breakdown: Dict
-    confidence_factors: Dict
+    predicted_home_goals: Optional[float] = None
+    predicted_away_goals: Optional[float] = None
+    home_xg: Optional[float] = None
+    away_xg: Optional[float] = None
+    home_win_probability: Optional[float] = None  # Percentage chance of home team winning
+    draw_probability: Optional[float] = None      # Percentage chance of draw
+    away_win_probability: Optional[float] = None  # Percentage chance of away team winning
+    scoreline_probabilities: Optional[Dict] = None  # New field for detailed scoreline probabilities
+    prediction_breakdown: Optional[Dict] = None
+    confidence_factors: Optional[Dict] = None
+    error: Optional[str] = None  # Error message when success=False
 
 # RBS Calculation Engine
 class RBSCalculator:
