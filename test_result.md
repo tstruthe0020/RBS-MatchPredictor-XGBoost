@@ -352,6 +352,9 @@ agent_communication:
   - agent: "testing"
     message: "I've successfully tested the ML-based match prediction frontend implementation. The page loads correctly with the '⚽ ML-Based Match Prediction' title and displays the ML Models Status section. The ML status shows that models are loaded with 45 features and 7 models. The 'Refresh Status' button works correctly, showing the current model status. The match prediction form works properly, allowing selection of home team, away team, referee, and match date. The 'Predict Match' button successfully generates predictions with proper probability calculations that sum to 100%. The prediction results display correctly, showing the predicted score, expected xG values, and win/draw/loss probabilities with visual bars. The ML Model Predictions section appears in the results with Model Performance & Confidence information. The algorithm explanation mentions Feature Engineering, Random Forest, and other ML concepts as expected. The 'Reload Models' button works correctly, showing a success message when clicked. All tests passed successfully with no issues found."
 
+  - agent: "testing"
+    message: "I've successfully tested the PDF export functionality for match predictions. The /api/export-prediction-pdf endpoint works correctly and generates a comprehensive PDF report with all required sections: match details, prediction summary, XGBoost analysis, Poisson distribution analysis, head-to-head stats, and referee bias analysis. The PDF contains multiple pages with detailed information and proper formatting. Team names and referee information are correctly included in the report. The endpoint accepts prediction data and returns a proper PDF file with the correct Content-Type header. All tests passed successfully with no issues found."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
