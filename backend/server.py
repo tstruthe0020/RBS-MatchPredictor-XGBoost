@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -26,6 +26,12 @@ from sklearn.model_selection import train_test_split
 from scipy.stats import poisson
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
