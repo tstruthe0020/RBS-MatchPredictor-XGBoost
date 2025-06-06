@@ -1738,7 +1738,7 @@ function App() {
                               <div className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-gray-300">Final xG:</span>
-                                  <span className="font-medium">{predictionResult.home_xg}</span>
+                                  <span className="font-medium">{parseFloat(predictionResult.home_xg).toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-300">Conversion Rate (goals/xG):</span>
@@ -1746,7 +1746,7 @@ function App() {
                                 </div>
                                 <div className="flex justify-between border-t pt-2 border-gray-600">
                                   <span className="font-bold text-white">Predicted Goals:</span>
-                                  <span className="font-bold text-white">{predictionResult.predicted_home_goals}</span>
+                                  <span className="font-bold text-white">{parseFloat(predictionResult.predicted_home_goals).toFixed(2)}</span>
                                 </div>
                               </div>
                               <div className="space-y-2">
