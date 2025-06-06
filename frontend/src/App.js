@@ -843,6 +843,7 @@ function App() {
                 }`}
               >
                 {tab === 'predict' ? 'Match Prediction' : 
+                 tab === 'xgboost' ? 'XGBoost + Poisson' :
                  tab === 'config' ? 'Prediction Config' :
                  tab === 'rbs-config' ? 'RBS Config' :
                  tab === 'analysis' ? 'Regression Analysis' :
