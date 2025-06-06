@@ -1154,8 +1154,347 @@ class MLMatchPredictor:
                 'referee': referee
             }
     
+    def calculate_poisson_scoreline_probabilities(self, home_lambda, away_lambda, max_goals=6):
+        """
+        Calculate detailed scoreline probabilities using Poisson distribution
+        
+        Args:
+            home_lambda (float): Expected goals for home team (from XGBoost)
+            away_lambda (float): Expected goals for away team (from XGBoost)
+            max_goals (int): Maximum goals to calculate for (0 to max_goals)
+            
+        Returns:
+            dict: Dictionary with scoreline probabilities and match outcome probabilities
+        """
+        scoreline_probs = {}
+        home_win_prob = 0.0
+        draw_prob = 0.0
+        away_win_prob = 0.0
+        
+        # Ensure lambda values are positive
+        home_lambda = max(0.1, home_lambda)
+        away_lambda = max(0.1, away_lambda)
+        
+        # Calculate probabilities for each scoreline
+        for home_goals in range(max_goals + 1):
+            for away_goals in range(max_goals + 1):
+                # Poisson probability for this exact scoreline
+                prob = poisson.pmf(home_goals, home_lambda) * poisson.pmf(away_goals, away_lambda)
+                scoreline = f"{home_goals}-{away_goals}"
+                scoreline_probs[scoreline] = prob
+                
+                # Add to match outcome probabilities
+                if home_goals > away_goals:
+                    home_win_prob += prob
+                elif home_goals == away_goals:
+                    draw_prob += prob
+                else:
+                    away_win_prob += prob
+        
+        # Calculate remaining probability (for scores > max_goals)
+        total_calculated = sum(scoreline_probs.values())
+        remaining_prob = max(0, 1 - total_calculated)
+        
+        # Distribute remaining probability based on current ratios
+        if total_calculated > 0:
+            home_win_prob += remaining_prob * (home_win_prob / total_calculated) if total_calculated > 0 else remaining_prob / 3
+            draw_prob += remaining_prob * (draw_prob / total_calculated) if total_calculated > 0 else remaining_prob / 3
+            away_win_prob += remaining_prob * (away_win_prob / total_calculated) if total_calculated > 0 else remaining_prob / 3
+        
+        # Normalize to ensure sum = 1
+        total_outcome_prob = home_win_prob + draw_prob + away_win_prob
+        if total_outcome_prob > 0:
+            home_win_prob = (home_win_prob / total_outcome_prob) * 100
+            draw_prob = (draw_prob / total_outcome_prob) * 100
+            away_win_prob = (away_win_prob / total_outcome_prob) * 100
+        
+        # Convert scoreline probabilities to percentages and sort by probability
+        scoreline_probs_pct = {k: v * 100 for k, v in scoreline_probs.items()}
+        sorted_scorelines = sorted(scoreline_probs_pct.items(), key=lambda x: x[1], reverse=True)
+        
+        return {
+            'scoreline_probabilities': dict(sorted_scorelines),
+            'match_outcome_probabilities': {
+                'home_win': home_win_prob,
+                'draw': draw_prob,
+                'away_win': away_win_prob
+            },
+            'most_likely_scoreline': sorted_scorelines[0] if sorted_scorelines else ("1-1", 0),
+            'poisson_parameters': {
+                'home_lambda': home_lambda,
+                'away_lambda': away_lambda
+            }
+        }
+    
+    async def build_training_dataset(self):
+        """Build training dataset from historical matches"""
+        try:
+            print("Building XGBoost training dataset...")
+            
+            # Get all matches with team stats
+            matches = await db.matches.find({}).to_list(10000)
+            print(f"Found {len(matches)} matches")
+            
+            features_list = []
+            targets = []
+            
+            for match in matches:
+                try:
+                    home_team = match['home_team']
+                    away_team = match['away_team']
+                    referee = match['referee']
+                    home_score = match['home_score']
+                    away_score = match['away_score']
+                    
+                    # Extract features for this match
+                    features = await self.extract_features_for_match(home_team, away_team, referee)
+                    if features is None:
+                        continue
+                    
+                    # Determine match outcome
+                    if home_score > away_score:
+                        outcome = 0  # Home win
+                    elif home_score == away_score:
+                        outcome = 1  # Draw
+                    else:
+                        outcome = 2  # Away win
+                    
+                    # Get actual xG values from team stats
+                    home_team_stats = await db.team_stats.find_one({
+                        "match_id": match['match_id'],
+                        "team_name": match['home_team'],
+                        "is_home": True
+                    })
+                    away_team_stats = await db.team_stats.find_one({
+                        "match_id": match['match_id'],
+                        "team_name": match['away_team'],
+                        "is_home": False
+                    })
+                    
+                    home_xg = home_team_stats.get('xg', 0) if home_team_stats else 0
+                    away_xg = away_team_stats.get('xg', 0) if away_team_stats else 0
+                    
+                    features_list.append(features)
+                    targets.append({
+                        'outcome': outcome,
+                        'home_goals': home_score,
+                        'away_goals': away_score,
+                        'home_xg': home_xg,
+                        'away_xg': away_xg
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing match {match['match_id']}: {e}")
+                    continue
+            
+            print(f"Successfully processed {len(features_list)} matches for XGBoost training")
+            return features_list, targets
+            
+        except Exception as e:
+            print(f"Error building XGBoost training dataset: {e}")
+            return [], []
+    
+    async def train_models(self, test_size=0.2, random_state=42):
+        """Train all XGBoost models"""
+        try:
+            print("Starting XGBoost model training...")
+            
+            # Build training dataset
+            features_list, targets = await self.build_training_dataset()
+            
+            if len(features_list) == 0:
+                raise ValueError("No training data available")
+            
+            # Convert to DataFrame for easier handling
+            import pandas as pd
+            X = pd.DataFrame(features_list)
+            
+            # Store feature columns for later use
+            self.feature_columns = X.columns.tolist()
+            
+            print(f"Training with {len(self.feature_columns)} features")
+            
+            # Prepare target variables
+            y_outcome = [t['outcome'] for t in targets]
+            y_home_goals = [t['home_goals'] for t in targets]
+            y_away_goals = [t['away_goals'] for t in targets]
+            y_home_xg = [t['home_xg'] for t in targets]
+            y_away_xg = [t['away_xg'] for t in targets]
+            
+            # Split data
+            X_train, X_test, y_outcome_train, y_outcome_test = train_test_split(
+                X, y_outcome, test_size=test_size, random_state=random_state, stratify=y_outcome
+            )
+            
+            # Scale features
+            X_train_scaled = self.scaler.fit_transform(X_train)
+            X_test_scaled = self.scaler.transform(X_test)
+            
+            # Split other targets with same indices
+            train_indices = X_train.index
+            test_indices = X_test.index
+            
+            y_home_goals_train = [y_home_goals[i] for i in train_indices]
+            y_home_goals_test = [y_home_goals[i] for i in test_indices]
+            y_away_goals_train = [y_away_goals[i] for i in train_indices]
+            y_away_goals_test = [y_away_goals[i] for i in test_indices]
+            y_home_xg_train = [y_home_xg[i] for i in train_indices]
+            y_home_xg_test = [y_home_xg[i] for i in test_indices]
+            y_away_xg_train = [y_away_xg[i] for i in train_indices]
+            y_away_xg_test = [y_away_xg[i] for i in test_indices]
+            
+            print(f"Training on {len(X_train)} samples, testing on {len(X_test)} samples")
+            
+            # Train XGBoost models
+            models_to_train = {
+                'classifier': (xgb.XGBClassifier(**self.xgb_params_classifier), 
+                              y_outcome_train, y_outcome_test),
+                'home_goals': (xgb.XGBRegressor(**self.xgb_params_regressor),
+                              y_home_goals_train, y_home_goals_test),
+                'away_goals': (xgb.XGBRegressor(**self.xgb_params_regressor),
+                              y_away_goals_train, y_away_goals_test),
+                'home_xg': (xgb.XGBRegressor(**self.xgb_params_regressor),
+                           y_home_xg_train, y_home_xg_test),
+                'away_xg': (xgb.XGBRegressor(**self.xgb_params_regressor),
+                           y_away_xg_train, y_away_xg_test)
+            }
+            
+            training_results = {}
+            
+            for model_name, (model, y_train, y_test) in models_to_train.items():
+                print(f"Training XGBoost {model_name}...")
+                
+                # Train model
+                model.fit(X_train_scaled, y_train)
+                
+                # Make predictions
+                y_pred = model.predict(X_test_scaled)
+                
+                # Evaluate
+                if model_name == 'classifier':
+                    from sklearn.metrics import accuracy_score, classification_report
+                    y_pred_proba = model.predict_proba(X_test_scaled)
+                    
+                    accuracy = accuracy_score(y_test, y_pred)
+                    log_loss_score = log_loss(y_test, y_pred_proba)
+                    class_report = classification_report(y_test, y_pred, output_dict=True)
+                    
+                    training_results[model_name] = {
+                        'accuracy': accuracy,
+                        'log_loss': log_loss_score,
+                        'classification_report': class_report,
+                        'samples': len(y_test)
+                    }
+                    print(f"{model_name} accuracy: {accuracy:.3f}, log loss: {log_loss_score:.3f}")
+                else:
+                    r2 = r2_score(y_test, y_pred)
+                    mse = mean_squared_error(y_test, y_pred)
+                    training_results[model_name] = {
+                        'r2_score': r2,
+                        'mse': mse,
+                        'samples': len(y_test)
+                    }
+                    print(f"{model_name} R² score: {r2:.3f}, MSE: {mse:.3f}")
+                
+                # Store trained model
+                self.models[model_name] = model
+            
+            # Save models
+            self.save_models()
+            
+            print("XGBoost model training completed successfully!")
+            return training_results
+            
+        except Exception as e:
+            print(f"Error training XGBoost models: {e}")
+            raise e
+    
+    async def predict_match(self, home_team, away_team, referee, match_date=None):
+        """Make match prediction using trained XGBoost models with Poisson simulation"""
+        try:
+            # Check if models are available
+            if not self.models or len(self.models) != 5:
+                raise ValueError("XGBoost models not trained. Please train models first.")
+            
+            # Extract features
+            features = await self.extract_features_for_match(home_team, away_team, referee, match_date)
+            if features is None:
+                raise ValueError("Could not extract features for prediction")
+            
+            # Convert to DataFrame and ensure correct column order
+            import pandas as pd
+            X = pd.DataFrame([features])
+            X = X.reindex(columns=self.feature_columns, fill_value=0)
+            
+            # Scale features
+            X_scaled = self.scaler.transform(X)
+            
+            # Make XGBoost predictions
+            outcome_probs = self.models['classifier'].predict_proba(X_scaled)[0]
+            home_goals = max(0, self.models['home_goals'].predict(X_scaled)[0])
+            away_goals = max(0, self.models['away_goals'].predict(X_scaled)[0])
+            home_xg = max(0, self.models['home_xg'].predict(X_scaled)[0])
+            away_xg = max(0, self.models['away_xg'].predict(X_scaled)[0])
+            
+            # Calculate Poisson scoreline probabilities using predicted goals
+            poisson_results = self.calculate_poisson_scoreline_probabilities(home_goals, away_goals)
+            
+            # Use Poisson probabilities for match outcome (more accurate than direct XGBoost probabilities)
+            home_win_prob = poisson_results['match_outcome_probabilities']['home_win']
+            draw_prob = poisson_results['match_outcome_probabilities']['draw']
+            away_win_prob = poisson_results['match_outcome_probabilities']['away_win']
+            
+            # Create enhanced prediction breakdown
+            prediction_breakdown = {
+                'xgboost_confidence': {
+                    'classifier_confidence': max(outcome_probs),
+                    'features_used': len(self.feature_columns),
+                    'training_samples': 'Variable by model'
+                },
+                'feature_importance': {
+                    'top_features': self._get_top_feature_importance(5)
+                },
+                'poisson_analysis': {
+                    'most_likely_scoreline': poisson_results['most_likely_scoreline'][0],
+                    'scoreline_probability': round(poisson_results['most_likely_scoreline'][1], 2),
+                    'lambda_parameters': poisson_results['poisson_parameters']
+                },
+                'prediction_method': 'XGBoost + Poisson Distribution Simulation'
+            }
+            
+            return {
+                'success': True,
+                'home_team': home_team,
+                'away_team': away_team,
+                'referee': referee,
+                'predicted_home_goals': round(home_goals, 2),
+                'predicted_away_goals': round(away_goals, 2),
+                'home_xg': round(home_xg, 2),
+                'away_xg': round(away_xg, 2),
+                'home_win_probability': round(home_win_prob, 2),
+                'draw_probability': round(draw_prob, 2),
+                'away_win_probability': round(away_win_prob, 2),
+                'scoreline_probabilities': {k: round(v, 2) for k, v in poisson_results['scoreline_probabilities'].items()},
+                'prediction_breakdown': prediction_breakdown,
+                'confidence_factors': {
+                    'model_type': 'XGBoost + Poisson Simulation',
+                    'features_count': len(self.feature_columns),
+                    'data_quality': 'Historical match data with enhanced feature engineering'
+                }
+            }
+            
+        except Exception as e:
+            print(f"Error making XGBoost prediction: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'home_team': home_team,
+                'away_team': away_team,
+                'referee': referee
+            }
+    
     def _get_top_feature_importance(self, top_n=5):
-        """Get top feature importance from classifier"""
+        """Get top feature importance from XGBoost classifier"""
         try:
             if 'classifier' not in self.models:
                 return {}
