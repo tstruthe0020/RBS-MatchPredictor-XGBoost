@@ -1752,7 +1752,7 @@ function App() {
                               <div className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-gray-300">Final xG:</span>
-                                  <span className="font-medium">{predictionResult.away_xg}</span>
+                                  <span className="font-medium">{parseFloat(predictionResult.away_xg).toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-300">Conversion Rate (goals/xG):</span>
