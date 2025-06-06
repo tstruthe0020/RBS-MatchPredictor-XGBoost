@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   Soccer Referee Bias Analysis Platform
+echo    RBS-MatchPredictor-XGBoost Platform
 echo            STOP SERVICES
 echo ============================================
 echo.

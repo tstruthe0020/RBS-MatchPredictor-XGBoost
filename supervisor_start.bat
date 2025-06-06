@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   Soccer Referee Bias Analysis Platform
+echo    RBS-MatchPredictor-XGBoost Platform
 echo        PRODUCTION QUICK START
 echo ============================================
 echo.
@@ -23,7 +23,7 @@ echo.
 echo [2/2] Starting all services with supervisor...
 echo.
 
-echo 🔧 Starting backend service...
+echo 🔧 Starting backend service (with XGBoost)...
 supervisorctl start backend
 if %errorlevel% neq 0 (
     echo ❌ Failed to start backend service
@@ -48,7 +48,7 @@ echo ============================================
 echo         SERVICES STARTED! 🚀
 echo ============================================
 echo.
-echo Your application is now running:
+echo Your RBS-MatchPredictor-XGBoost application is now running:
 echo.
 echo 🔧 Backend API: Available on configured port
 echo 🌐 Frontend:    Available on configured port

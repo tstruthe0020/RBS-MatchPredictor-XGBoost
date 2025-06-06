@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   Soccer Referee Bias Analysis Platform
+echo    RBS-MatchPredictor-XGBoost Platform
 echo        INITIAL SETUP AND START
 echo ============================================
 echo.
@@ -42,7 +42,7 @@ if not exist requirements.txt (
     exit /b 1
 )
 
-echo Installing Python packages...
+echo Installing Python packages (including XGBoost)...
 pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo ERROR: Failed to install Python dependencies
@@ -50,7 +50,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo ✅ Backend dependencies installed
+echo ✅ Backend dependencies installed (including XGBoost)
 cd ..
 echo.
 
@@ -91,7 +91,7 @@ echo ✅ Environment check completed
 echo.
 
 echo [5/6] Starting Backend Server...
-echo Starting FastAPI backend on http://localhost:8001
+echo Starting FastAPI backend with XGBoost on http://localhost:8001
 cd backend
 start "Backend Server" cmd /k "python server.py"
 cd ..
@@ -111,7 +111,7 @@ echo ============================================
 echo           SETUP COMPLETED! 🚀
 echo ============================================
 echo.
-echo Your application is starting up:
+echo Your RBS-MatchPredictor-XGBoost application is starting up:
 echo.
 echo 🔧 Backend API: http://localhost:8001
 echo 🌐 Frontend:    http://localhost:3000

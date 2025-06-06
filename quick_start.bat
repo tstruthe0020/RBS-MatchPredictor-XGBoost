@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   Soccer Referee Bias Analysis Platform
+echo    RBS-MatchPredictor-XGBoost Platform
 echo            QUICK START
 echo ============================================
 echo.
@@ -61,6 +61,7 @@ echo 📊 Upload Data: Use the 'Upload' tab to import CSV files
 echo 🔍 Analyze: Use 'Regression Analysis' for statistical insights
 echo ⚙️  Optimize: Use 'Formula Optimization' to improve algorithms
 echo 🎯 Predict: Use 'Match Prediction' for game outcome forecasts
+echo 🚀 XGBoost: Use 'XGBoost + Poisson' for advanced ML predictions
 echo.
 echo Press any key to continue...
 pause >nul
