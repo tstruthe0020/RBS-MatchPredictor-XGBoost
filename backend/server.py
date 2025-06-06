@@ -677,9 +677,9 @@ class MLMatchPredictor:
             joblib.dump(self.models['away_xg'], model_paths['away_xg'])
             joblib.dump(self.scaler, model_paths['scaler'])
             joblib.dump(self.feature_columns, model_paths['feature_columns'])
-            print("ML models saved successfully")
+            print("XGBoost models saved successfully")
         except Exception as e:
-            print(f"Error saving ML models: {e}")
+            print(f"Error saving XGBoost models: {e}")
     
     async def extract_features_for_match(self, home_team, away_team, referee, match_date=None):
         """Extract features for a single match prediction"""
