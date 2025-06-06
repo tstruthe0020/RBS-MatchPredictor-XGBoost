@@ -2738,7 +2738,7 @@ function App() {
                         <div className="text-center">
                           <h3 className="text-lg font-semibold text-gray-800 mb-2">🚀 XGBoost + Poisson Prediction</h3>
                           <div className="text-4xl font-bold text-gray-900 mb-2">
-                            {predictionResult.home_team} {predictionResult.predicted_home_goals} - {predictionResult.predicted_away_goals} {predictionResult.away_team}
+                            {predictionResult.home_team} {parseFloat(predictionResult.predicted_home_goals).toFixed(2)} - {predictionResult.predicted_away_goals} {predictionResult.away_team}
                           </div>
                           <div className="text-sm text-gray-600">
                             Expected xG: {predictionResult.home_xg} - {predictionResult.away_xg}
