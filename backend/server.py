@@ -615,6 +615,442 @@ class RBSCalculator:
 # Initialize RBS Calculator
 rbs_calculator = RBSCalculator()
 
+# PDF Export Engine
+class PDFExporter:
+    def __init__(self):
+        self.styles = getSampleStyleSheet()
+        
+        # Custom styles for the report
+        self.title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=self.styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            textColor=colors.darkblue
+        )
+        
+        self.section_style = ParagraphStyle(
+            'CustomSection',
+            parent=self.styles['Heading2'],
+            fontSize=14,
+            spaceAfter=12,
+            textColor=colors.darkblue,
+            leftIndent=0
+        )
+        
+        self.subsection_style = ParagraphStyle(
+            'CustomSubsection',
+            parent=self.styles['Heading3'],
+            fontSize=12,
+            spaceAfter=8,
+            textColor=colors.darkgreen,
+            leftIndent=10
+        )
+        
+        self.normal_style = ParagraphStyle(
+            'CustomNormal',
+            parent=self.styles['Normal'],
+            fontSize=10,
+            spaceAfter=6,
+            leftIndent=10
+        )
+        
+        self.small_style = ParagraphStyle(
+            'CustomSmall',
+            parent=self.styles['Normal'],
+            fontSize=9,
+            spaceAfter=4,
+            leftIndent=10,
+            textColor=colors.grey
+        )
+    
+    async def generate_prediction_pdf(self, prediction_data, head_to_head_data, referee_data):
+        """Generate comprehensive PDF report for match prediction"""
+        try:
+            # Create BytesIO buffer
+            buffer = io.BytesIO()
+            
+            # Create PDF document
+            doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72,
+                                  topMargin=72, bottomMargin=18)
+            
+            # Build story (content) for PDF
+            story = []
+            
+            # Title
+            title = f"Football Match Prediction Report"
+            story.append(Paragraph(title, self.title_style))
+            story.append(Spacer(1, 20))
+            
+            # Match Details
+            story.extend(self._create_match_details_section(prediction_data))
+            
+            # Prediction Summary
+            story.extend(self._create_prediction_summary_section(prediction_data))
+            
+            # Detailed Analysis
+            story.extend(self._create_detailed_analysis_section(prediction_data))
+            
+            # Poisson Analysis
+            story.extend(self._create_poisson_analysis_section(prediction_data))
+            
+            # Head-to-Head Statistics
+            if head_to_head_data:
+                story.extend(self._create_head_to_head_section(head_to_head_data))
+            
+            # Referee Analysis
+            if referee_data:
+                story.extend(self._create_referee_analysis_section(referee_data))
+            
+            # Model Information
+            story.extend(self._create_model_info_section(prediction_data))
+            
+            # Footer
+            story.extend(self._create_footer_section())
+            
+            # Build PDF
+            doc.build(story)
+            
+            # Get PDF content
+            buffer.seek(0)
+            return buffer
+            
+        except Exception as e:
+            print(f"Error generating PDF: {e}")
+            raise e
+    
+    def _create_match_details_section(self, prediction_data):
+        """Create match details section"""
+        story = []
+        
+        story.append(Paragraph("Match Information", self.section_style))
+        
+        match_data = [
+            ['Home Team:', prediction_data.get('home_team', 'N/A')],
+            ['Away Team:', prediction_data.get('away_team', 'N/A')],
+            ['Referee:', prediction_data.get('referee', 'N/A')],
+            ['Report Generated:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
+            ['Prediction Method:', 'XGBoost + Poisson Distribution Simulation']
+        ]
+        
+        table = Table(match_data, colWidths=[2*inch, 3*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(table)
+        story.append(Spacer(1, 20))
+        
+        return story
+    
+    def _create_prediction_summary_section(self, prediction_data):
+        """Create prediction summary section"""
+        story = []
+        
+        story.append(Paragraph("Prediction Summary", self.section_style))
+        
+        # Main prediction results
+        summary_data = [
+            ['Metric', 'Home Team', 'Away Team'],
+            ['Predicted Goals', f"{prediction_data.get('predicted_home_goals', 0):.2f}", 
+             f"{prediction_data.get('predicted_away_goals', 0):.2f}"],
+            ['Expected xG', f"{prediction_data.get('home_xg', 0):.2f}", 
+             f"{prediction_data.get('away_xg', 0):.2f}"],
+        ]
+        
+        table = Table(summary_data, colWidths=[2*inch, 1.5*inch, 1.5*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(table)
+        story.append(Spacer(1, 15))
+        
+        # Match outcome probabilities
+        story.append(Paragraph("Match Outcome Probabilities", self.subsection_style))
+        
+        prob_data = [
+            ['Outcome', 'Probability'],
+            ['Home Win', f"{prediction_data.get('home_win_probability', 0):.1f}%"],
+            ['Draw', f"{prediction_data.get('draw_probability', 0):.1f}%"],
+            ['Away Win', f"{prediction_data.get('away_win_probability', 0):.1f}%"]
+        ]
+        
+        prob_table = Table(prob_data, colWidths=[2*inch, 2*inch])
+        prob_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgreen),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(prob_table)
+        story.append(Spacer(1, 20))
+        
+        return story
+    
+    def _create_detailed_analysis_section(self, prediction_data):
+        """Create detailed analysis section"""
+        story = []
+        
+        story.append(Paragraph("Detailed Model Analysis", self.section_style))
+        
+        # XGBoost confidence
+        prediction_breakdown = prediction_data.get('prediction_breakdown', {})
+        xgboost_confidence = prediction_breakdown.get('xgboost_confidence', {})
+        
+        story.append(Paragraph("Model Confidence Metrics", self.subsection_style))
+        
+        confidence_text = f"""
+        <b>Classifier Confidence:</b> {xgboost_confidence.get('classifier_confidence', 0):.3f}<br/>
+        <b>Features Used:</b> {xgboost_confidence.get('features_used', 'N/A')}<br/>
+        <b>Training Samples:</b> {xgboost_confidence.get('training_samples', 'N/A')}
+        """
+        
+        story.append(Paragraph(confidence_text, self.normal_style))
+        story.append(Spacer(1, 10))
+        
+        # Feature importance
+        feature_importance = prediction_breakdown.get('feature_importance', {}).get('top_features', {})
+        if feature_importance:
+            story.append(Paragraph("Top Feature Importance", self.subsection_style))
+            
+            feature_data = [['Feature', 'Importance']]
+            for feature, importance in list(feature_importance.items())[:10]:  # Top 10
+                feature_name = feature.replace('_', ' ').title()
+                feature_data.append([feature_name, f"{importance:.4f}"])
+            
+            feature_table = Table(feature_data, colWidths=[3*inch, 1.5*inch])
+            feature_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.navy),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.lightsteelblue),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(feature_table)
+        
+        story.append(Spacer(1, 20))
+        return story
+    
+    def _create_poisson_analysis_section(self, prediction_data):
+        """Create Poisson analysis section"""
+        story = []
+        
+        story.append(Paragraph("Poisson Distribution Analysis", self.section_style))
+        
+        prediction_breakdown = prediction_data.get('prediction_breakdown', {})
+        poisson_analysis = prediction_breakdown.get('poisson_analysis', {})
+        
+        # Lambda parameters
+        lambda_params = poisson_analysis.get('lambda_parameters', {})
+        story.append(Paragraph("Expected Goals Parameters", self.subsection_style))
+        
+        lambda_text = f"""
+        <b>Home Team Lambda (Expected Goals):</b> {lambda_params.get('home_lambda', 0):.3f}<br/>
+        <b>Away Team Lambda (Expected Goals):</b> {lambda_params.get('away_lambda', 0):.3f}<br/>
+        <b>Most Likely Scoreline:</b> {poisson_analysis.get('most_likely_scoreline', 'N/A')}<br/>
+        <b>Scoreline Probability:</b> {poisson_analysis.get('scoreline_probability', 0):.1f}%
+        """
+        
+        story.append(Paragraph(lambda_text, self.normal_style))
+        story.append(Spacer(1, 15))
+        
+        # Scoreline probabilities table
+        scoreline_probs = prediction_data.get('scoreline_probabilities', {})
+        if scoreline_probs:
+            story.append(Paragraph("Top Scoreline Probabilities", self.subsection_style))
+            
+            # Get top 10 most likely scorelines
+            sorted_scorelines = sorted(scoreline_probs.items(), key=lambda x: x[1], reverse=True)[:10]
+            
+            score_data = [['Scoreline', 'Probability']]
+            for scoreline, probability in sorted_scorelines:
+                score_data.append([scoreline, f"{probability:.2f}%"])
+            
+            score_table = Table(score_data, colWidths=[1.5*inch, 1.5*inch])
+            score_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.purple),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.lavender),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(score_table)
+        
+        story.append(Spacer(1, 20))
+        return story
+    
+    def _create_head_to_head_section(self, h2h_data):
+        """Create head-to-head section"""
+        story = []
+        
+        story.append(Paragraph("Head-to-Head Statistics", self.section_style))
+        
+        h2h_table_data = [
+            ['Metric', 'Value'],
+            ['Home Wins', str(h2h_data.get('home_wins', 0))],
+            ['Draws', str(h2h_data.get('draws', 0))],
+            ['Away Wins', str(h2h_data.get('away_wins', 0))],
+            ['Average Home Goals', f"{h2h_data.get('home_goals_avg', 0):.2f}"],
+            ['Average Away Goals', f"{h2h_data.get('away_goals_avg', 0):.2f}"]
+        ]
+        
+        h2h_table = Table(h2h_table_data, colWidths=[2.5*inch, 1.5*inch])
+        h2h_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkorange),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.moccasin),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(h2h_table)
+        story.append(Spacer(1, 20))
+        
+        return story
+    
+    def _create_referee_analysis_section(self, referee_data):
+        """Create referee analysis section"""
+        story = []
+        
+        story.append(Paragraph("Referee Bias Analysis (RBS)", self.section_style))
+        
+        home_rbs = referee_data.get('home_rbs', {})
+        away_rbs = referee_data.get('away_rbs', {})
+        
+        if home_rbs or away_rbs:
+            story.append(Paragraph("Referee Bias Scores", self.subsection_style))
+            
+            rbs_data = [['Team', 'RBS Score', 'Confidence', 'Matches with Referee']]
+            
+            if home_rbs:
+                rbs_data.append([
+                    home_rbs.get('team_name', 'Home Team'),
+                    f"{home_rbs.get('rbs_score', 0):.3f}",
+                    f"{home_rbs.get('confidence_level', 0):.1f}%",
+                    str(home_rbs.get('matches_with_ref', 0))
+                ])
+            
+            if away_rbs:
+                rbs_data.append([
+                    away_rbs.get('team_name', 'Away Team'),
+                    f"{away_rbs.get('rbs_score', 0):.3f}",
+                    f"{away_rbs.get('confidence_level', 0):.1f}%",
+                    str(away_rbs.get('matches_with_ref', 0))
+                ])
+            
+            rbs_table = Table(rbs_data, colWidths=[1.5*inch, 1*inch, 1*inch, 1.5*inch])
+            rbs_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkred),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.mistyrose),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(rbs_table)
+            
+            # RBS explanation
+            rbs_explanation = """
+            <b>RBS Score Interpretation:</b><br/>
+            • Positive values indicate favorable treatment by the referee<br/>
+            • Negative values indicate unfavorable treatment<br/>
+            • Values range from -1.0 to +1.0<br/>
+            • Higher confidence percentages indicate more reliable scores
+            """
+            
+            story.append(Spacer(1, 10))
+            story.append(Paragraph(rbs_explanation, self.small_style))
+        
+        story.append(Spacer(1, 20))
+        return story
+    
+    def _create_model_info_section(self, prediction_data):
+        """Create model information section"""
+        story = []
+        
+        story.append(Paragraph("Model Information & Methodology", self.section_style))
+        
+        methodology_text = """
+        <b>Prediction Method:</b> XGBoost + Poisson Distribution Simulation<br/><br/>
+        
+        <b>XGBoost Models:</b><br/>
+        • Classification model for match outcomes (Win/Draw/Loss)<br/>
+        • Regression models for goals and xG prediction<br/>
+        • Uses 65+ features including team performance, form, and referee bias<br/><br/>
+        
+        <b>Poisson Simulation:</b><br/>
+        • Uses predicted goals as lambda parameters<br/>
+        • Calculates probability for each possible scoreline<br/>
+        • Provides more accurate outcome probabilities than direct classification<br/><br/>
+        
+        <b>Key Features Used:</b><br/>
+        • Team offensive and defensive statistics<br/>
+        • Recent form (last 5 matches)<br/>
+        • Head-to-head historical performance<br/>
+        • Referee bias scores (RBS)<br/>
+        • Home advantage factor<br/>
+        • Team quality metrics (points per game)
+        """
+        
+        story.append(Paragraph(methodology_text, self.normal_style))
+        story.append(Spacer(1, 20))
+        
+        return story
+    
+    def _create_footer_section(self):
+        """Create footer section"""
+        story = []
+        
+        footer_text = """
+        <i>This report was generated by the Football Analytics Prediction System.<br/>
+        Predictions are based on historical data and statistical models.<br/>
+        Results should be used for informational purposes only.</i>
+        """
+        
+        story.append(Paragraph(footer_text, self.small_style))
+        
+        return story
+
+# Initialize PDF Exporter
+pdf_exporter = PDFExporter()
+
 # XGBoost-Based Match Prediction Engine with Poisson Simulation
 class MLMatchPredictor:
     def __init__(self):
