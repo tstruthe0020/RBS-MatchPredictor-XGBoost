@@ -148,7 +148,7 @@ curl -X POST "http://localhost:8001/api/ml-models/reload"
    - Match Results last
 3. **Wait for processing confirmation**
 4. **Calculate comprehensive team stats** (button in Team Performance tab)
-5. **Train ML models** (Navigate to Match Prediction tab → Click "🧠 Train ML Models")
+5. **Train XGBoost models** (Navigate to XGBoost + Poisson tab → Click "🚀 Train XGBoost Models")
 
 ## 🔧 System Maintenance
 
@@ -158,13 +158,13 @@ After uploading new data:
 curl -X POST "http://localhost:8001/api/calculate-comprehensive-team-stats"
 ```
 
-### Retrain ML Models (After New Data)
-When you have new match data, retrain the models:
+### Retrain XGBoost Models (After New Data)
+When you have new match data, retrain the XGBoost models:
 ```bash
 # Via API
 curl -X POST "http://localhost:8001/api/train-ml-models"
 
-# Or use the frontend button in Match Prediction tab
+# Or use the frontend button in XGBoost + Poisson tab
 ```
 
 ### Reset Database (if needed)
