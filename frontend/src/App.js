@@ -632,6 +632,57 @@ function App() {
     setExportingPDF(false);
   };
 
+  // PDF Export function
+  const exportPredictionPDF = async () => {
+    if (!predictionResult) {
+      alert('No prediction data available to export');
+      return;
+    }
+
+    setExportingPDF(true);
+    try {
+      const exportData = {
+        match_details: {
+          home_team: predictionResult.home_team,
+          away_team: predictionResult.away_team,
+          referee: predictionResult.referee,
+          match_date: predictionForm.match_date || 'TBD',
+          config_name: configName
+        },
+        prediction_data: predictionResult
+      };
+
+      const response = await axios.post(`${API}/export-prediction-pdf`, exportData, {
+        responseType: 'blob',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename with teams and date
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `${predictionResult.home_team}_vs_${predictionResult.away_team}_prediction_${date}.pdf`;
+      link.setAttribute('download', filename);
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      alert('✅ PDF exported successfully!');
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      alert(`❌ PDF Export Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setExportingPDF(false);
+  };
+
   // Database management functions
   const wipeDatabase = async () => {
     const confirmText = "WIPE DATABASE";
