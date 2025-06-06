@@ -4259,7 +4259,13 @@ async def get_referees():
     """Get list of all referees"""
     try:
         referees = await db.matches.distinct("referee")
-        return {"referees": sorted(referees)}
+        # Filter out invalid referees (null, nan, empty strings)
+        valid_referees = [
+            ref for ref in referees 
+            if ref and str(ref).lower() not in ['nan', 'null', 'none', ''] 
+            and str(ref).strip() != ''
+        ]
+        return {"referees": sorted(valid_referees)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching referees: {str(e)}")
 
