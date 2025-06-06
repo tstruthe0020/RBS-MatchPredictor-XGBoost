@@ -1,7 +1,7 @@
-# 🚀 Soccer Referee Bias Analysis Platform - Startup Guide
+# 🚀 RBS-MatchPredictor-XGBoost - Startup Guide
 
 ## Overview
-This platform analyzes referee bias in soccer matches and provides sophisticated match predictions using **Machine Learning algorithms**. It consists of a React frontend, FastAPI backend, MongoDB database, and trained ML models for match prediction.
+This platform analyzes referee bias in soccer matches and provides sophisticated match predictions using **XGBoost Machine Learning with Poisson Distribution Simulation**. It consists of a React frontend, FastAPI backend, MongoDB database, and trained XGBoost models for enhanced match prediction.
 
 ## 🏗️ System Architecture
 
@@ -9,8 +9,9 @@ This platform analyzes referee bias in soccer matches and provides sophisticated
 Frontend (React) ←→ Backend (FastAPI) ←→ Database (MongoDB)
      :3000              :8001              :27017
                           ↓
-                   ML Models (joblib)
+               XGBoost Models (joblib)
                  /app/backend/models/
+                  (xgb_*.pkl files)
 ```
 
 ## 📋 Prerequisites
@@ -19,7 +20,7 @@ Frontend (React) ←→ Backend (FastAPI) ←→ Database (MongoDB)
 - Python 3.8+
 - Node.js 18+
 - MongoDB
-- Scikit-learn for ML models
+- XGBoost and Scikit-learn for ML models
 
 ## 🚀 Quick Start
 
@@ -60,32 +61,32 @@ tail -f /var/log/supervisor/frontend.*.log
 tail -f /var/log/supervisor/mongodb.*.log
 ```
 
-## 🤖 ML Model Setup (First Time Only)
+## 🚀 XGBoost Model Setup (First Time Only)
 
-### 1. Check ML Model Status
-Navigate to the **Match Prediction** tab in the frontend to check if models are trained.
+### 1. Check XGBoost Model Status
+Navigate to the **XGBoost + Poisson** tab in the frontend to check if models are trained.
 
-### 2. Train ML Models (Required on First Run)
+### 2. Train XGBoost Models (Required on First Run)
 ```bash
 # Via API
 curl -X POST "http://localhost:8001/api/train-ml-models"
 
-# Or use the frontend button "🧠 Train ML Models"
+# Or use the frontend button "🚀 Train XGBoost Models"
 ```
 
 ### 3. Verify Model Training
-The system will train 5 models:
-- **Classification**: Win/Draw/Loss prediction (~75% accuracy)
-- **4 Regression models**: Home/Away goals and xG prediction
+The system will train 5 XGBoost models:
+- **XGBClassifier**: Win/Draw/Loss prediction with enhanced accuracy
+- **4 XGBRegressors**: Home/Away goals and xG prediction
 
-Models are saved in `/app/backend/models/` directory.
+Models are saved in `/app/backend/models/` directory with `xgb_` prefix.
 
-### 4. Model Management Commands
+### 4. XGBoost Model Management Commands
 ```bash
-# Check model status
+# Check XGBoost model status
 curl -X GET "http://localhost:8001/api/ml-models/status"
 
-# Reload models from disk
+# Reload XGBoost models from disk
 curl -X POST "http://localhost:8001/api/ml-models/reload"
 ```
 
