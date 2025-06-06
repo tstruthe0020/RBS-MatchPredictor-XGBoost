@@ -659,11 +659,11 @@ class MLMatchPredictor:
                 self.models['away_xg'] = joblib.load(model_paths['away_xg'])
                 self.scaler = joblib.load(model_paths['scaler'])
                 self.feature_columns = joblib.load(model_paths['feature_columns'])
-                print("ML models loaded successfully")
+                print("XGBoost models loaded successfully")
             else:
-                print("ML models not found - will need to train first")
+                print("XGBoost models not found - will need to train first")
         except Exception as e:
-            print(f"Error loading ML models: {e}")
+            print(f"Error loading XGBoost models: {e}")
             self.models = {}
     
     def save_models(self):
