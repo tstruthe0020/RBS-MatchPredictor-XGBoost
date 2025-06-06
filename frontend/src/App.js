@@ -575,6 +575,50 @@ function App() {
     }
   };
 
+  // Database management functions
+  const wipeDatabase = async () => {
+    const confirmText = "WIPE DATABASE";
+    const userInput = prompt(
+      `⚠️ DANGER: This will permanently delete ALL data!\n\n` +
+      `This includes:\n` +
+      `- All match data\n` +
+      `- All team statistics\n` +
+      `- All player statistics\n` +
+      `- All RBS results\n` +
+      `- All configuration settings\n\n` +
+      `Type "${confirmText}" to confirm:`
+    );
+
+    if (userInput !== confirmText) {
+      alert('❌ Operation cancelled. Database not wiped.');
+      return;
+    }
+
+    try {
+      const response = await axios.delete(`${API}/database/wipe`);
+      
+      // Reset all frontend state
+      setStats({ matches: 0, team_stats: 0, player_stats: 0, rbs_results: 0 });
+      setTeams([]);
+      setReferees([]);
+      setConfigs([]);
+      setRbsConfigs([]);
+      setDatasets([]);
+      setPredictionResult(null);
+      setRbsResults([]);
+      setOptimizationResults([]);
+      setTrainingResults(null);
+      setMlStatus(null);
+      
+      alert(`✅ Database wiped successfully!\n\nDeleted:\n${JSON.stringify(response.data.deleted_counts, null, 2)}`);
+      
+      // Refresh stats
+      fetchStats();
+    } catch (error) {
+      alert(`❌ Wipe Error: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
   // Configuration functions
   const fetchConfigs = async () => {
     try {
