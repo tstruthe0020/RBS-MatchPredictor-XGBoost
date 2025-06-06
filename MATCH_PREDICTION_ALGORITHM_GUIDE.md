@@ -1,44 +1,187 @@
-# 🤖 ML-Based Match Prediction Algorithm Guide
+# 🚀 XGBoost + Poisson Match Prediction Algorithm Guide
 
 ## Overview
-This sophisticated Machine Learning system predicts match outcomes using **Random Forest algorithms** with comprehensive feature engineering, historical data analysis, and ensemble modeling techniques.
+This sophisticated Machine Learning system predicts match outcomes using **XGBoost gradient boosting algorithms** with **Poisson Distribution Simulation**, comprehensive feature engineering, historical data analysis, and ensemble modeling techniques for enhanced accuracy.
 
-## 🧠 ML Architecture Flow
+## 🧠 XGBoost + Poisson Architecture Flow
 
 ```
-Historical Data → Feature Engineering → Model Training → Prediction → Probabilities
-     ↓                    ↓                  ↓            ↓           ↓
- Match Stats        45+ Features      5 RF Models    Goals/xG    Win/Draw/Loss
+Historical Data → Enhanced Feature Engineering → XGBoost Training → Goal Predictions → Poisson Simulation → Scoreline Probabilities
+     ↓                       ↓                      ↓                 ↓                    ↓                     ↓
+ Match Stats          60+ Features            5 XGBoost Models    Goals/xG         Lambda Parameters     Win/Draw/Loss + Scores
 ```
 
-## 🏗️ Model Architecture
+## 🏗️ Enhanced Model Architecture
 
-### 5 Trained Models Working Together
+### 5 Trained XGBoost Models Working Together
 
-1. **Classification Model**: Random Forest for Win/Draw/Loss prediction
-2. **Home Goals Regression**: Random Forest for home team goal prediction
-3. **Away Goals Regression**: Random Forest for away team goal prediction  
-4. **Home xG Regression**: Random Forest for home team xG prediction
-5. **Away xG Regression**: Random Forest for away team xG prediction
+1. **XGBClassifier**: XGBoost gradient boosting for Win/Draw/Loss prediction
+2. **Home Goals XGBRegressor**: XGBoost for home team goal prediction
+3. **Away Goals XGBRegressor**: XGBoost for away team goal prediction  
+4. **Home xG XGBRegressor**: XGBoost for home team xG prediction
+5. **Away xG XGBRegressor**: XGBoost for away team xG prediction
 
-### Model Specifications
+### Enhanced Model Specifications
 ```python
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
+from scipy.stats import poisson
 
-# Classification for match outcomes
-classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-
-# Regression for goals and xG
-regressors = {
-    'home_goals': RandomForestRegressor(n_estimators=100),
-    'away_goals': RandomForestRegressor(n_estimators=100),
-    'home_xg': RandomForestRegressor(n_estimators=100),
-    'away_xg': RandomForestRegressor(n_estimators=100)
+# XGBoost Optimal Hyperparameters for Football Prediction
+xgb_classifier_params = {
+    'n_estimators': 200,
+    'max_depth': 6,
+    'learning_rate': 0.1,
+    'subsample': 0.8,
+    'colsample_bytree': 0.8,
+    'reg_alpha': 0.1,
+    'reg_lambda': 1.0,
+    'random_state': 42,
+    'objective': 'multi:softprob',
+    'num_class': 3
 }
 
-# Feature scaling for optimal performance
+xgb_regressor_params = {
+    'n_estimators': 150,
+    'max_depth': 5,
+    'learning_rate': 0.1,
+    'subsample': 0.8,
+    'colsample_bytree': 0.8,
+    'reg_alpha': 0.1,
+    'reg_lambda': 1.0,
+    'random_state': 42,
+    'objective': 'reg:squarederror'
+}
+
+# XGBoost Models
+classifier = xgb.XGBClassifier(**xgb_classifier_params)
+regressors = {
+    'home_goals': xgb.XGBRegressor(**xgb_regressor_params),
+    'away_goals': xgb.XGBRegressor(**xgb_regressor_params),
+    'home_xg': xgb.XGBRegressor(**xgb_regressor_params),
+    'away_xg': xgb.XGBRegressor(**xgb_regressor_params)
+}
+
+# Enhanced feature scaling for optimal XGBoost performance
 scaler = StandardScaler()
+```
+
+## 🔧 Enhanced Feature Engineering (60+ Features)
+
+### Core Team Statistics
+```python
+# Offensive Features
+'home_xg_per_match', 'home_goals_per_match', 'home_shots_per_match',
+'home_shots_on_target_per_match', 'home_xg_per_shot', 'home_shot_accuracy',
+'home_conversion_rate', 'home_possession_pct',
+
+# Defensive Features  
+'home_goals_conceded_per_match', 'home_xg_conceded_per_match',
+
+# Same for away team...
+```
+
+### Enhanced Differential Features (XGBoost Loves These!)
+```python
+# Team Quality Differentials
+'xg_differential': home_stats['xg'] - away_stats['xg'],
+'goals_differential': home_stats['goals'] - away_stats['goals'],
+'possession_differential': home_stats['possession_pct'] - away_stats['possession_pct'],
+'shots_differential': home_stats['shots_total'] - away_stats['shots_total'],
+'conversion_rate_differential': home_stats['conversion_rate'] - away_stats['conversion_rate'],
+
+# Form and Momentum Features
+'form_differential': home_form_last5 - away_form_last5,
+'ppg_differential': home_stats['points_per_game'] - away_stats['points_per_game'],
+
+# Referee Bias Features
+'referee_bias_differential': home_rbs - away_rbs,
+
+# Disciplinary Differentials
+'penalty_differential': home_stats['penalties_awarded'] - away_stats['penalties_awarded'],
+'fouls_drawn_differential': home_stats['fouls_drawn'] - away_stats['fouls_drawn'],
+'fouls_committed_differential': home_stats['fouls'] - away_stats['fouls'],
+'yellow_cards_differential': home_stats['yellow_cards'] - away_stats['yellow_cards'],
+'red_cards_differential': home_stats['red_cards'] - away_stats['red_cards'],
+```
+
+### Advanced Head-to-Head Features
+```python
+# Enhanced H2H Analysis
+'h2h_goal_differential': h2h_stats['home_goals_avg'] - h2h_stats['away_goals_avg'],
+'h2h_total_matches': h2h_stats['home_wins'] + h2h_stats['draws'] + h2h_stats['away_wins'],
+```
+
+## 📊 Poisson Distribution Simulation
+
+### Step 1: XGBoost Goal Prediction
+```python
+# XGBoost predicts expected goals for each team
+home_goals_predicted = home_goals_model.predict(features_scaled)[0]
+away_goals_predicted = away_goals_model.predict(features_scaled)[0]
+
+# Ensure positive values for Poisson parameters
+home_lambda = max(0.1, home_goals_predicted)
+away_lambda = max(0.1, away_goals_predicted)
+```
+
+### Step 2: Detailed Scoreline Probability Calculation
+```python
+def calculate_poisson_scoreline_probabilities(home_lambda, away_lambda, max_goals=6):
+    scoreline_probs = {}
+    home_win_prob = 0.0
+    draw_prob = 0.0
+    away_win_prob = 0.0
+    
+    # Calculate probabilities for each possible scoreline
+    for home_goals in range(max_goals + 1):
+        for away_goals in range(max_goals + 1):
+            # Poisson probability for this exact scoreline
+            prob = poisson.pmf(home_goals, home_lambda) * poisson.pmf(away_goals, away_lambda)
+            scoreline = f"{home_goals}-{away_goals}"
+            scoreline_probs[scoreline] = prob
+            
+            # Add to match outcome probabilities
+            if home_goals > away_goals:
+                home_win_prob += prob
+            elif home_goals == away_goals:
+                draw_prob += prob
+            else:
+                away_win_prob += prob
+    
+    return {
+        'scoreline_probabilities': scoreline_probs,
+        'match_outcome_probabilities': {
+            'home_win': home_win_prob * 100,
+            'draw': draw_prob * 100,
+            'away_win': away_win_prob * 100
+        },
+        'most_likely_scoreline': max(scoreline_probs.items(), key=lambda x: x[1]),
+        'poisson_parameters': {
+            'home_lambda': home_lambda,
+            'away_lambda': away_lambda
+        }
+    }
+```
+
+### Step 3: Enhanced Probability Normalization
+```python
+# Handle remaining probability for scores > max_goals
+total_calculated = sum(scoreline_probs.values())
+remaining_prob = max(0, 1 - total_calculated)
+
+# Distribute remaining probability proportionally
+if total_calculated > 0:
+    home_win_prob += remaining_prob * (home_win_prob / total_calculated)
+    draw_prob += remaining_prob * (draw_prob / total_calculated)  
+    away_win_prob += remaining_prob * (away_win_prob / total_calculated)
+
+# Final normalization to ensure sum = 100%
+total_outcome_prob = home_win_prob + draw_prob + away_win_prob
+if total_outcome_prob > 0:
+    home_win_prob = (home_win_prob / total_outcome_prob) * 100
+    draw_prob = (draw_prob / total_outcome_prob) * 100
+    away_win_prob = (away_win_prob / total_outcome_prob) * 100
 ```
 
 ### Step 2: Possession Adjustment
