@@ -2921,6 +2921,434 @@ function App() {
           </div>
         )}
 
+        {/* XGBoost + Poisson Prediction Tab */}
+        {activeTab === 'xgboost' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">🚀 XGBoost + Poisson Distribution Prediction</h2>
+              <p className="text-gray-600 mb-6">
+                Advanced match prediction using XGBoost gradient boosting with Poisson distribution simulation for detailed scoreline probabilities. This combines the power of XGBoost feature engineering with statistical modeling for comprehensive match analysis.
+              </p>
+
+              {/* XGBoost Status Section */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-semibold text-orange-900">🧠 XGBoost Models Status</h3>
+                  <button
+                    onClick={checkMLStatus}
+                    className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700"
+                  >
+                    Refresh Status
+                  </button>
+                </div>
+                
+                {mlStatus ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-block w-3 h-3 rounded-full ${mlStatus.models_loaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className="text-sm font-medium">
+                        XGBoost Models: {mlStatus.models_loaded ? '✅ Ready' : '❌ Need Training'}
+                      </span>
+                    </div>
+                    <div className="text-sm text-orange-700">
+                      Features: {mlStatus.feature_columns_count} | Enhanced Engineering: XGBoost + Poisson
+                    </div>
+                    
+                    {!mlStatus.models_loaded && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p className="text-sm text-yellow-800">
+                          ⚠️ XGBoost models not found. Train models first to enable advanced predictions with Poisson simulation.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-orange-700">Click "Refresh Status" to check XGBoost models status</div>
+                )}
+
+                {/* Training Controls */}
+                <div className="mt-4 flex space-x-3">
+                  <button
+                    onClick={trainMLModels}
+                    disabled={trainingModels}
+                    className="px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white font-medium rounded-lg hover:from-orange-700 hover:to-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {trainingModels ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Training XGBoost...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀</span>
+                        <span>Train XGBoost Models</span>
+                      </>
+                    )}
+                  </button>
+                  
+                  {mlStatus?.models_loaded && (
+                    <button
+                      onClick={reloadMLModels}
+                      className="px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700"
+                    >
+                      🔄 Reload Models
+                    </button>
+                  )}
+                </div>
+
+                {/* Training Results */}
+                {trainingResults && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                    <h4 className="text-sm font-semibold text-green-900 mb-2">✅ XGBoost Training Complete!</h4>
+                    <div className="text-xs text-green-800 space-y-1">
+                      {trainingResults.training_results && Object.entries(trainingResults.training_results).map(([model, metrics]) => (
+                        <div key={model}>
+                          <strong>{model}:</strong> {
+                            metrics.accuracy ? `Accuracy: ${(metrics.accuracy * 100).toFixed(1)}%` : 
+                            `R² Score: ${(metrics.r2_score * 100).toFixed(1)}%`
+                          }
+                          {metrics.log_loss && ` | Log Loss: ${metrics.log_loss.toFixed(3)}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {!predictionResult ? (
+                /* XGBoost Prediction Form */
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Configuration Selection */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Prediction Configuration
+                      </label>
+                      <select
+                        value={configName}
+                        onChange={(e) => setConfigName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="default">Default Configuration</option>
+                        {configs.map(config => (
+                          <option key={config.config_name} value={config.config_name}>
+                            {config.config_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Home Team */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Home Team *
+                      </label>
+                      <select
+                        value={predictionForm.home_team}
+                        onChange={(e) => handlePredictionFormChange('home_team', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">Select Home Team</option>
+                        {teams.map(team => (
+                          <option key={team} value={team}>{team}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Away Team */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Away Team *
+                      </label>
+                      <select
+                        value={predictionForm.away_team}
+                        onChange={(e) => handlePredictionFormChange('away_team', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">Select Away Team</option>
+                        {teams.filter(team => team !== predictionForm.home_team).map(team => (
+                          <option key={team} value={team}>{team}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Referee */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Referee *
+                      </label>
+                      <select
+                        value={predictionForm.referee_name}
+                        onChange={(e) => handlePredictionFormChange('referee_name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">Select Referee</option>
+                        {referees.map(referee => (
+                          <option key={referee} value={referee}>{referee}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Match Date (Optional) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Match Date (Optional)
+                      </label>
+                      <input
+                        type="date"
+                        value={predictionForm.match_date}
+                        onChange={(e) => handlePredictionFormChange('match_date', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Prediction Button */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={predictMatch}
+                      disabled={predicting || !predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name}
+                      className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-medium rounded-lg hover:from-orange-700 hover:to-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {predicting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Calculating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🚀</span>
+                          <span>XGBoost Predict</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Algorithm Explanation */}
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-lg border border-orange-200">
+                    <h3 className="text-md font-semibold text-orange-900 mb-2">🚀 XGBoost + Poisson Prediction Algorithm</h3>
+                    <div className="text-sm text-orange-800 space-y-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p><strong>🧠 XGBoost Features:</strong></p>
+                          <ul className="ml-4 space-y-1 text-xs">
+                            <li>• Enhanced feature engineering (60+ features)</li>
+                            <li>• Team performance differentials</li>
+                            <li>• Advanced referee bias analysis</li>
+                            <li>• Form trends and momentum indicators</li>
+                            <li>• Head-to-head historical patterns</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <p><strong>📊 Poisson Simulation:</strong></p>
+                          <ul className="ml-4 space-y-1 text-xs">
+                            <li>• Detailed scoreline probabilities (0-0, 1-0, etc.)</li>
+                            <li>• Uses XGBoost predicted goals as λ parameters</li>
+                            <li>• Statistical match outcome modeling</li>
+                            <li>• Most likely scoreline identification</li>
+                            <li>• Comprehensive probability distributions</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-2 bg-white rounded text-xs">
+                        <strong>🎯 Why XGBoost + Poisson?</strong> XGBoost excels at capturing complex feature interactions for accurate goal predictions, while Poisson distribution provides statistically sound scoreline probabilities based on those predictions. This dual approach offers both high-level match outcomes and detailed score predictions.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* XGBoost Prediction Results */
+                <div className="space-y-6">
+                  {predictionResult.success ? (
+                    <>
+                      {/* Header with predicted score */}
+                      <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-lg border border-orange-200">
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">🚀 XGBoost + Poisson Prediction</h3>
+                          <div className="text-4xl font-bold text-gray-900 mb-2">
+                            {predictionResult.home_team} {predictionResult.predicted_home_goals} - {predictionResult.predicted_away_goals} {predictionResult.away_team}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Expected xG: {predictionResult.home_xg} - {predictionResult.away_xg}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Referee: {predictionResult.referee}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Match Outcome Probabilities */}
+                      <div className="bg-white p-6 rounded-lg border border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">🎯 Match Outcome Probabilities (Poisson)</h3>
+                        <div className="space-y-4">
+                          {/* Home Win */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">{predictionResult.home_team} Win</span>
+                              <span className="text-sm font-bold text-green-600">{predictionResult.home_win_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                                style={{width: `${predictionResult.home_win_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+                          
+                          {/* Draw */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">Draw</span>
+                              <span className="text-sm font-bold text-gray-600">{predictionResult.draw_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-gray-500 h-2 rounded-full transition-all duration-500"
+                                style={{width: `${predictionResult.draw_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+                          
+                          {/* Away Win */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">{predictionResult.away_team} Win</span>
+                              <span className="text-sm font-bold text-red-600">{predictionResult.away_win_probability}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                                style={{width: `${predictionResult.away_win_probability}%`}}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Scoreline Probabilities */}
+                      {predictionResult.scoreline_probabilities && (
+                        <div className="bg-white p-6 rounded-lg border border-gray-200">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">📊 Detailed Scoreline Probabilities</h3>
+                          <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                            {Object.entries(predictionResult.scoreline_probabilities).slice(0, 24).map(([scoreline, probability]) => (
+                              <div key={scoreline} className="text-center p-3 bg-gray-50 rounded-lg border">
+                                <div className="font-semibold text-sm text-gray-900">{scoreline}</div>
+                                <div className="text-xs text-blue-600 font-medium">{probability}%</div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Most Likely Scoreline */}
+                          {predictionResult.prediction_breakdown?.poisson_analysis && (
+                            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <div className="text-center">
+                                <span className="text-sm font-medium text-blue-900">Most Likely Scoreline: </span>
+                                <span className="text-lg font-bold text-blue-800">
+                                  {predictionResult.prediction_breakdown.poisson_analysis.most_likely_scoreline}
+                                </span>
+                                <span className="text-sm text-blue-700 ml-2">
+                                  ({predictionResult.prediction_breakdown.poisson_analysis.scoreline_probability}% probability)
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* XGBoost Model Analysis */}
+                      {predictionResult.prediction_breakdown && (
+                        <div className="bg-white p-6 rounded-lg border border-gray-200">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">🧠 XGBoost Model Analysis</h3>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Model Confidence */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="font-semibold text-gray-900 mb-2">Model Confidence</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Classifier Confidence:</span>
+                                  <span className="font-medium">{(predictionResult.prediction_breakdown.xgboost_confidence?.classifier_confidence * 100).toFixed(1)}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Features Used:</span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown.xgboost_confidence?.features_used}</span>
+                                </div>
+                                <div className="text-xs text-gray-600 mt-2">
+                                  Method: {predictionResult.prediction_breakdown.prediction_method}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Top Features */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="font-semibold text-gray-900 mb-2">Top Influential Features</h4>
+                              <div className="space-y-1 text-sm">
+                                {predictionResult.prediction_breakdown.feature_importance?.top_features && 
+                                  Object.entries(predictionResult.prediction_breakdown.feature_importance.top_features).map(([feature, importance]) => (
+                                    <div key={feature} className="flex justify-between">
+                                      <span className="text-gray-700 truncate">{feature.replace(/_/g, ' ')}</span>
+                                      <span className="font-medium text-orange-600">{(importance * 100).toFixed(1)}%</span>
+                                    </div>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Poisson Parameters */}
+                          {predictionResult.prediction_breakdown.poisson_analysis?.lambda_parameters && (
+                            <div className="mt-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                              <h4 className="font-semibold text-blue-900 mb-2">📊 Poisson Distribution Parameters</h4>
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="text-blue-700">Home λ (lambda): </span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown.poisson_analysis.lambda_parameters.home_lambda.toFixed(2)}</span>
+                                </div>
+                                <div>
+                                  <span className="text-blue-700">Away λ (lambda): </span>
+                                  <span className="font-medium">{predictionResult.prediction_breakdown.poisson_analysis.lambda_parameters.away_lambda.toFixed(2)}</span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-blue-600 mt-2">
+                                Lambda parameters represent the expected number of goals based on XGBoost predictions, used in Poisson distribution to calculate scoreline probabilities.
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={() => setPredictionResult(null)}
+                          className="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700"
+                        >
+                          🔄 New Prediction
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* Error Display */
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                      <div className="flex items-center mb-3">
+                        <div className="text-red-600 mr-3">❌</div>
+                        <h3 className="text-lg font-semibold text-red-900">Prediction Failed</h3>
+                      </div>
+                      <p className="text-red-700 mb-4">{predictionResult.error}</p>
+                      <button
+                        onClick={() => setPredictionResult(null)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Regression Analysis Tab */}
         {activeTab === 'analysis' && (
           <div className="space-y-6">
