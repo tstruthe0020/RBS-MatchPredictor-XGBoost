@@ -112,6 +112,19 @@ function App() {
   const [regressionResult, setRegressionResult] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
 
+  // Starting XI and Enhanced Prediction state
+  const [showStartingXI, setShowStartingXI] = useState(false);
+  const [availableFormations, setAvailableFormations] = useState(['4-4-2', '4-3-3', '3-5-2', '4-5-1', '3-4-3']);
+  const [homeTeamPlayers, setHomeTeamPlayers] = useState([]);
+  const [awayTeamPlayers, setAwayTeamPlayers] = useState([]);
+  const [homeStartingXI, setHomeStartingXI] = useState(null);
+  const [awayStartingXI, setAwayStartingXI] = useState(null);
+  const [selectedFormation, setSelectedFormation] = useState('4-4-2');
+  const [useTimeDecay, setUseTimeDecay] = useState(true);
+  const [decayPreset, setDecayPreset] = useState('moderate');
+  const [decayPresets, setDecayPresets] = useState([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(false);
+
   // Fetch initial data
   useEffect(() => {
     fetchStats();
