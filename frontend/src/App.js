@@ -134,6 +134,8 @@ function App() {
     fetchRbsConfigs();
     fetchDatasets();
     checkMLStatus(); // Load ML status on page load
+    fetchFormations(); // Load available formations
+    fetchDecayPresets(); // Load time decay presets
   }, []);
 
   const fetchStats = async () => {
