@@ -18,6 +18,411 @@ BASE_URL = f"{BACKEND_URL}/api"
 # Pretty printer for better output formatting
 pp = pprint.PrettyPrinter(indent=2)
 
+def test_formations_endpoint():
+    """Test the /api/formations endpoint to ensure it returns available formations"""
+    print("\n=== Testing Formations Endpoint ===")
+    response = requests.get(f"{BASE_URL}/formations")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        formations = data.get('formations', [])
+        print(f"Formations found: {len(formations)}")
+        
+        for formation in formations:
+            print(f"  - {formation.get('name')}: {formation.get('positions_count')} positions")
+            
+        # Verify expected formations are present
+        expected_formations = ["4-4-2", "4-3-3", "3-5-2", "4-5-1", "3-4-3"]
+        found_formations = [f.get('name') for f in formations]
+        
+        missing_formations = [f for f in expected_formations if f not in found_formations]
+        if missing_formations:
+            print(f"❌ Missing expected formations: {', '.join(missing_formations)}")
+        else:
+            print("✅ All expected formations are present")
+            
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_time_decay_presets_endpoint():
+    """Test the /api/time-decay/presets endpoint to ensure it returns decay presets"""
+    print("\n=== Testing Time Decay Presets Endpoint ===")
+    response = requests.get(f"{BASE_URL}/time-decay/presets")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        presets = data.get('presets', [])
+        print(f"Presets found: {len(presets)}")
+        
+        for preset in presets:
+            print(f"  - {preset.get('preset_name')}: {preset.get('decay_type')} decay")
+            print(f"    Description: {preset.get('description')}")
+            
+        # Verify expected presets are present
+        expected_presets = ["aggressive", "moderate", "conservative", "linear", "none"]
+        found_presets = [p.get('preset_name') for p in presets]
+        
+        missing_presets = [p for p in expected_presets if p not in found_presets]
+        if missing_presets:
+            print(f"❌ Missing expected presets: {', '.join(missing_presets)}")
+        else:
+            print("✅ All expected presets are present")
+            
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_team_players_endpoint(team_name="Arsenal"):
+    """Test the /api/teams/{team_name}/players endpoint to get players for a team"""
+    print(f"\n=== Testing Team Players Endpoint for {team_name} ===")
+    response = requests.get(f"{BASE_URL}/teams/{team_name}/players")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        print(f"Team: {data.get('team_name')}")
+        
+        players = data.get('players', [])
+        print(f"Players found: {len(players)}")
+        
+        if players:
+            print("Sample players:")
+            for player in players[:5]:
+                print(f"  - {player.get('player_name')} ({player.get('position')}): {player.get('matches_played')} matches")
+            if len(players) > 5:
+                print("  ...")
+                
+            # Check for position distribution
+            positions = {}
+            for player in players:
+                pos = player.get('position')
+                positions[pos] = positions.get(pos, 0) + 1
+                
+            print("\nPosition distribution:")
+            for pos, count in positions.items():
+                print(f"  - {pos}: {count} players")
+                
+            # Check for default starting XI
+            default_xi = data.get('default_starting_xi')
+            if default_xi:
+                print(f"\nDefault Starting XI (Formation: {default_xi.get('formation')})")
+                positions = default_xi.get('positions', [])
+                for position in positions:
+                    player = position.get('player')
+                    if player:
+                        print(f"  - {position.get('position_id')} ({position.get('position_type')}): {player.get('player_name')}")
+                    else:
+                        print(f"  - {position.get('position_id')} ({position.get('position_type')}): None")
+            else:
+                print("\n❌ No default starting XI provided")
+                
+            # Check for available formations
+            formations = data.get('available_formations', [])
+            print(f"\nAvailable formations: {', '.join(formations)}")
+            
+            return data
+        else:
+            print("❌ No players found for this team")
+            return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_predict_match_enhanced_endpoint():
+    """Test the /api/predict-match-enhanced endpoint with basic parameters"""
+    print("\n=== Testing Enhanced Match Prediction Endpoint ===")
+    
+    # First, get teams and referees
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    if referees_response.status_code != 200:
+        print(f"❌ Failed to get referees: {referees_response.status_code}")
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    # Select teams and referee for testing
+    home_team = teams[0]
+    away_team = teams[1]
+    referee = referees[0]
+    
+    print(f"Testing enhanced prediction for {home_team} vs {away_team} with referee {referee}")
+    
+    # Basic request without starting XI or time decay customization
+    basic_request = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee
+    }
+    
+    response = requests.post(f"{BASE_URL}/predict-match-enhanced", json=basic_request)
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        if data.get('success'):
+            print(f"Home Team: {data.get('home_team')}")
+            print(f"Away Team: {data.get('away_team')}")
+            print(f"Referee: {data.get('referee')}")
+            print(f"Predicted Home Goals: {data.get('predicted_home_goals')}")
+            print(f"Predicted Away Goals: {data.get('predicted_away_goals')}")
+            print(f"Home xG: {data.get('home_xg')}")
+            print(f"Away xG: {data.get('away_xg')}")
+            
+            # Check for probability fields
+            print(f"Home Win Probability: {data.get('home_win_probability')}%")
+            print(f"Draw Probability: {data.get('draw_probability')}%")
+            print(f"Away Win Probability: {data.get('away_win_probability')}%")
+            
+            # Check prediction breakdown
+            breakdown = data.get('prediction_breakdown', {})
+            print("\nPrediction Breakdown:")
+            for key, value in list(breakdown.items())[:5]:
+                print(f"  - {key}: {value}")
+            if len(breakdown) > 5:
+                print("  ...")
+                
+            # Check for starting XI and time decay info in breakdown
+            if 'starting_xi_impact' in breakdown:
+                print("\nStarting XI Impact:")
+                xi_impact = breakdown.get('starting_xi_impact', {})
+                for key, value in xi_impact.items():
+                    print(f"  - {key}: {value}")
+                    
+            if 'time_decay_info' in breakdown:
+                print("\nTime Decay Info:")
+                decay_info = breakdown.get('time_decay_info', {})
+                for key, value in decay_info.items():
+                    print(f"  - {key}: {value}")
+                    
+            return data
+        else:
+            print(f"Prediction failed: {data.get('error', 'Unknown error')}")
+            return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_predict_match_enhanced_with_starting_xi():
+    """Test the /api/predict-match-enhanced endpoint with custom starting XI"""
+    print("\n=== Testing Enhanced Match Prediction with Starting XI ===")
+    
+    # First, get teams and referees
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print(f"❌ Failed to get teams: {teams_response.status_code}")
+        return False
+    
+    teams = teams_response.json().get('teams', [])
+    if len(teams) < 2:
+        print("❌ Not enough teams for match prediction")
+        return False
+    
+    referees_response = requests.get(f"{BASE_URL}/referees")
+    if referees_response.status_code != 200:
+        print(f"❌ Failed to get referees: {referees_response.status_code}")
+        return False
+    
+    referees = referees_response.json().get('referees', [])
+    if not referees:
+        print("❌ No referees found for match prediction")
+        return False
+    
+    # Select teams and referee for testing
+    home_team = teams[0]
+    away_team = teams[1]
+    referee = referees[0]
+    
+    # Get players for home team to create custom starting XI
+    home_players_response = requests.get(f"{BASE_URL}/teams/{home_team}/players")
+    if home_players_response.status_code != 200 or not home_players_response.json().get('success'):
+        print(f"❌ Failed to get players for {home_team}")
+        return False
+    
+    home_players_data = home_players_response.json()
+    home_players = home_players_data.get('players', [])
+    home_default_xi = home_players_data.get('default_starting_xi')
+    
+    if not home_players or not home_default_xi:
+        print(f"❌ No players or default XI found for {home_team}")
+        return False
+    
+    # Get players for away team to create custom starting XI
+    away_players_response = requests.get(f"{BASE_URL}/teams/{away_team}/players")
+    if away_players_response.status_code != 200 or not away_players_response.json().get('success'):
+        print(f"❌ Failed to get players for {away_team}")
+        return False
+    
+    away_players_data = away_players_response.json()
+    away_players = away_players_data.get('players', [])
+    away_default_xi = away_players_data.get('default_starting_xi')
+    
+    if not away_players or not away_default_xi:
+        print(f"❌ No players or default XI found for {away_team}")
+        return False
+    
+    print(f"Testing enhanced prediction with starting XI for {home_team} vs {away_team} with referee {referee}")
+    
+    # Create request with custom starting XI (using default XI from API)
+    request_with_xi = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee,
+        "home_starting_xi": home_default_xi,
+        "away_starting_xi": away_default_xi,
+        "use_time_decay": True,
+        "decay_preset": "aggressive"
+    }
+    
+    response = requests.post(f"{BASE_URL}/predict-match-enhanced", json=request_with_xi)
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        if data.get('success'):
+            print(f"Home Team: {data.get('home_team')}")
+            print(f"Away Team: {data.get('away_team')}")
+            print(f"Referee: {data.get('referee')}")
+            print(f"Predicted Home Goals: {data.get('predicted_home_goals')}")
+            print(f"Predicted Away Goals: {data.get('predicted_away_goals')}")
+            print(f"Home xG: {data.get('home_xg')}")
+            print(f"Away xG: {data.get('away_xg')}")
+            
+            # Check for probability fields
+            print(f"Home Win Probability: {data.get('home_win_probability')}%")
+            print(f"Draw Probability: {data.get('draw_probability')}%")
+            print(f"Away Win Probability: {data.get('away_win_probability')}%")
+            
+            # Check prediction breakdown
+            breakdown = data.get('prediction_breakdown', {})
+            
+            # Check for starting XI and time decay info in breakdown
+            if 'starting_xi_impact' in breakdown:
+                print("\nStarting XI Impact:")
+                xi_impact = breakdown.get('starting_xi_impact', {})
+                for key, value in xi_impact.items():
+                    print(f"  - {key}: {value}")
+                    
+            if 'time_decay_info' in breakdown:
+                print("\nTime Decay Info:")
+                decay_info = breakdown.get('time_decay_info', {})
+                for key, value in decay_info.items():
+                    print(f"  - {key}: {value}")
+                    
+            return data
+        else:
+            print(f"Prediction failed: {data.get('error', 'Unknown error')}")
+            return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_starting_xi_and_time_decay_functionality():
+    """Test all Starting XI and time decay functionality"""
+    print("\n\n========== TESTING STARTING XI AND TIME DECAY FUNCTIONALITY ==========\n")
+    
+    # Test formations endpoint
+    print("\nStep 1: Testing formations endpoint")
+    formations_data = test_formations_endpoint()
+    
+    if not formations_data or not formations_data.get('success'):
+        print("❌ Formations endpoint test failed")
+    else:
+        print("✅ Formations endpoint test passed")
+    
+    # Test time decay presets endpoint
+    print("\nStep 2: Testing time decay presets endpoint")
+    presets_data = test_time_decay_presets_endpoint()
+    
+    if not presets_data or not presets_data.get('success'):
+        print("❌ Time decay presets endpoint test failed")
+    else:
+        print("✅ Time decay presets endpoint test passed")
+    
+    # Test team players endpoint
+    print("\nStep 3: Testing team players endpoint")
+    # Get a team name first
+    teams_response = requests.get(f"{BASE_URL}/teams")
+    if teams_response.status_code != 200:
+        print("❌ Failed to get teams for testing")
+        team_name = "Arsenal"  # Fallback
+    else:
+        teams = teams_response.json().get('teams', [])
+        team_name = teams[0] if teams else "Arsenal"
+    
+    players_data = test_team_players_endpoint(team_name)
+    
+    if not players_data:
+        print("❌ Team players endpoint test failed")
+    else:
+        print("✅ Team players endpoint test passed")
+    
+    # Test enhanced match prediction endpoint
+    print("\nStep 4: Testing enhanced match prediction endpoint")
+    prediction_data = test_predict_match_enhanced_endpoint()
+    
+    if not prediction_data or not prediction_data.get('success'):
+        print("❌ Enhanced match prediction endpoint test failed")
+    else:
+        print("✅ Enhanced match prediction endpoint test passed")
+    
+    # Test enhanced match prediction with starting XI
+    print("\nStep 5: Testing enhanced match prediction with starting XI")
+    prediction_with_xi_data = test_predict_match_enhanced_with_starting_xi()
+    
+    if not prediction_with_xi_data or not prediction_with_xi_data.get('success'):
+        print("❌ Enhanced match prediction with starting XI test failed")
+    else:
+        print("✅ Enhanced match prediction with starting XI test passed")
+    
+    # Final summary
+    print("\n========== STARTING XI AND TIME DECAY FUNCTIONALITY TEST SUMMARY ==========")
+    
+    all_tests_passed = (
+        formations_data and formations_data.get('success') and
+        presets_data and presets_data.get('success') and
+        players_data and
+        prediction_data and prediction_data.get('success')
+    )
+    
+    if all_tests_passed:
+        print("✅ All Starting XI and time decay functionality tests passed!")
+        return True
+    else:
+        print("❌ Some Starting XI and time decay functionality tests failed")
+        return False
+
 def test_list_datasets():
     """Test the /api/datasets endpoint to list all datasets"""
     print("\n=== Testing List Datasets Endpoint ===")
