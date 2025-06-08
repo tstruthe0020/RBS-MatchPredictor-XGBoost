@@ -285,6 +285,49 @@ class PDFExportResponse(BaseModel):
     message: str
     error: Optional[str] = None
 
+# Starting XI Models
+class PlayerInfo(BaseModel):
+    player_name: str
+    position: str  # GK, DEF, MID, FWD
+    minutes_played: Optional[int] = 0
+    matches_played: Optional[int] = 0
+
+class FormationPosition(BaseModel):
+    position_id: str  # e.g., "GK1", "DEF1", "DEF2", "MID1", etc.
+    position_type: str  # GK, DEF, MID, FWD
+    player: Optional[PlayerInfo] = None
+
+class StartingXI(BaseModel):
+    formation: str  # e.g., "4-4-2", "4-3-3", "3-5-2"
+    positions: List[FormationPosition]
+
+class EnhancedMatchPredictionRequest(BaseModel):
+    home_team: str
+    away_team: str
+    referee_name: str
+    match_date: Optional[str] = None
+    config_name: Optional[str] = "default"
+    home_starting_xi: Optional[StartingXI] = None
+    away_starting_xi: Optional[StartingXI] = None
+    use_time_decay: Optional[bool] = True
+    decay_preset: Optional[str] = "moderate"  # Options: "aggressive", "moderate", "conservative", "custom"
+    custom_decay_rate: Optional[float] = None  # For custom decay
+
+class TeamPlayersResponse(BaseModel):
+    success: bool
+    team_name: str
+    players: List[PlayerInfo]
+    default_starting_xi: Optional[StartingXI] = None
+    available_formations: List[str] = ["4-4-2", "4-3-3", "3-5-2", "4-5-1", "3-4-3"]
+
+class TimeDecayConfig(BaseModel):
+    preset_name: str
+    decay_type: str  # "exponential", "linear", "step"
+    half_life_months: Optional[float] = None  # For exponential decay
+    decay_rate_per_month: Optional[float] = None  # For linear decay
+    cutoff_months: Optional[int] = None  # For step decay
+    description: str
+
 # RBS Calculation Engine
 class RBSCalculator:
     def __init__(self):
