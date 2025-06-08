@@ -328,6 +328,275 @@ class TimeDecayConfig(BaseModel):
     cutoff_months: Optional[int] = None  # For step decay
     description: str
 
+# Starting XI Manager
+class StartingXIManager:
+    def __init__(self):
+        self.formations = {
+            "4-4-2": [
+                {"position_id": "GK1", "position_type": "GK"},
+                {"position_id": "DEF1", "position_type": "DEF"},
+                {"position_id": "DEF2", "position_type": "DEF"},
+                {"position_id": "DEF3", "position_type": "DEF"},
+                {"position_id": "DEF4", "position_type": "DEF"},
+                {"position_id": "MID1", "position_type": "MID"},
+                {"position_id": "MID2", "position_type": "MID"},
+                {"position_id": "MID3", "position_type": "MID"},
+                {"position_id": "MID4", "position_type": "MID"},
+                {"position_id": "FWD1", "position_type": "FWD"},
+                {"position_id": "FWD2", "position_type": "FWD"}
+            ],
+            "4-3-3": [
+                {"position_id": "GK1", "position_type": "GK"},
+                {"position_id": "DEF1", "position_type": "DEF"},
+                {"position_id": "DEF2", "position_type": "DEF"},
+                {"position_id": "DEF3", "position_type": "DEF"},
+                {"position_id": "DEF4", "position_type": "DEF"},
+                {"position_id": "MID1", "position_type": "MID"},
+                {"position_id": "MID2", "position_type": "MID"},
+                {"position_id": "MID3", "position_type": "MID"},
+                {"position_id": "FWD1", "position_type": "FWD"},
+                {"position_id": "FWD2", "position_type": "FWD"},
+                {"position_id": "FWD3", "position_type": "FWD"}
+            ],
+            "3-5-2": [
+                {"position_id": "GK1", "position_type": "GK"},
+                {"position_id": "DEF1", "position_type": "DEF"},
+                {"position_id": "DEF2", "position_type": "DEF"},
+                {"position_id": "DEF3", "position_type": "DEF"},
+                {"position_id": "MID1", "position_type": "MID"},
+                {"position_id": "MID2", "position_type": "MID"},
+                {"position_id": "MID3", "position_type": "MID"},
+                {"position_id": "MID4", "position_type": "MID"},
+                {"position_id": "MID5", "position_type": "MID"},
+                {"position_id": "FWD1", "position_type": "FWD"},
+                {"position_id": "FWD2", "position_type": "FWD"}
+            ],
+            "4-5-1": [
+                {"position_id": "GK1", "position_type": "GK"},
+                {"position_id": "DEF1", "position_type": "DEF"},
+                {"position_id": "DEF2", "position_type": "DEF"},
+                {"position_id": "DEF3", "position_type": "DEF"},
+                {"position_id": "DEF4", "position_type": "DEF"},
+                {"position_id": "MID1", "position_type": "MID"},
+                {"position_id": "MID2", "position_type": "MID"},
+                {"position_id": "MID3", "position_type": "MID"},
+                {"position_id": "MID4", "position_type": "MID"},
+                {"position_id": "MID5", "position_type": "MID"},
+                {"position_id": "FWD1", "position_type": "FWD"}
+            ],
+            "3-4-3": [
+                {"position_id": "GK1", "position_type": "GK"},
+                {"position_id": "DEF1", "position_type": "DEF"},
+                {"position_id": "DEF2", "position_type": "DEF"},
+                {"position_id": "DEF3", "position_type": "DEF"},
+                {"position_id": "MID1", "position_type": "MID"},
+                {"position_id": "MID2", "position_type": "MID"},
+                {"position_id": "MID3", "position_type": "MID"},
+                {"position_id": "MID4", "position_type": "MID"},
+                {"position_id": "FWD1", "position_type": "FWD"},
+                {"position_id": "FWD2", "position_type": "FWD"},
+                {"position_id": "FWD3", "position_type": "FWD"}
+            ]
+        }
+        
+        self.decay_presets = {
+            "aggressive": TimeDecayConfig(
+                preset_name="aggressive",
+                decay_type="exponential",
+                half_life_months=2.0,
+                description="Heavy emphasis on recent matches (2-month half-life)"
+            ),
+            "moderate": TimeDecayConfig(
+                preset_name="moderate", 
+                decay_type="exponential",
+                half_life_months=4.0,
+                description="Balanced weighting of recent vs historical data (4-month half-life)"
+            ),
+            "conservative": TimeDecayConfig(
+                preset_name="conservative",
+                decay_type="exponential", 
+                half_life_months=8.0,
+                description="Gradual decay giving significant weight to historical data (8-month half-life)"
+            ),
+            "linear": TimeDecayConfig(
+                preset_name="linear",
+                decay_type="linear",
+                decay_rate_per_month=0.1,
+                description="Linear decay reducing weight by 10% per month"
+            ),
+            "none": TimeDecayConfig(
+                preset_name="none",
+                decay_type="step",
+                cutoff_months=None,
+                description="No time decay - all historical data weighted equally"
+            )
+        }
+    
+    async def get_team_players_with_stats(self, team_name: str):
+        """Get all players for a team with their playing time statistics"""
+        try:
+            # Get all player stats for this team
+            player_stats = await db.player_stats.find({"team_name": team_name}).to_list(10000)
+            
+            # Group by player and calculate total minutes/matches
+            player_aggregates = {}
+            for stat in player_stats:
+                player = stat['player_name']
+                if player not in player_aggregates:
+                    player_aggregates[player] = {
+                        'minutes_played': 0,
+                        'matches_played': 0,
+                        'goals': 0,
+                        'assists': 0,
+                        'position': self._estimate_player_position(stat)
+                    }
+                
+                # Estimate 90 minutes per match as baseline
+                player_aggregates[player]['minutes_played'] += 90  # Simplified - could be enhanced with actual minutes data
+                player_aggregates[player]['matches_played'] += 1
+                player_aggregates[player]['goals'] += stat.get('goals', 0)
+                player_aggregates[player]['assists'] += stat.get('assists', 0)
+            
+            # Convert to PlayerInfo objects and sort by minutes played
+            players = []
+            for player_name, stats in player_aggregates.items():
+                players.append(PlayerInfo(
+                    player_name=player_name,
+                    position=stats['position'],
+                    minutes_played=stats['minutes_played'],
+                    matches_played=stats['matches_played']
+                ))
+            
+            # Sort by minutes played descending
+            players.sort(key=lambda x: x.minutes_played, reverse=True)
+            
+            return players
+            
+        except Exception as e:
+            print(f"Error getting team players: {e}")
+            return []
+    
+    def _estimate_player_position(self, player_stat):
+        """Estimate player position based on their stats (simplified logic)"""
+        goals = player_stat.get('goals', 0)
+        assists = player_stat.get('assists', 0)
+        fouls = player_stat.get('fouls_committed', 0)
+        
+        # Simple heuristic - could be enhanced with more sophisticated logic
+        if goals + assists > 0.5:  # High goal/assist rate
+            return "FWD"
+        elif fouls > 2:  # High fouling rate (defensive players)
+            return "DEF"
+        elif assists > goals:  # More assists than goals (midfield playmaker)
+            return "MID"
+        else:
+            return "MID"  # Default to midfielder
+    
+    async def generate_default_starting_xi(self, team_name: str, formation: str = "4-4-2"):
+        """Generate default starting XI based on most played players"""
+        try:
+            players = await self.get_team_players_with_stats(team_name)
+            if len(players) < 11:
+                return None
+            
+            # Get formation template
+            formation_template = self.formations.get(formation, self.formations["4-4-2"])
+            
+            # Organize players by position
+            players_by_position = {
+                "GK": [p for p in players if p.position == "GK"],
+                "DEF": [p for p in players if p.position == "DEF"], 
+                "MID": [p for p in players if p.position == "MID"],
+                "FWD": [p for p in players if p.position == "FWD"]
+            }
+            
+            # Fill positions based on formation
+            selected_players = []
+            position_assignments = []
+            
+            for template_position in formation_template:
+                position_type = template_position["position_type"]
+                available_players = [p for p in players_by_position[position_type] if p not in selected_players]
+                
+                if available_players:
+                    # Pick the player with most minutes in this position
+                    selected_player = available_players[0]
+                    selected_players.append(selected_player)
+                else:
+                    # Fallback: pick any remaining player
+                    remaining_players = [p for p in players if p not in selected_players]
+                    if remaining_players:
+                        selected_player = remaining_players[0]
+                        selected_players.append(selected_player)
+                    else:
+                        selected_player = None
+                
+                position_assignments.append(FormationPosition(
+                    position_id=template_position["position_id"],
+                    position_type=template_position["position_type"],
+                    player=selected_player
+                ))
+            
+            return StartingXI(
+                formation=formation,
+                positions=position_assignments
+            )
+            
+        except Exception as e:
+            print(f"Error generating default starting XI: {e}")
+            return None
+    
+    def calculate_time_weight(self, match_date_str: str, current_date_str: str, decay_config: TimeDecayConfig):
+        """Calculate time-based weight for a match"""
+        try:
+            from datetime import datetime
+            
+            match_date = datetime.strptime(match_date_str, "%Y-%m-%d")
+            current_date = datetime.strptime(current_date_str, "%Y-%m-%d") if current_date_str else datetime.now()
+            
+            # Calculate months difference
+            months_diff = (current_date.year - match_date.year) * 12 + (current_date.month - match_date.month)
+            months_diff += (current_date.day - match_date.day) / 30  # Approximate days to months
+            
+            if decay_config.decay_type == "exponential":
+                # Exponential decay: weight = 0.5^(months_diff / half_life)
+                half_life = decay_config.half_life_months or 4.0
+                weight = 0.5 ** (months_diff / half_life)
+            elif decay_config.decay_type == "linear":
+                # Linear decay: weight = 1 - (months_diff * decay_rate)
+                decay_rate = decay_config.decay_rate_per_month or 0.1
+                weight = max(0.1, 1.0 - (months_diff * decay_rate))  # Minimum weight of 0.1
+            elif decay_config.decay_type == "step":
+                # Step decay: full weight until cutoff, then zero
+                cutoff = decay_config.cutoff_months or 12
+                weight = 1.0 if months_diff <= cutoff else 0.1
+            else:
+                # No decay
+                weight = 1.0
+            
+            return max(0.1, min(1.0, weight))  # Clamp between 0.1 and 1.0
+            
+        except Exception as e:
+            print(f"Error calculating time weight: {e}")
+            return 1.0
+
+# Initialize Starting XI Manager
+starting_xi_manager = StartingXIManager()
+
+# Time Decay Configuration Manager  
+class TimeDecayManager:
+    def __init__(self):
+        self.current_config = starting_xi_manager.decay_presets["moderate"]
+    
+    def get_preset(self, preset_name: str):
+        return starting_xi_manager.decay_presets.get(preset_name, self.current_config)
+    
+    def get_all_presets(self):
+        return list(starting_xi_manager.decay_presets.values())
+
+# Initialize managers
+time_decay_manager = TimeDecayManager()
+
 # RBS Calculation Engine
 class RBSCalculator:
     def __init__(self):
