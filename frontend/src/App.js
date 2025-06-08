@@ -542,6 +542,124 @@ function App() {
     setPredicting(false);
   };
 
+  // Enhanced prediction with Starting XI support
+  const predictMatchEnhanced = async () => {
+    if (!predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setPredicting(true);
+    try {
+      const requestData = {
+        home_team: predictionForm.home_team,
+        away_team: predictionForm.away_team,
+        referee_name: predictionForm.referee_name,
+        match_date: predictionForm.match_date,
+        config_name: configName,
+        home_starting_xi: homeStartingXI,
+        away_starting_xi: awayStartingXI,
+        use_time_decay: useTimeDecay,
+        decay_preset: decayPreset
+      };
+      
+      const response = await axios.post(`${API}/predict-match-enhanced`, requestData);
+      setPredictionResult(response.data);
+    } catch (error) {
+      alert(`❌ Enhanced Prediction Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setPredicting(false);
+  };
+
+  // Fetch team players and generate default starting XI
+  const fetchTeamPlayers = async (teamName, isHomeTeam = true) => {
+    try {
+      setLoadingPlayers(true);
+      const response = await axios.get(`${API}/teams/${encodeURIComponent(teamName)}/players?formation=${selectedFormation}`);
+      
+      if (response.data.success) {
+        const players = response.data.players || [];
+        const defaultXI = response.data.default_starting_xi;
+        
+        if (isHomeTeam) {
+          setHomeTeamPlayers(players);
+          setHomeStartingXI(defaultXI);
+        } else {
+          setAwayTeamPlayers(players);
+          setAwayStartingXI(defaultXI);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching team players:', error);
+      alert(`Error loading players for ${teamName}: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingPlayers(false);
+    }
+  };
+
+  // Fetch available formations
+  const fetchFormations = async () => {
+    try {
+      const response = await axios.get(`${API}/formations`);
+      if (response.data.success) {
+        setAvailableFormations(response.data.formations.map(f => f.name));
+      }
+    } catch (error) {
+      console.error('Error fetching formations:', error);
+    }
+  };
+
+  // Fetch time decay presets
+  const fetchDecayPresets = async () => {
+    try {
+      const response = await axios.get(`${API}/time-decay/presets`);
+      if (response.data.success) {
+        setDecayPresets(response.data.presets);
+      }
+    } catch (error) {
+      console.error('Error fetching decay presets:', error);
+    }
+  };
+
+  // Handle formation change
+  const handleFormationChange = async (newFormation) => {
+    setSelectedFormation(newFormation);
+    
+    // Regenerate starting XIs for both teams with new formation
+    if (predictionForm.home_team) {
+      await fetchTeamPlayers(predictionForm.home_team, true);
+    }
+    if (predictionForm.away_team) {
+      await fetchTeamPlayers(predictionForm.away_team, false);
+    }
+  };
+
+  // Update starting XI player selection
+  const updateStartingXIPlayer = (isHomeTeam, positionId, selectedPlayer) => {
+    const setStartingXI = isHomeTeam ? setHomeStartingXI : setAwayStartingXI;
+    const currentXI = isHomeTeam ? homeStartingXI : awayStartingXI;
+    
+    if (!currentXI) return;
+    
+    const updatedPositions = currentXI.positions.map(pos => {
+      if (pos.position_id === positionId) {
+        return { ...pos, player: selectedPlayer };
+      }
+      return pos;
+    });
+    
+    setStartingXI({
+      ...currentXI,
+      positions: updatedPositions
+    });
+  };
+
+  // Validate starting XI (ensure 11 players selected)
+  const validateStartingXI = (startingXI) => {
+    if (!startingXI || !startingXI.positions) return false;
+    return startingXI.positions.filter(pos => pos.player).length === 11;
+  };
+
   const resetPrediction = () => {
     setPredictionForm({
       home_team: '',
