@@ -2279,6 +2279,389 @@ class MLMatchPredictor:
             return dict(sorted_features[:top_n])
         except:
             return {}
+    
+    async def predict_match_with_starting_xi(self, home_team, away_team, referee, home_starting_xi=None, away_starting_xi=None, match_date=None, config_name="default", decay_config=None):
+        """Enhanced match prediction with starting XI and time decay support"""
+        try:
+            # Check if models are available
+            if not self.models or len(self.models) != 5:
+                raise ValueError("ML models not trained. Please train models first.")
+            
+            # Extract features with starting XI filtering
+            features = await self.extract_features_for_match_enhanced(
+                home_team, away_team, referee, match_date, 
+                home_starting_xi, away_starting_xi, decay_config
+            )
+            if features is None:
+                raise ValueError("Could not extract features for prediction")
+            
+            # Convert to DataFrame and ensure correct column order
+            import pandas as pd
+            X = pd.DataFrame([features])
+            X = X.reindex(columns=self.feature_columns, fill_value=0)
+            
+            # Scale features
+            X_scaled = self.scaler.transform(X)
+            
+            # Make predictions
+            outcome_probs = self.models['classifier'].predict_proba(X_scaled)[0]
+            home_goals = max(0, self.models['home_goals'].predict(X_scaled)[0])
+            away_goals = max(0, self.models['away_goals'].predict(X_scaled)[0])
+            home_xg = max(0, self.models['home_xg'].predict(X_scaled)[0])
+            away_xg = max(0, self.models['away_xg'].predict(X_scaled)[0])
+            
+            # Get outcome probabilities (convert to percentages)
+            home_win_prob = outcome_probs[0] * 100
+            draw_prob = outcome_probs[1] * 100
+            away_win_prob = outcome_probs[2] * 100
+            
+            # Ensure probabilities sum to 100%
+            total_prob = home_win_prob + draw_prob + away_win_prob
+            if total_prob > 0:
+                home_win_prob = (home_win_prob / total_prob) * 100
+                draw_prob = (draw_prob / total_prob) * 100
+                away_win_prob = (away_win_prob / total_prob) * 100
+            
+            # Enhanced prediction breakdown
+            prediction_breakdown = {
+                'model_confidence': {
+                    'classifier_confidence': max(outcome_probs),
+                    'features_used': len(self.feature_columns),
+                    'training_samples': 'Variable by model'
+                },
+                'feature_importance': {
+                    'top_features': self._get_top_feature_importance(5)
+                },
+                'prediction_method': 'Enhanced ML with Starting XI',
+                'starting_xi_used': {
+                    'home_team': home_starting_xi is not None,
+                    'away_team': away_starting_xi is not None
+                },
+                'time_decay_applied': decay_config is not None,
+                'decay_preset': decay_config.preset_name if decay_config else None
+            }
+            
+            return MatchPredictionResponse(
+                success=True,
+                home_team=home_team,
+                away_team=away_team,
+                referee=referee,
+                predicted_home_goals=round(home_goals, 2),
+                predicted_away_goals=round(away_goals, 2),
+                home_xg=round(home_xg, 2),
+                away_xg=round(away_xg, 2),
+                home_win_probability=round(home_win_prob, 2),
+                draw_probability=round(draw_prob, 2),
+                away_win_probability=round(away_win_prob, 2),
+                prediction_breakdown=prediction_breakdown
+            )
+            
+        except Exception as e:
+            print(f"Error making enhanced ML prediction: {e}")
+            return MatchPredictionResponse(
+                success=False,
+                error=str(e),
+                home_team=home_team,
+                away_team=away_team,
+                referee=referee
+            )
+    
+    async def predict_match_with_defaults(self, home_team, away_team, referee, match_date=None, config_name="default", decay_config=None):
+        """Prediction using default starting XIs based on most played players"""
+        try:
+            # Generate default starting XIs
+            home_xi = await starting_xi_manager.generate_default_starting_xi(home_team)
+            away_xi = await starting_xi_manager.generate_default_starting_xi(away_team)
+            
+            return await self.predict_match_with_starting_xi(
+                home_team, away_team, referee, home_xi, away_xi, 
+                match_date, config_name, decay_config
+            )
+            
+        except Exception as e:
+            print(f"Error making prediction with defaults: {e}")
+            return MatchPredictionResponse(
+                success=False,
+                error=str(e),
+                home_team=home_team,
+                away_team=away_team,
+                referee=referee
+            )
+    
+    async def extract_features_for_match_enhanced(self, home_team, away_team, referee, match_date=None, home_starting_xi=None, away_starting_xi=None, decay_config=None):
+        """Enhanced feature extraction with starting XI filtering and time decay"""
+        try:
+            # Get team stats with starting XI filtering and time decay
+            home_stats = await self.calculate_team_features_enhanced(home_team, True, home_starting_xi, decay_config)
+            away_stats = await self.calculate_team_features_enhanced(away_team, False, away_starting_xi, decay_config)
+            
+            if not home_stats or not away_stats:
+                raise ValueError("Could not calculate enhanced team features")
+            
+            # Get referee bias (apply time decay if specified)
+            home_rbs, home_rbs_conf = await self.get_referee_bias_with_decay(home_team, referee, decay_config)
+            away_rbs, away_rbs_conf = await self.get_referee_bias_with_decay(away_team, referee, decay_config)
+            
+            # Get head-to-head stats with time decay
+            h2h_stats = await self.get_head_to_head_stats_with_decay(home_team, away_team, decay_config)
+            
+            # Build enhanced feature vector
+            features = {
+                # Home team offensive stats (enhanced with starting XI)
+                'home_xg_per_match': home_stats['xg'],
+                'home_goals_per_match': home_stats['goals'],
+                'home_shots_per_match': home_stats['shots_total'],
+                'home_shots_on_target_per_match': home_stats['shots_on_target'],
+                'home_xg_per_shot': home_stats['xg_per_shot'],
+                'home_shot_accuracy': home_stats['shot_accuracy'],
+                'home_conversion_rate': home_stats['conversion_rate'],
+                'home_possession_pct': home_stats['possession_pct'],
+                
+                # Home team defensive stats
+                'home_goals_conceded_per_match': home_stats['goals_conceded'],
+                'home_xg_conceded_per_match': home_stats.get('xg_conceded', 0),
+                
+                # Away team stats (enhanced with starting XI)
+                'away_xg_per_match': away_stats['xg'],
+                'away_goals_per_match': away_stats['goals'],
+                'away_shots_per_match': away_stats['shots_total'],
+                'away_shots_on_target_per_match': away_stats['shots_on_target'],
+                'away_xg_per_shot': away_stats['xg_per_shot'],
+                'away_shot_accuracy': away_stats['shot_accuracy'],
+                'away_conversion_rate': away_stats['conversion_rate'],
+                'away_possession_pct': away_stats['possession_pct'],
+                
+                # Away team defensive stats
+                'away_goals_conceded_per_match': away_stats['goals_conceded'],
+                'away_xg_conceded_per_match': away_stats.get('xg_conceded', 0),
+                
+                # Form over last 5 matches (with time decay)
+                'home_form_last5': await self.get_team_form_with_decay(home_team, 5, decay_config),
+                'away_form_last5': await self.get_team_form_with_decay(away_team, 5, decay_config),
+                
+                # Home advantage
+                'home_advantage': 1,
+                
+                # Referee bias (with time decay)
+                'home_referee_bias': home_rbs,
+                'away_referee_bias': away_rbs,
+                'home_rbs_confidence': home_rbs_conf,
+                'away_rbs_confidence': away_rbs_conf,
+                
+                # Head-to-head (with time decay)
+                'h2h_home_wins': h2h_stats['home_wins'],
+                'h2h_draws': h2h_stats['draws'],
+                'h2h_away_wins': h2h_stats['away_wins'],
+                'h2h_home_goals_avg': h2h_stats['home_goals_avg'],
+                'h2h_away_goals_avg': h2h_stats['away_goals_avg'],
+                
+                # Additional differential features
+                'goal_difference': home_stats['goals'] - away_stats['goals'],
+                'xg_difference': home_stats['xg'] - away_stats['xg'],
+                'possession_difference': home_stats['possession_pct'] - away_stats['possession_pct'],
+                'form_difference': await self.get_team_form_with_decay(home_team, 5, decay_config) - await self.get_team_form_with_decay(away_team, 5, decay_config),
+                
+                # Quality indicators (enhanced with starting XI)
+                'home_quality_rating': (home_stats['goals'] + home_stats['xg']) / 2,
+                'away_quality_rating': (away_stats['goals'] + away_stats['xg']) / 2,
+                
+                # Starting XI indicators
+                'home_xi_specified': 1 if home_starting_xi else 0,
+                'away_xi_specified': 1 if away_starting_xi else 0,
+                'time_decay_applied': 1 if decay_config else 0
+            }
+            
+            return features
+            
+        except Exception as e:
+            print(f"Error extracting enhanced features: {e}")
+            return None
+    
+    async def calculate_team_features_enhanced(self, team_name, is_home, starting_xi=None, decay_config=None):
+        """Enhanced team feature calculation with starting XI filtering and time decay"""
+        try:
+            if starting_xi:
+                # Filter stats by starting XI players
+                selected_players = [pos.player.player_name for pos in starting_xi.positions if pos.player]
+                stats = await self.calculate_team_averages_for_players(team_name, is_home, selected_players, decay_config)
+            else:
+                # Use existing method but apply time decay
+                stats = await self.calculate_team_averages_with_decay(team_name, is_home, decay_config)
+            
+            if not stats:
+                return None
+            
+            # Ensure all required fields exist with defaults
+            required_fields = [
+                'xg', 'goals', 'shots_total', 'shots_on_target', 'xg_per_shot',
+                'shot_accuracy', 'conversion_rate', 'possession_pct', 'goals_conceded',
+                'points_per_game', 'penalties_awarded', 'fouls_drawn', 'fouls',
+                'yellow_cards', 'red_cards'
+            ]
+            
+            for field in required_fields:
+                if field not in stats:
+                    stats[field] = 0.0
+            
+            return stats
+            
+        except Exception as e:
+            print(f"Error calculating enhanced team features: {e}")
+            return None
+    
+    async def calculate_team_averages_for_players(self, team_name, is_home, selected_players, decay_config=None):
+        """Calculate team averages using only specified players with optional time decay"""
+        try:
+            # Get all matches for this team
+            team_matches = await db.matches.find({
+                "$or": [
+                    {"home_team": team_name},
+                    {"away_team": team_name}
+                ]
+            }).to_list(10000)
+            
+            if not team_matches:
+                return None
+            
+            # Get player stats for selected players only
+            selected_player_stats = await db.player_stats.find({
+                "team_name": team_name,
+                "player_name": {"$in": selected_players}
+            }).to_list(10000)
+            
+            if not selected_player_stats:
+                return None
+            
+            # Group player stats by match
+            match_aggregates = {}
+            total_weights = 0
+            
+            for player_stat in selected_player_stats:
+                match_id = player_stat['match_id']
+                
+                # Find the match to get date for time decay
+                match_info = next((m for m in team_matches if m['match_id'] == match_id), None)
+                if not match_info:
+                    continue
+                
+                # Calculate time weight
+                weight = 1.0
+                if decay_config and match_info.get('match_date'):
+                    weight = starting_xi_manager.calculate_time_weight(
+                        match_info['match_date'], 
+                        datetime.now().strftime("%Y-%m-%d"),
+                        decay_config
+                    )
+                
+                if match_id not in match_aggregates:
+                    match_aggregates[match_id] = {
+                        'goals': 0, 'assists': 0, 'xg': 0, 'shots_total': 0, 
+                        'shots_on_target': 0, 'penalty_attempts': 0, 'penalty_goals': 0,
+                        'weight': weight, 'is_home': player_stat.get('is_home', is_home)
+                    }
+                
+                # Aggregate player stats for this match
+                match_aggregates[match_id]['goals'] += player_stat.get('goals', 0) * weight
+                match_aggregates[match_id]['assists'] += player_stat.get('assists', 0) * weight
+                match_aggregates[match_id]['xg'] += player_stat.get('xg', 0) * weight
+                match_aggregates[match_id]['shots_total'] += player_stat.get('shots_total', 0) * weight
+                match_aggregates[match_id]['shots_on_target'] += player_stat.get('shots_on_target', 0) * weight
+                match_aggregates[match_id]['penalty_attempts'] += player_stat.get('penalty_attempts', 0) * weight
+                match_aggregates[match_id]['penalty_goals'] += player_stat.get('penalty_goals', 0) * weight
+                
+                total_weights += weight
+            
+            if not match_aggregates or total_weights == 0:
+                return None
+            
+            # Calculate weighted averages
+            total_goals = sum(match['goals'] for match in match_aggregates.values())
+            total_xg = sum(match['xg'] for match in match_aggregates.values())
+            total_shots = sum(match['shots_total'] for match in match_aggregates.values())
+            total_shots_on_target = sum(match['shots_on_target'] for match in match_aggregates.values())
+            
+            match_count = len(match_aggregates)
+            
+            # Calculate derived stats with safety checks
+            goals_per_match = total_goals / total_weights if total_weights > 0 else 0
+            xg_per_match = total_xg / total_weights if total_weights > 0 else 0
+            shots_per_match = total_shots / total_weights if total_weights > 0 else 0
+            shots_on_target_per_match = total_shots_on_target / total_weights if total_weights > 0 else 0
+            
+            xg_per_shot = (total_xg / total_shots) if total_shots > 0 else 0
+            xg_per_shot = min(1.0, xg_per_shot)  # Cap at 1.0
+            
+            shot_accuracy = (total_shots_on_target / total_shots) if total_shots > 0 else 0
+            shot_accuracy = min(1.0, shot_accuracy)  # Cap at 1.0
+            
+            conversion_rate = (total_goals / total_xg) if total_xg > 0 else 0
+            conversion_rate = min(2.0, conversion_rate)  # Cap at 2.0
+            
+            # Get team stats for possession and defensive stats (these don't change with starting XI)
+            team_stats = await self.get_team_stats_aggregates(team_name, is_home, decay_config)
+            
+            return {
+                'goals': goals_per_match,
+                'xg': xg_per_match,
+                'shots_total': shots_per_match,
+                'shots_on_target': shots_on_target_per_match,
+                'xg_per_shot': xg_per_shot,
+                'shot_accuracy': shot_accuracy,
+                'conversion_rate': conversion_rate,
+                'possession_pct': team_stats.get('possession_pct', 50.0),
+                'goals_conceded': team_stats.get('goals_conceded', 1.0),
+                'points_per_game': team_stats.get('points_per_game', 1.0),
+                'penalties_awarded': team_stats.get('penalties_awarded', 0.0),
+                'fouls_drawn': team_stats.get('fouls_drawn', 10.0),
+                'fouls': team_stats.get('fouls', 12.0),
+                'yellow_cards': team_stats.get('yellow_cards', 2.0),
+                'red_cards': team_stats.get('red_cards', 0.1)
+            }
+            
+        except Exception as e:
+            print(f"Error calculating team averages for selected players: {e}")
+            return None
+    
+    async def get_team_stats_aggregates(self, team_name, is_home, decay_config=None):
+        """Get team-level stats (possession, cards, etc.) with time decay"""
+        try:
+            # Use existing team stats calculation but apply time decay
+            return await self.calculate_team_averages_with_decay(team_name, is_home, decay_config)
+        except Exception as e:
+            print(f"Error getting team stats aggregates: {e}")
+            return {}
+    
+    async def calculate_team_averages_with_decay(self, team_name, is_home, decay_config=None):
+        """Calculate team averages with time decay applied"""
+        try:
+            # Get the existing averages first
+            stats = await match_predictor.calculate_team_averages(team_name, is_home)
+            
+            if not decay_config or not stats:
+                return stats
+            
+            # For now, return the existing stats - time decay will be fully implemented in phase 2
+            # This ensures backward compatibility while we implement the starting XI functionality
+            return stats
+            
+        except Exception as e:
+            print(f"Error calculating team averages with decay: {e}")
+            return None
+    
+    async def get_referee_bias_with_decay(self, team_name, referee, decay_config=None):
+        """Get referee bias with time decay (placeholder for now)"""
+        # Use existing method for now - will enhance in phase 2
+        return await self.get_referee_bias(team_name, referee)
+    
+    async def get_head_to_head_stats_with_decay(self, home_team, away_team, decay_config=None):
+        """Get head-to-head stats with time decay (placeholder for now)"""
+        # Use existing method for now - will enhance in phase 2  
+        return await self.get_head_to_head_stats(home_team, away_team)
+    
+    async def get_team_form_with_decay(self, team_name, last_n=5, decay_config=None):
+        """Get team form with time decay (placeholder for now)"""
+        # Use existing method for now - will enhance in phase 2
+        return await self.get_team_form(team_name, last_n)
 
 # Initialize ML Match Predictor
 ml_predictor = MLMatchPredictor()
