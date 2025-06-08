@@ -5046,6 +5046,113 @@ async def get_teams():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching teams: {str(e)}")
 
+@api_router.get("/teams/{team_name}/players", response_model=TeamPlayersResponse)
+async def get_team_players(team_name: str, formation: str = "4-4-2"):
+    """Get players for a team with default starting XI based on playing time"""
+    try:
+        # Get all players with stats
+        players = await starting_xi_manager.get_team_players_with_stats(team_name)
+        
+        # Generate default starting XI
+        default_xi = await starting_xi_manager.generate_default_starting_xi(team_name, formation)
+        
+        return TeamPlayersResponse(
+            success=True,
+            team_name=team_name,
+            players=players,
+            default_starting_xi=default_xi,
+            available_formations=list(starting_xi_manager.formations.keys())
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching team players: {str(e)}")
+
+@api_router.get("/formations")
+async def get_available_formations():
+    """Get list of available formations"""
+    try:
+        formations = []
+        for formation_name, positions in starting_xi_manager.formations.items():
+            formation_info = {
+                "name": formation_name,
+                "positions": len(positions),
+                "position_breakdown": {
+                    "GK": len([p for p in positions if p["position_type"] == "GK"]),
+                    "DEF": len([p for p in positions if p["position_type"] == "DEF"]),
+                    "MID": len([p for p in positions if p["position_type"] == "MID"]),
+                    "FWD": len([p for p in positions if p["position_type"] == "FWD"])
+                }
+            }
+            formations.append(formation_info)
+        
+        return {
+            "success": True,
+            "formations": formations,
+            "default_formation": "4-4-2"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching formations: {str(e)}")
+
+@api_router.get("/time-decay/presets")
+async def get_time_decay_presets():
+    """Get available time decay presets"""
+    try:
+        presets = time_decay_manager.get_all_presets()
+        return {
+            "success": True,
+            "presets": [preset.dict() for preset in presets],
+            "default_preset": "moderate"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching time decay presets: {str(e)}")
+
+@api_router.post("/predict-match-enhanced")
+async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
+    """Enhanced match prediction with starting XI and time decay support"""
+    try:
+        # Get time decay configuration
+        decay_config = time_decay_manager.get_preset(request.decay_preset or "moderate")
+        if request.custom_decay_rate and request.decay_preset == "custom":
+            decay_config.decay_rate_per_month = request.custom_decay_rate
+        
+        # Use existing prediction logic but with enhanced features
+        if request.home_starting_xi or request.away_starting_xi:
+            # Enhanced prediction with specific players
+            result = await ml_predictor.predict_match_with_starting_xi(
+                home_team=request.home_team,
+                away_team=request.away_team,
+                referee=request.referee_name,
+                home_starting_xi=request.home_starting_xi,
+                away_starting_xi=request.away_starting_xi,
+                match_date=request.match_date,
+                config_name=request.config_name,
+                decay_config=decay_config if request.use_time_decay else None
+            )
+        else:
+            # Standard prediction with default starting XI
+            result = await ml_predictor.predict_match_with_defaults(
+                home_team=request.home_team,
+                away_team=request.away_team,
+                referee=request.referee_name,
+                match_date=request.match_date,
+                config_name=request.config_name,
+                decay_config=decay_config if request.use_time_decay else None
+            )
+        
+        return result
+        
+    except Exception as e:
+        print(f"Enhanced prediction error: {e}")
+        return MatchPredictionResponse(
+            success=False,
+            home_team=request.home_team,
+            away_team=request.away_team,
+            referee=request.referee_name,
+            error=str(e)
+        )
+
 @api_router.post("/initialize-default-config")
 async def initialize_default_config():
     """Initialize default prediction configuration"""
