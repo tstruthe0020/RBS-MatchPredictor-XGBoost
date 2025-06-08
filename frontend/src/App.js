@@ -2047,6 +2047,573 @@ function App() {
             </div>
           </div>
         )}
+
+        {/* Regression Analysis Tab */}
+        {activeTab === 'analysis' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">📈 Regression Analysis</h2>
+              <p className="text-gray-600 mb-6">
+                Analyze how different team-level statistics correlate with match outcomes using machine learning models.
+              </p>
+
+              {/* Available Statistics */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Available Statistics</h3>
+                {availableStats.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {availableStats.map(stat => (
+                      <div
+                        key={stat}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedStats.includes(stat)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-blue-300'
+                        }`}
+                        onClick={() => {
+                          if (selectedStats.includes(stat)) {
+                            setSelectedStats(selectedStats.filter(s => s !== stat));
+                          } else {
+                            setSelectedStats([...selectedStats, stat]);
+                          }
+                        }}
+                      >
+                        <div className="font-medium text-gray-900">{stat.replace(/_/g, ' ').toUpperCase()}</div>
+                        {statDescriptions[stat] && (
+                          <div className="text-sm text-gray-600 mt-1">{statDescriptions[stat]}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Loading available statistics...</p>
+                    <button
+                      onClick={fetchAvailableStats}
+                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Refresh Statistics
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Analysis Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Target Variable
+                  </label>
+                  <select
+                    value={regressionTarget}
+                    onChange={(e) => setRegressionTarget(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="points_per_game">Points Per Game</option>
+                    <option value="match_result">Match Result</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selected Statistics: {selectedStats.length}
+                  </label>
+                  <button
+                    onClick={() => setSelectedStats([])}
+                    disabled={selectedStats.length === 0}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+
+              {/* Run Analysis Button */}
+              <div className="mb-6">
+                <button
+                  onClick={runRegressionAnalysis}
+                  disabled={analyzing || selectedStats.length === 0}
+                  className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {analyzing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🧪</span>
+                      <span>Run Regression Analysis</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Analysis Results */}
+              {regressionResult && (
+                <div className="bg-white p-6 rounded-lg border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Analysis Results</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Model Performance</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Model Type:</span>
+                          <span className="font-medium">{regressionResult.model_type}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">R² Score:</span>
+                          <span className="font-medium">{(regressionResult.results?.r2_score * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sample Size:</span>
+                          <span className="font-medium">{regressionResult.sample_size}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Feature Importance</h4>
+                      <div className="space-y-1 text-sm">
+                        {regressionResult.results?.feature_importance && 
+                          Object.entries(regressionResult.results.feature_importance)
+                            .slice(0, 5)
+                            .map(([feature, importance]) => (
+                              <div key={feature} className="flex justify-between">
+                                <span className="text-gray-600">{feature.replace(/_/g, ' ')}:</span>
+                                <span className="font-medium">{(importance * 100).toFixed(1)}%</span>
+                              </div>
+                            ))
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Prediction Config Tab */}
+        {activeTab === 'config' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">⚙️ Prediction Configuration</h2>
+              <p className="text-gray-600 mb-6">
+                Configure the parameters used in match prediction algorithms. These settings affect how different factors are weighted in the prediction calculations.
+              </p>
+
+              {/* Configuration Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Configuration
+                </label>
+                <div className="flex space-x-4">
+                  <select
+                    value={configName}
+                    onChange={(e) => {
+                      setConfigName(e.target.value);
+                      fetchConfig(e.target.value);
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="default">Default Configuration</option>
+                    {configs.map(config => (
+                      <option key={config.config_name} value={config.config_name}>
+                        {config.config_name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setConfigEditing(!configEditing)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    {configEditing ? 'Cancel' : 'Edit'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Configuration Form */}
+              {configEditing && (
+                <div className="space-y-6">
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuration Parameters</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Configuration Name</label>
+                        <input
+                          type="text"
+                          value={configForm.config_name}
+                          onChange={(e) => handleConfigFormChange('config_name', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">xG Shot Based Weight</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={configForm.xg_shot_based_weight}
+                          onChange={(e) => handleConfigFormChange('xg_shot_based_weight', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex space-x-4">
+                      <button
+                        onClick={saveConfig}
+                        className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700"
+                      >
+                        Save Configuration
+                      </button>
+                      <button
+                        onClick={() => setConfigEditing(false)}
+                        className="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Configuration Display */}
+              {currentConfig && !configEditing && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Current Configuration: {currentConfig.config_name}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">xG Shot Weight:</span>
+                      <span className="ml-2 font-medium">{currentConfig.xg_shot_based_weight}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">xG Historical Weight:</span>
+                      <span className="ml-2 font-medium">{currentConfig.xg_historical_weight}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">PPG Adjustment:</span>
+                      <span className="ml-2 font-medium">{currentConfig.ppg_adjustment_factor}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* RBS Config Tab */}
+        {activeTab === 'rbs-config' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">⚖️ RBS Configuration</h2>
+              <p className="text-gray-600 mb-6">
+                Configure the Referee Bias Score (RBS) calculation parameters. These weights determine how different referee decisions impact the bias score.
+              </p>
+
+              {/* RBS Configuration Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select RBS Configuration
+                </label>
+                <div className="flex space-x-4">
+                  <select
+                    value={rbsConfigName}
+                    onChange={(e) => {
+                      setRbsConfigName(e.target.value);
+                      fetchRbsConfig(e.target.value);
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="default">Default RBS Configuration</option>
+                    {rbsConfigs.map(config => (
+                      <option key={config.config_name} value={config.config_name}>
+                        {config.config_name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setRbsConfigEditing(!rbsConfigEditing)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    {rbsConfigEditing ? 'Cancel' : 'Edit'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Current RBS Configuration Display */}
+              {currentRbsConfig && !rbsConfigEditing && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Current RBS Configuration: {currentRbsConfig.config_name}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Yellow Cards Weight:</span>
+                      <span className="ml-2 font-medium">{currentRbsConfig.yellow_cards_weight}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Red Cards Weight:</span>
+                      <span className="ml-2 font-medium">{currentRbsConfig.red_cards_weight}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Fouls Weight:</span>
+                      <span className="ml-2 font-medium">{currentRbsConfig.fouls_committed_weight}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Formula Optimization Tab */}
+        {activeTab === 'optimization' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">🔬 Formula Optimization</h2>
+              <p className="text-gray-600 mb-6">
+                Analyze and optimize the RBS formula and Match Predictor algorithm based on statistical regression analysis.
+              </p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* RBS Formula Optimization */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4">⚖️ RBS Formula Optimization</h3>
+                  <p className="text-blue-700 mb-4 text-sm">
+                    Analyze the statistical significance of RBS variables and get suggestions for optimal weight adjustments.
+                  </p>
+                  
+                  <button
+                    onClick={analyzeRBSFormula}
+                    disabled={analyzingFormulas}
+                    className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {analyzingFormulas ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🧪</span>
+                        <span>Analyze RBS Formula</span>
+                      </>
+                    )}
+                  </button>
+
+                  {optimizationResults.rbs && (
+                    <div className="mt-4 space-y-3">
+                      <h4 className="font-medium text-blue-900">📊 Analysis Results</h4>
+                      <div className="text-sm text-blue-800 space-y-2">
+                        <p><strong>R² Score:</strong> {(optimizationResults.rbs.analysis?.r2_score * 100).toFixed(1)}%</p>
+                        <p><strong>Sample Size:</strong> {optimizationResults.rbs.analysis?.sample_size}</p>
+                      </div>
+                      
+                      <button
+                        onClick={() => applyOptimizedWeights('rbs')}
+                        disabled={applyingWeights}
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+                      >
+                        Apply Suggested Weights
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Match Predictor Optimization */}
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold text-green-900 mb-4">🎯 Match Predictor Optimization</h3>
+                  <p className="text-green-700 mb-4 text-sm">
+                    Analyze predictor variables and get recommendations for optimizing the match prediction algorithm.
+                  </p>
+                  
+                  <button
+                    onClick={analyzeMatchPredictor}
+                    disabled={analyzingFormulas}
+                    className="w-full px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {analyzingFormulas ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🎯</span>
+                        <span>Analyze Match Predictor</span>
+                      </>
+                    )}
+                  </button>
+
+                  {optimizationResults.predictor && (
+                    <div className="mt-4 space-y-3">
+                      <h4 className="font-medium text-green-900">📊 Analysis Results</h4>
+                      <div className="text-sm text-green-800 space-y-2">
+                        <p><strong>R² Score:</strong> {(optimizationResults.predictor.analysis?.r2_score * 100).toFixed(1)}%</p>
+                        <p><strong>Sample Size:</strong> {optimizationResults.predictor.analysis?.sample_size}</p>
+                      </div>
+                      
+                      <button
+                        onClick={() => applyOptimizedWeights('predictor')}
+                        disabled={applyingWeights}
+                        className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400"
+                      >
+                        Apply Optimized Configuration
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Results Tab */}
+        {activeTab === 'results' && (
+          <div className="space-y-6">
+            {!viewingReferee ? (
+              /* Referee Summary View */
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">📊 Referee Analysis Results</h2>
+                <p className="text-gray-600 mb-6">
+                  Browse referee performance analysis and bias scores. Click on any referee to view detailed statistics.
+                </p>
+
+                {refereeSummary.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referee</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Matches</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teams Analyzed</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg RBS Score</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {refereeSummary.map((referee) => (
+                          <tr key={referee.referee} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">{referee.referee}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{referee.total_matches}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{referee.teams_count}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className={`text-sm font-medium ${
+                                referee.avg_rbs_score > 0 ? 'text-green-600' : 
+                                referee.avg_rbs_score < 0 ? 'text-red-600' : 'text-gray-600'
+                              }`}>
+                                {referee.avg_rbs_score?.toFixed(3) || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <button
+                                onClick={() => fetchRefereeDetails(referee.referee)}
+                                className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                              >
+                                View Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No referee data available. Upload match data first.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Referee Details View */
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Referee: {viewingReferee}</h2>
+                    <p className="text-gray-600">Detailed bias analysis and team-specific statistics</p>
+                  </div>
+                  <button
+                    onClick={goBackToRefereeList}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    ← Back to List
+                  </button>
+                </div>
+
+                {selectedRefereeDetails && (
+                  <div className="space-y-6">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div className="text-2xl font-bold text-blue-600">{selectedRefereeDetails.total_matches}</div>
+                        <div className="text-blue-700">Total Matches</div>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="text-2xl font-bold text-green-600">{selectedRefereeDetails.teams_analyzed}</div>
+                        <div className="text-green-700">Teams Analyzed</div>
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <div className="text-2xl font-bold text-purple-600">{selectedRefereeDetails.avg_goals_per_match?.toFixed(1)}</div>
+                        <div className="text-purple-700">Avg Goals/Match</div>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                        <div className="text-2xl font-bold text-orange-600">{selectedRefereeDetails.avg_cards_per_match?.toFixed(1)}</div>
+                        <div className="text-orange-700">Avg Cards/Match</div>
+                      </div>
+                    </div>
+
+                    {/* RBS Results Table */}
+                    {selectedRefereeDetails.rbs_results && selectedRefereeDetails.rbs_results.length > 0 && (
+                      <div className="overflow-x-auto">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">🎯 Team-Specific Bias Scores</h3>
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RBS Score</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {selectedRefereeDetails.rbs_results.map((result) => (
+                              <tr key={result.team_name}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">{result.team_name}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className={`text-sm font-medium ${
+                                    result.rbs_score > 0 ? 'text-green-600' : 
+                                    result.rbs_score < 0 ? 'text-red-600' : 'text-gray-600'
+                                  }`}>
+                                    {result.rbs_score?.toFixed(3)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">{result.matches_with_ref}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">{result.confidence_level}%</div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
