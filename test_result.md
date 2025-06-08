@@ -47,6 +47,7 @@ metadata:
 test_plan:
   current_focus:
     - "Starting XI and Time Decay Functionality"
+    - "XGBoost Tab Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
