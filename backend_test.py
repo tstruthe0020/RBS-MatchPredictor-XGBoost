@@ -2520,8 +2520,11 @@ def test_ml_match_prediction_system():
         return False
 
 if __name__ == "__main__":
+    # Test the Starting XI and time decay functionality
+    test_starting_xi_and_time_decay_functionality()
+    
     # Test the PDF export functionality
-    test_pdf_export_endpoint()
+    # test_pdf_export_endpoint()
     
     # Test the ML-based match prediction system
     # test_ml_match_prediction_system()
