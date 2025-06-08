@@ -2194,6 +2194,151 @@ function App() {
             </div>
           </div>
         )}
+        {activeTab === 'analysis' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">📈 Regression Analysis</h2>
+              <p className="text-gray-600 mb-6">
+                Analyze how different team-level statistics correlate with match outcomes using machine learning models.
+              </p>
+
+              {/* Available Statistics */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Available Statistics</h3>
+                {availableStats.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {availableStats.map(stat => (
+                      <div
+                        key={stat}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedStats.includes(stat)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-blue-300'
+                        }`}
+                        onClick={() => {
+                          if (selectedStats.includes(stat)) {
+                            setSelectedStats(selectedStats.filter(s => s !== stat));
+                          } else {
+                            setSelectedStats([...selectedStats, stat]);
+                          }
+                        }}
+                      >
+                        <div className="font-medium text-gray-900">{stat.replace(/_/g, ' ').toUpperCase()}</div>
+                        {statDescriptions[stat] && (
+                          <div className="text-sm text-gray-600 mt-1">{statDescriptions[stat]}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Loading available statistics...</p>
+                    <button
+                      onClick={fetchAvailableStats}
+                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Refresh Statistics
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Analysis Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Target Variable
+                  </label>
+                  <select
+                    value={regressionTarget}
+                    onChange={(e) => setRegressionTarget(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="points_per_game">Points Per Game</option>
+                    <option value="match_result">Match Result</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selected Statistics: {selectedStats.length}
+                  </label>
+                  <button
+                    onClick={() => setSelectedStats([])}
+                    disabled={selectedStats.length === 0}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+
+              {/* Run Analysis Button */}
+              <div className="mb-6">
+                <button
+                  onClick={runRegressionAnalysis}
+                  disabled={analyzing || selectedStats.length === 0}
+                  className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {analyzing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🧪</span>
+                      <span>Run Regression Analysis</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Analysis Results */}
+              {regressionResult && (
+                <div className="bg-white p-6 rounded-lg border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Analysis Results</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Model Performance</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Model Type:</span>
+                          <span className="font-medium">{regressionResult.model_type}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">R² Score:</span>
+                          <span className="font-medium">{(regressionResult.results?.r2_score * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sample Size:</span>
+                          <span className="font-medium">{regressionResult.sample_size}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Feature Importance</h4>
+                      <div className="space-y-1 text-sm">
+                        {regressionResult.results?.feature_importance && 
+                          Object.entries(regressionResult.results.feature_importance)
+                            .slice(0, 5)
+                            .map(([feature, importance]) => (
+                              <div key={feature} className="flex justify-between">
+                                <span className="text-gray-600">{feature.replace(/_/g, ' ')}:</span>
+                                <span className="font-medium">{(importance * 100).toFixed(1)}%</span>
+                              </div>
+                            ))
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Prediction Config Tab */}
         {activeTab === 'config' && (
