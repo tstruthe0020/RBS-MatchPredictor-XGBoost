@@ -86,6 +86,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified that the uploaded data is correctly reflected in the Dashboard statistics. After uploading test files, the database statistics show 15550 Total Records, 522 Matches, 944 Team Stats, and 14084 Player Stats. This confirms that the file upload functionality is working correctly and the data is being properly stored in the database. The only remaining minor issue is that the 'Uploaded Datasets' section doesn't appear in the Upload Data tab, but this doesn't affect the core functionality."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the complete Upload Data functionality including the datasets endpoint. All three upload sections (Match Data, Team Stats, Player Stats) work correctly. Files can be selected and uploaded successfully, with proper status messages displayed after upload. The 'Uploaded Datasets' section now appears after successful uploads and displays dataset information correctly, including dataset name, record counts, and upload dates. The Dashboard statistics are also updated correctly after uploads. The complete upload-to-display workflow is now fully functional."
 
 agent_communication:
   - agent: "testing"
