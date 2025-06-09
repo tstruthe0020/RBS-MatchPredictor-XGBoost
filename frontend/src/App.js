@@ -19,6 +19,21 @@ import {
   getRBSScoreColor
 } from './analysis-components';
 
+import {
+  fetchEnhancedRBSAnalysis,
+  fetchTeamPerformance,
+  fetchAllPredictionConfigs,
+  fetchAllRBSConfigs,
+  deletePredictionConfig,
+  deleteRBSConfig,
+  runAdvancedOptimization,
+  formatOptimizationResults,
+  RBSVarianceAnalysis,
+  TeamPerformanceMetrics,
+  ConfigurationList,
+  OptimizationResults
+} from './advanced-features';
+
 const API = (process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001') + '/api';
 
 function App() {
