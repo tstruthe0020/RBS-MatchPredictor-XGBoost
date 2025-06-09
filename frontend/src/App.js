@@ -623,23 +623,24 @@ function App() {
               </div>
 
               {/* ML Model Status */}
-              <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+              <div className="mt-8 p-4 rounded-lg" style={{backgroundColor: '#A3D9FF'}}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">🧠 XGBoost Models Status</h3>
+                    <h3 className="text-lg font-semibold" style={{color: '#002629'}}>🧠 XGBoost Models Status</h3>
                     <div className="flex items-center space-x-2 mt-2">
                       <span className={`inline-block w-3 h-3 rounded-full ${mlStatus?.models_loaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium" style={{color: '#002629'}}>
                         {mlStatus?.models_loaded ? '✅ Models Ready' : '❌ Models Need Training'}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs" style={{color: '#002629', opacity: 0.7}}>
                         ({mlStatus?.feature_columns_count || 0} features)
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={checkMLStatus}
-                    className="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700"
+                    className="px-3 py-1 text-sm text-white rounded hover:opacity-90 transition-opacity"
+                    style={{backgroundColor: '#1C5D99'}}
                   >
                     🔄 Refresh
                   </button>
