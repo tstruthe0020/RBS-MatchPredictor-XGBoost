@@ -2551,12 +2551,15 @@ class MLMatchPredictor:
             if starting_xi:
                 # Filter stats by starting XI players
                 selected_players = [pos.player.player_name for pos in starting_xi.positions if pos.player]
+                print(f"Enhanced prediction for {team_name}: Using Starting XI with {len(selected_players)} players")
                 stats = await self.calculate_team_averages_for_players(team_name, is_home, selected_players, decay_config)
             else:
                 # Use existing method but apply time decay
+                print(f"Enhanced prediction for {team_name}: Using team averages (no Starting XI)")
                 stats = await self.calculate_team_averages_with_decay(team_name, is_home, decay_config)
             
             if not stats:
+                print(f"Warning: No stats found for {team_name}")
                 return None
             
             # Ensure all required fields exist with defaults
