@@ -3,6 +3,21 @@ import axios from 'axios';
 import PlayerSearchInput from './PlayerSearchInput';
 import './App.css';
 import './custom-colors.css';
+import { 
+  VARIABLE_CATEGORIES, 
+  runRegressionAnalysis, 
+  savePredictionConfig, 
+  saveRBSConfig,
+  runFormulaOptimization,
+  fetchRefereeAnalysis,
+  fetchDetailedRefereeAnalysis,
+  DEFAULT_PREDICTION_CONFIG,
+  DEFAULT_RBS_CONFIG,
+  formatPercentage,
+  formatScore,
+  getConfidenceColor,
+  getRBSScoreColor
+} from './analysis-components';
 
 const API = (process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001') + '/api';
 
