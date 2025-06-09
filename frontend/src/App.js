@@ -1052,6 +1052,52 @@ function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Team Performance Analysis */}
+              <div className="mt-8 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#1C5D99'}}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{color: '#002629'}}>📊 Team Performance Analysis</h3>
+                    <p className="text-sm mt-1" style={{color: '#002629', opacity: 0.8}}>Detailed performance metrics for any team</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 mb-4">
+                  <select
+                    value={selectedTeamForAnalysis}
+                    onChange={(e) => setSelectedTeamForAnalysis(e.target.value)}
+                    className="form-select"
+                    style={{minWidth: '200px'}}
+                  >
+                    <option value="">Select Team for Analysis</option>
+                    {teams.map(team => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => fetchTeamPerformanceData(selectedTeamForAnalysis)}
+                    disabled={!selectedTeamForAnalysis || loadingTeamPerformance}
+                    className="px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    style={{backgroundColor: '#1C5D99'}}
+                  >
+                    {loadingTeamPerformance ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📈</span>
+                        <span>Analyze Performance</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {teamPerformanceData && (
+                  <TeamPerformanceMetrics performanceData={teamPerformanceData} />
+                )}
+              </div>
             </div>
           </div>
         )}
