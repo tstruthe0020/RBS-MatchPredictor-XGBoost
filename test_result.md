@@ -66,6 +66,20 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the Database Management UI in the Dashboard tab. The section is properly displayed with warning colors (red/orange theme) as required. The database statistics are displayed correctly in a grid layout showing Total Records, Matches, Team Stats, and Player Stats. The 'Refresh Stats' button works correctly and fetches the latest database statistics from the backend. The 'Wipe Database' button is present in the Danger Zone section with proper styling. The confirmation flow for database wipe includes multiple confirmations as required - first a warning dialog listing all data that will be deleted, then a final warning dialog, and finally a prompt asking the user to type 'DELETE' to confirm. The button also shows a loading state when processing. The UI is well-integrated with the existing Dashboard layout and the stats grid is responsive."
+  - task: "Upload Data Tab Functionality"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Testing the Upload Data tab functionality."
+      - working: false
+        agent: "testing"
+        comment: "Found a critical issue with the file upload functionality in the Upload Data tab. The UI components are correctly implemented with three upload sections (Match Data, Team Stats, Player Stats), file input controls that accept .csv files, and proper styling. However, all file uploads fail with 404 errors. The issue is a mismatch between frontend API calls and backend endpoints. In the frontend, the handleFileUpload function makes requests to '${API}/upload-${datasetType}' (e.g., '/api/upload-matches'), but the backend endpoints are defined as '/upload/matches', '/upload/team-stats', and '/upload/player-stats'. This path mismatch causes all upload attempts to fail. The 'Uploaded Datasets' section does not appear after uploads since they all fail."
 
 agent_communication:
   - agent: "testing"
