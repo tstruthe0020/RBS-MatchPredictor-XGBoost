@@ -223,6 +223,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the Prediction Config tab functionality. The tab displays correctly with a clear header 'Prediction Configuration' and a description explaining customization of prediction algorithm parameters, xG calculations, and performance adjustments. The configuration selection dropdown is present and functional. The Edit button works correctly, toggling the editing interface when clicked. When in edit mode, the interface displays multiple numeric input fields organized into categories including 'xG Calculation Weights' and 'Performance Adjustments'. The Save Configuration button is present and properly enabled when in edit mode. All form elements are correctly styled according to the application's color scheme. The UI is responsive and maintains proper spacing and alignment."
+      - working: true
+        agent: "testing"
+        comment: "Verified that the 422 errors in the Prediction Config tab have been resolved. Successfully navigated to the Prediction Config tab, clicked the Edit button to enable editing mode, modified the Shot-based Weight field from 0.4 to 0.45 and the Historical Weight field from 0.4 to 0.35, and clicked the Save Configuration button. The API request to /api/prediction-config was successful with a 200 status code. No 422 errors were detected in the console or network requests. The form validation is working correctly, ensuring that the xG weights sum to 1.0 as required by the backend validation."
   - task: "RBS Config Tab Functionality"
     implemented: true
     working: true
@@ -237,6 +240,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the RBS Config tab functionality. The tab displays correctly with a clear header 'Referee Bias Score Configuration' and appropriate description. The RBS configuration selection dropdown is present and functional. The Edit button works correctly, toggling the editing interface when clicked. When in edit mode, the interface displays 7 statistical weight input fields organized into categories including 'Statistical Weights' and 'Confidence Thresholds'. The Save RBS Configuration button is present and properly enabled when in edit mode. All form elements are correctly styled according to the application's color scheme. The UI is responsive and maintains proper spacing and alignment."
+      - working: true
+        agent: "testing"
+        comment: "Verified that the 422 errors in the RBS Config tab have been resolved. Successfully navigated to the RBS Config tab, clicked the Edit button to enable editing mode, modified the Yellow Cards Weight field from 0.3 to 0.35 and the Red Cards Weight field from 0.5 to 0.55, and clicked the Save RBS Configuration button. The API request to /api/rbs-config was successful with a 200 status code. No 422 errors were detected in the console or network requests. The form validation is working correctly, ensuring that at least one weight is positive as required by the backend validation."
   - task: "Formula Optimization Tab Functionality"
     implemented: true
     working: true
