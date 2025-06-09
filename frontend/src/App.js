@@ -571,29 +571,29 @@ function App() {
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">📊 Football Analytics Dashboard</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <h2 className="text-xl font-bold mb-4" style={{color: '#002629'}}>📊 Football Analytics Dashboard</h2>
+              <p className="mb-6" style={{color: '#002629', opacity: 0.8}}>
                 Advanced football match prediction system with Enhanced XGBoost models, Starting XI analysis, and Time Decay algorithms.
               </p>
 
               {/* Statistics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-600">{teams.length}</div>
-                  <div className="text-blue-700">Teams</div>
+                <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                  <div className="text-2xl font-bold" style={{color: '#002629'}}>{teams.length}</div>
+                  <div style={{color: '#002629'}}>Teams</div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <div className="text-2xl font-bold text-green-600">{referees.length}</div>
-                  <div className="text-green-700">Referees</div>
+                <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#12664F'}}>
+                  <div className="text-2xl font-bold" style={{color: '#002629'}}>{referees.length}</div>
+                  <div style={{color: '#002629'}}>Referees</div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <div className="text-2xl font-bold text-purple-600">{stats.matches || 0}</div>
-                  <div className="text-purple-700">Matches</div>
+                <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                  <div className="text-2xl font-bold" style={{color: '#002629'}}>{stats.matches || 0}</div>
+                  <div style={{color: '#002629'}}>Matches</div>
                 </div>
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <div className="text-2xl font-bold text-orange-600">{stats.player_stats || 0}</div>
-                  <div className="text-orange-700">Player Records</div>
+                <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#12664F'}}>
+                  <div className="text-2xl font-bold" style={{color: '#002629'}}>{stats.player_stats || 0}</div>
+                  <div style={{color: '#002629'}}>Player Records</div>
                 </div>
               </div>
 
