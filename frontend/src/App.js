@@ -2559,6 +2559,57 @@ function App() {
                   </div>
                 </div>
               )}
+
+              {/* Advanced Optimization Section */}
+              <div className="mt-8 p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
+                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🚀 Advanced AI Optimization</h3>
+                <p className="text-sm mb-6" style={{color: '#002629', opacity: 0.8}}>
+                  Run specialized optimization algorithms for different aspects of the system.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Optimization Type</label>
+                    <select
+                      value={selectedOptimizationType}
+                      onChange={(e) => setSelectedOptimizationType(e.target.value)}
+                      className="form-select w-full"
+                    >
+                      <option value="prediction-suggestion">AI Prediction Config Suggestion</option>
+                      <option value="rbs-optimization">RBS Optimization Analysis</option>
+                      <option value="predictor-optimization">Predictor Feature Optimization</option>
+                      <option value="comprehensive-regression">Comprehensive Regression Analysis</option>
+                    </select>
+                  </div>
+                  <div className="pt-6">
+                    <button
+                      onClick={() => runAdvancedOptimizationAnalysis(selectedOptimizationType)}
+                      disabled={runningAdvancedOptimization}
+                      className="px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      style={{backgroundColor: '#002629'}}
+                    >
+                      {runningAdvancedOptimization ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Optimizing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🤖</span>
+                          <span>Run Advanced Analysis</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {advancedOptimizationResults && (
+                  <OptimizationResults 
+                    results={advancedOptimizationResults} 
+                    type={selectedOptimizationType} 
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}
