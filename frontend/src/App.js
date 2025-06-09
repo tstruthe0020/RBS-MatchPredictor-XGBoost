@@ -475,7 +475,7 @@ function App() {
   // Database Management Functions
   const fetchDatabaseStats = async () => {
     try {
-      const response = await axios.get(`${API}/database/stats`);
+      const response = await axios.get(`${API}/stats`);
       setDatabaseStats(response.data);
     } catch (error) {
       console.error('Error fetching database stats:', error);
@@ -483,49 +483,81 @@ function App() {
   };
 
   const wipeDatabase = async () => {
-    // Double confirmation for safety
-    const firstConfirm = window.confirm(
-      '⚠️ WARNING: This will permanently delete ALL data from the database!\n\n' +
-      'This includes:\n' +
-      '• All match data\n' +
-      '• All team statistics\n' +
-      '• All player statistics\n' +
-      '• All referee bias scores\n' +
-      '• All configurations\n\n' +
-      'Are you sure you want to continue?'
-    );
-    
-    if (!firstConfirm) return;
-    
-    const secondConfirm = window.confirm(
-      '🚨 FINAL WARNING: This action cannot be undone!\n\n' +
-      'Type "DELETE" in the next prompt to confirm database wipe.'
-    );
-    
-    if (!secondConfirm) return;
-    
-    const finalConfirm = window.prompt(
-      'Type "DELETE" (in capital letters) to confirm:'
-    );
-    
-    if (finalConfirm !== 'DELETE') {
-      alert('❌ Database wipe cancelled - confirmation text did not match.');
-      return;
-    }
-    
-    setWipingDatabase(true);
+    const confirmations = [
+      "⚠️ DANGER: This will permanently delete ALL data from the database!\n\nThis includes:\n• All match data\n• All team statistics\n• All player statistics\n• All RBS calculations\n• All trained ML models\n\nThis action CANNOT be undone!\n\nType 'DELETE' to confirm:",
+      "⚠️ FINAL WARNING: You are about to permanently destroy all data!\n\nAre you absolutely certain you want to proceed?\n\nType 'CONFIRM' to continue:",
+      "⚠️ LAST CHANCE: This is your final confirmation!\n\nOnce you click OK, ALL DATA WILL BE PERMANENTLY DELETED!\n\nClick OK to proceed or Cancel to abort:"
+    ];
+
     try {
-      const response = await axios.delete(`${API}/database/wipe`);
+      // First confirmation
+      const firstConfirm = prompt(confirmations[0]);
+      if (firstConfirm !== 'DELETE') {
+        alert('❌ Database wipe cancelled - incorrect confirmation text');
+        return;
+      }
+
+      // Second confirmation  
+      const secondConfirm = prompt(confirmations[1]);
+      if (secondConfirm !== 'CONFIRM') {
+        alert('❌ Database wipe cancelled - incorrect confirmation text');
+        return;
+      }
+
+      // Final confirmation
+      const finalConfirm = window.confirm(confirmations[2]);
+      if (!finalConfirm) {
+        alert('❌ Database wipe cancelled by user');
+        return;
+      }
+
+      setWipingDatabase(true);
+      const response = await axios.delete(`${API}/wipe-database`);
       
       if (response.data.success) {
-        alert(`✅ ${response.data.message}`);
-        // Refresh all data after wipe
-        await fetchInitialData();
+        alert('✅ Database successfully wiped! All data has been permanently deleted.');
+        // Reset all local state
+        setTeams([]);
+        setReferees([]);
+        setStats({});
+        setDatasets([]);
+        setDatabaseStats(null);
+        setMlStatus(null);
+        setPredictionResult(null);
+        setEnhancedPredictionResult(null);
       }
     } catch (error) {
-      alert(`❌ Database Wipe Error: ${error.response?.data?.detail || error.message}`);
+      console.error('Error wiping database:', error);
+      alert(`❌ Error wiping database: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setWipingDatabase(false);
     }
-    setWipingDatabase(false);
+  };
+
+  // RBS Calculation functions
+  const checkRBSStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/rbs-status`);
+      setRbsStatus(response.data);
+    } catch (error) {
+      console.error('Error checking RBS status:', error);
+      setRbsStatus(null);
+    }
+  };
+
+  const calculateRBS = async () => {
+    setCalculatingRBS(true);
+    try {
+      const response = await axios.post(`${API}/calculate-rbs`);
+      setRbsResults(response.data);
+      setRbsStatus(response.data.status);
+      alert(`✅ RBS Calculation Complete!\n\n• ${response.data.referees_analyzed} referees analyzed\n• ${response.data.teams_covered} teams covered\n• ${response.data.calculations_performed} bias scores calculated`);
+    } catch (error) {
+      console.error('Error calculating RBS:', error);
+      alert(`❌ RBS Calculation Error: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setCalculatingRBS(false);
+    }
   };
 
   // File Upload Function
