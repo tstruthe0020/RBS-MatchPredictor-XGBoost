@@ -108,6 +108,8 @@ function App() {
   const [refereeAnalysis, setRefereeAnalysis] = useState(null);
   const [selectedRefereeForAnalysis, setSelectedRefereeForAnalysis] = useState('');
   const [loadingResults, setLoadingResults] = useState(false);
+  const [detailedRefereeData, setDetailedRefereeData] = useState(null);
+  const [loadingDetailedAnalysis, setLoadingDetailedAnalysis] = useState(false);
 
   // Initialize data on component mount
   useEffect(() => {
