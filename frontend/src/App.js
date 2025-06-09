@@ -599,21 +599,21 @@ function App() {
 
               {/* Enhanced Features */}
               <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 Enhanced Features</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🚀 Enhanced Features</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="font-semibold text-blue-900">⚽ Starting XI Analysis</h4>
-                    <p className="text-blue-700 text-sm mt-1">Select specific players for each team to get predictions based on actual lineups</p>
-                    <div className="mt-2 text-xs text-blue-600">
+                  <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#1C5D99'}}>
+                    <h4 className="font-semibold" style={{color: '#002629'}}>⚽ Starting XI Analysis</h4>
+                    <p className="text-sm mt-1" style={{color: '#002629', opacity: 0.8}}>Select specific players for each team to get predictions based on actual lineups</p>
+                    <div className="mt-2 text-xs" style={{color: '#1C5D99'}}>
                       • Formation-based selection (4-4-2, 4-3-3, etc.)
                       • Player stats aggregation
                       • Position-aware analysis
                     </div>
                   </div>
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
-                    <h4 className="font-semibold text-green-900">⏰ Time Decay Weighting</h4>
-                    <p className="text-green-700 text-sm mt-1">Recent matches have higher impact than historical data</p>
-                    <div className="mt-2 text-xs text-green-600">
+                  <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+                    <h4 className="font-semibold" style={{color: '#002629'}}>⏰ Time Decay Weighting</h4>
+                    <p className="text-sm mt-1" style={{color: '#002629', opacity: 0.8}}>Recent matches have higher impact than historical data</p>
+                    <div className="mt-2 text-xs" style={{color: '#12664F'}}>
                       • Configurable decay presets
                       • Exponential/Linear decay options
                       • Season-aware weighting
