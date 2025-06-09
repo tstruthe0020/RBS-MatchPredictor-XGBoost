@@ -52,6 +52,20 @@ frontend:
       - working: true
         agent: "testing"
         comment: "The API URL issue has been fixed. The Enhanced XGBoost tab now loads correctly and all UI components are visible and functional. The Starting XI toggle button works properly, allowing users to enable/disable the Starting XI functionality. The time decay checkbox and settings are also working correctly - when the checkbox is unchecked, the decay preset dropdown is disabled, and when checked, it's enabled. The formation dropdown is visible and can be changed when Starting XI is enabled. The team and referee dropdowns are also present and functional. The interface handles empty database gracefully by showing the appropriate UI elements even when no data is available."
+  - task: "Database Management UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Testing the Database Management UI in the Dashboard tab."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the Database Management UI in the Dashboard tab. The section is properly displayed with warning colors (red/orange theme) as required. The database statistics are displayed correctly in a grid layout showing Total Records, Matches, Team Stats, and Player Stats. The 'Refresh Stats' button works correctly and fetches the latest database statistics from the backend. The 'Wipe Database' button is present in the Danger Zone section with proper styling. The confirmation flow for database wipe includes multiple confirmations as required - first a warning dialog listing all data that will be deleted, then a final warning dialog, and finally a prompt asking the user to type 'DELETE' to confirm. The button also shows a loading state when processing. The UI is well-integrated with the existing Dashboard layout and the stats grid is responsive."
 
 agent_communication:
   - agent: "testing"
@@ -64,17 +78,20 @@ agent_communication:
     message: "I've completed testing the Enhanced XGBoost functionality after the API URL issue was fixed. The Enhanced XGBoost tab now loads correctly and all UI components are visible and functional. The Starting XI toggle button works properly, allowing users to enable/disable the Starting XI functionality. The time decay checkbox and settings are also working correctly - when the checkbox is unchecked, the decay preset dropdown is disabled, and when checked, it's enabled. The formation dropdown is visible and can be changed when Starting XI is enabled. The team and referee dropdowns are also present and functional. The interface handles empty database gracefully by showing the appropriate UI elements even when no data is available. All the required API endpoints (/api/formations, /api/time-decay/presets, /api/teams, /api/referees) are now being called correctly, and the UI is responding appropriately to user interactions."
   - agent: "testing"
     message: "I've successfully tested the database management functionality. The GET /api/database/stats endpoint correctly returns collection statistics including total document count and per-collection counts. The DELETE /api/database/wipe endpoint properly clears all collections and returns success confirmation with stats. Both endpoints are accessible and working correctly. I found and fixed a bug in the database stats endpoint where datetime.datetime.now() was incorrectly referenced (changed to datetime.now()). The same issue was present in the database wipe endpoint, which I also fixed. After these fixes, both endpoints are working properly."
+  - agent: "testing"
+    message: "I've tested the Database Management UI in the Dashboard tab. The section is properly displayed with warning colors (red/orange theme) as required. The database statistics are displayed correctly in a grid layout showing Total Records, Matches, Team Stats, and Player Stats. The 'Refresh Stats' button works correctly and fetches the latest database statistics from the backend. The 'Wipe Database' button is present in the Danger Zone section with proper styling. The confirmation flow for database wipe includes multiple confirmations as required - first a warning dialog listing all data that will be deleted, then a final warning dialog, and finally a prompt asking the user to type 'DELETE' to confirm. The button also shows a loading state when processing. The UI is well-integrated with the existing Dashboard layout and the stats grid is responsive."
 
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 3
+  test_sequence: 4
 
 test_plan:
   current_focus:
     - "Starting XI and Time Decay Functionality"
     - "XGBoost Tab Functionality"
     - "Database Management Functionality"
+    - "Database Management UI"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
