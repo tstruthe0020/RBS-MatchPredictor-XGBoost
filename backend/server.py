@@ -6748,26 +6748,65 @@ async def train_ml_models():
 async def get_ml_models_status():
     """Get status of ML models"""
     try:
-        model_paths = ml_predictor.get_model_paths()
-        status = {}
+        models_loaded = hasattr(ml_predictor, 'models') and ml_predictor.models and len(ml_predictor.models) == 5
+        feature_columns_count = len(ml_predictor.feature_columns) if hasattr(ml_predictor, 'feature_columns') and ml_predictor.feature_columns else 0
         
-        for model_name, path in model_paths.items():
-            status[model_name] = {
-                "exists": os.path.exists(path),
-                "path": path,
-                "last_modified": None
-            }
-            if os.path.exists(path):
-                status[model_name]["last_modified"] = os.path.getmtime(path)
+        # Get training metadata if available
+        training_metadata = {}
+        try:
+            if os.path.exists('/tmp/model_training_metadata.json'):
+                with open('/tmp/model_training_metadata.json', 'r') as f:
+                    training_metadata = json.load(f)
+        except:
+            pass
+        
+        # Get current data counts for retraining recommendations
+        try:
+            matches_count = await db.matches.count_documents({})
+            team_stats_count = await db.team_stats.count_documents({})
+            player_stats_count = await db.player_stats.count_documents({})
+            
+            total_data_points = matches_count + team_stats_count + player_stats_count
+            
+            # Check if significant new data has been added since last training
+            last_data_count = training_metadata.get('data_count_at_training', 0)
+            data_increase_percentage = ((total_data_points - last_data_count) / max(last_data_count, 1)) * 100 if last_data_count > 0 else 0
+            
+            retraining_recommended = data_increase_percentage > 20  # Recommend retraining if data increased by >20%
+            
+        except Exception as e:
+            print(f"Error getting data counts: {e}")
+            matches_count = team_stats_count = player_stats_count = 0
+            total_data_points = 0
+            data_increase_percentage = 0
+            retraining_recommended = False
         
         return {
-            "success": True,
-            "models_loaded": len(ml_predictor.models) == 5,
-            "feature_columns_count": len(ml_predictor.feature_columns),
-            "models_status": status
+            "models_loaded": models_loaded,
+            "feature_columns_count": feature_columns_count,
+            "models_info": {
+                "classifier": "XGBoost Win/Draw/Loss classifier",
+                "home_goals": "XGBoost home goals regressor", 
+                "away_goals": "XGBoost away goals regressor",
+                "home_xg": "XGBoost home xG regressor",
+                "away_xg": "XGBoost away xG regressor"
+            } if models_loaded else None,
+            "last_trained": training_metadata.get('timestamp'),
+            "training_data_count": training_metadata.get('data_count_at_training', 0),
+            "current_data_count": total_data_points,
+            "data_increase_since_training": f"{data_increase_percentage:.1f}%",
+            "retraining_recommended": retraining_recommended,
+            "retraining_reason": f"Data increased by {data_increase_percentage:.1f}% since last training" if retraining_recommended else None,
+            "current_data_breakdown": {
+                "matches": matches_count,
+                "team_stats": team_stats_count, 
+                "player_stats": player_stats_count
+            }
         }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Status error: {str(e)}")
+        print(f"Error checking ML models status: {e}")
+        raise HTTPException(status_code=500, detail=f"Error checking ML models status: {str(e)}")
 
 @api_router.post("/ml-models/reload")
 async def reload_ml_models():
