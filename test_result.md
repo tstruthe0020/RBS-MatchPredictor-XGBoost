@@ -112,7 +112,6 @@ test_plan:
     - "Database Management Functionality"
     - "Database Management UI"
     - "Upload Data Tab Functionality"
-  stuck_tasks: 
-    - "Upload Data Tab Functionality"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
