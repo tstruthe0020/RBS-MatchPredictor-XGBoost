@@ -1,0 +1,197 @@
+/* Custom Color Palette CSS Variables */
+:root {
+  --castleton-green: #12664F;
+  --gunmetal: #002629;
+  --lapis-lazuli: #1C5D99;
+  --isabelline: #F2E9E4;
+  --uranian-blue: #A3D9FF;
+}
+
+/* Custom button styles */
+.btn-primary {
+  background-color: var(--lapis-lazuli);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: var(--castleton-green);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.btn-secondary:hover {
+  opacity: 0.9;
+}
+
+.btn-dark {
+  background-color: var(--gunmetal);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.btn-dark:hover {
+  opacity: 0.9;
+}
+
+/* Form elements */
+.form-input {
+  border: 2px solid var(--lapis-lazuli);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--gunmetal);
+  background-color: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--castleton-green);
+  box-shadow: 0 0 0 3px rgba(28, 93, 153, 0.1);
+}
+
+.form-select {
+  border: 2px solid var(--lapis-lazuli);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--gunmetal);
+  background-color: white;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--castleton-green);
+  box-shadow: 0 0 0 3px rgba(28, 93, 153, 0.1);
+}
+
+/* Card styles */
+.card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  color: var(--gunmetal);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.card-text {
+  color: var(--gunmetal);
+  opacity: 0.8;
+}
+
+/* Stat cards */
+.stat-card {
+  background-color: var(--uranian-blue);
+  border: 2px solid var(--lapis-lazuli);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.stat-card-number {
+  color: var(--gunmetal);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-card-label {
+  color: var(--gunmetal);
+  opacity: 0.8;
+  font-size: 0.875rem;
+}
+
+/* Enhanced feature cards */
+.feature-card {
+  background-color: var(--isabelline);
+  border: 2px solid var(--lapis-lazuli);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.feature-card-alt {
+  background-color: var(--isabelline);
+  border: 2px solid var(--castleton-green);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* File input styling */
+input[type="file"]::file-selector-button {
+  background-color: var(--lapis-lazuli);
+  color: white;
+  border: none;
+  margin-right: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+input[type="file"]::file-selector-button:hover {
+  opacity: 0.9;
+}
+
+/* Dataset cards */
+.dataset-card {
+  background-color: var(--uranian-blue);
+  border: 2px solid var(--castleton-green);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Status indicators */
+.status-ready {
+  background-color: var(--uranian-blue);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Database management */
+.db-card {
+  background-color: var(--isabelline);
+  border: 2px solid var(--gunmetal);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.danger-zone {
+  background-color: var(--uranian-blue);
+  border: 2px solid var(--gunmetal);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Upload sections */
+.upload-section {
+  background-color: var(--isabelline);
+  border: 2px solid var(--lapis-lazuli);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
