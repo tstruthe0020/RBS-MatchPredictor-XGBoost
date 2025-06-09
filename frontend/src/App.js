@@ -655,6 +655,20 @@ function App() {
     setUploadingDataset(false);
   };
 
+  // Load all configuration lists
+  const loadAllConfigurations = async () => {
+    try {
+      const [predictionConfigs, rbsConfigs] = await Promise.all([
+        fetchAllPredictionConfigs(),
+        fetchAllRBSConfigs()
+      ]);
+      setAllPredictionConfigs(predictionConfigs);
+      setAllRBSConfigs(rbsConfigs);
+    } catch (error) {
+      console.error('Error loading configurations:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen" style={{backgroundColor: '#F2E9E4'}}>
       {/* Header */}
