@@ -102,7 +102,7 @@ function App() {
 
   const fetchConfigs = async () => {
     try {
-      const response = await axios.get(`${API}/configs`);
+      const response = await axios.get(`${API}/prediction-configs`);
       setConfigs(response.data.configs || []);
     } catch (error) {
       console.error('Error fetching configs:', error);
