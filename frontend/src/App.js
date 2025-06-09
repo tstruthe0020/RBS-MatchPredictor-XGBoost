@@ -125,7 +125,8 @@ function App() {
         fetchFormations(),
         fetchDecayPresets(),
         checkMLStatus(),
-        fetchDatabaseStats()
+        fetchDatabaseStats(),
+        checkRBSStatus()
       ]);
     } catch (error) {
       console.error('Error fetching initial data:', error);
