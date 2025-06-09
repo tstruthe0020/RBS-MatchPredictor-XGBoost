@@ -126,6 +126,24 @@ function App() {
   const [detailedRefereeData, setDetailedRefereeData] = useState(null);
   const [loadingDetailedAnalysis, setLoadingDetailedAnalysis] = useState(false);
 
+  // Advanced Features States
+  const [enhancedRBSData, setEnhancedRBSData] = useState(null);
+  const [teamPerformanceData, setTeamPerformanceData] = useState(null);
+  const [selectedTeamForAnalysis, setSelectedTeamForAnalysis] = useState('');
+  const [loadingTeamPerformance, setLoadingTeamPerformance] = useState(false);
+  const [loadingEnhancedRBS, setLoadingEnhancedRBS] = useState(false);
+  
+  // Configuration Management States
+  const [allPredictionConfigs, setAllPredictionConfigs] = useState([]);
+  const [allRBSConfigs, setAllRBSConfigs] = useState([]);
+  const [showConfigManager, setShowConfigManager] = useState(false);
+  const [showRBSConfigManager, setShowRBSConfigManager] = useState(false);
+  
+  // Advanced Optimization States
+  const [advancedOptimizationResults, setAdvancedOptimizationResults] = useState(null);
+  const [runningAdvancedOptimization, setRunningAdvancedOptimization] = useState(false);
+  const [selectedOptimizationType, setSelectedOptimizationType] = useState('prediction-suggestion');
+
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
