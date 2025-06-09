@@ -5852,6 +5852,9 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
         else:
             result_dict = result
         
+        # Recursively convert all NumPy types
+        result_dict = convert_numpy_types(result_dict)
+        
         return NumpyJSONResponse(content=result_dict)
         
     except Exception as e:
