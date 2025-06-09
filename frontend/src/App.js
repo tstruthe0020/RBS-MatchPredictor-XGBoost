@@ -54,6 +54,10 @@ function App() {
   // Export states
   const [exportingPDF, setExportingPDF] = useState(false);
 
+  // Database management states
+  const [wipingDatabase, setWipingDatabase] = useState(false);
+  const [databaseStats, setDatabaseStats] = useState(null);
+
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
