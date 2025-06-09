@@ -5725,6 +5725,40 @@ async def get_rbs_results(team: Optional[str] = None, referee: Optional[str] = N
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching RBS results: {str(e)}")
 
+@api_router.get("/rbs-status")
+async def get_rbs_status():
+    """Get RBS calculation status and statistics"""
+    try:
+        # Check if RBS calculations exist
+        rbs_count = await db.rbs_results.count_documents({})
+        
+        if rbs_count == 0:
+            return {
+                "calculated": False,
+                "referees_analyzed": 0,
+                "teams_covered": 0,
+                "total_calculations": 0,
+                "last_calculated": None
+            }
+        
+        # Get latest calculation timestamp
+        latest_result = await db.rbs_results.find_one({}, sort=[("last_updated", -1)])
+        
+        # Get unique referees and teams
+        referees_analyzed = len(await db.rbs_results.distinct("referee"))
+        teams_covered = len(await db.rbs_results.distinct("team_name"))
+        
+        return {
+            "calculated": True,
+            "referees_analyzed": referees_analyzed,
+            "teams_covered": teams_covered,
+            "total_calculations": rbs_count,
+            "last_calculated": latest_result.get("last_updated") if latest_result else None
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking RBS status: {str(e)}")
+
 @api_router.get("/referees")
 async def get_referees():
     """Get list of all referees"""
