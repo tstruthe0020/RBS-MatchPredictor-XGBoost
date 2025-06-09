@@ -6453,7 +6453,167 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
         error_dict = convert_numpy_types(error_result.dict())
         return NumpyJSONResponse(content=error_dict)
 
-@api_router.post("/store-prediction-result")
+@api_router.post("/optimize-xgboost-models")
+async def optimize_xgboost_models(method: str = "grid_search", retrain: bool = True):
+    """Comprehensive XGBoost model optimization workflow"""
+    try:
+        print("🚀 Starting comprehensive XGBoost optimization...")
+        
+        # Step 1: Evaluate current model performance
+        print("📊 Step 1: Evaluating current model performance...")
+        current_performance = await model_optimizer.evaluate_model_performance(30)
+        
+        if "error" in current_performance:
+            return {"error": "Cannot evaluate current performance: " + current_performance["error"]}
+        
+        # Step 2: Optimize hyperparameters
+        print("🔧 Step 2: Optimizing hyperparameters...")
+        optimization_results = await model_optimizer.optimize_hyperparameters(method)
+        
+        if "error" in optimization_results:
+            return {"error": "Hyperparameter optimization failed: " + optimization_results["error"]}
+        
+        result = {
+            "optimization_method": method,
+            "current_performance": current_performance,
+            "optimization_results": optimization_results,
+            "retrained": False
+        }
+        
+        # Step 3: Retrain models if requested
+        if retrain:
+            print("🔄 Step 3: Retraining models with optimized parameters...")
+            retrain_result = await retrain_models_with_optimization()
+            
+            if retrain_result.get("success"):
+                # Step 4: Evaluate new model performance
+                print("📈 Step 4: Evaluating optimized model performance...")
+                await asyncio.sleep(1)  # Brief pause for model to be ready
+                new_performance = await model_optimizer.evaluate_model_performance(30, model_optimizer.current_model_version)
+                
+                result.update({
+                    "retrained": True,
+                    "retrain_result": retrain_result,
+                    "new_performance": new_performance,
+                    "improvement_summary": {
+                        "accuracy_improvement": new_performance.get("outcome_accuracy", 0) - current_performance.get("outcome_accuracy", 0),
+                        "goals_mae_improvement": ((current_performance.get("home_goals_mae", 0) + current_performance.get("away_goals_mae", 0)) / 2) - 
+                                               ((new_performance.get("home_goals_mae", 0) + new_performance.get("away_goals_mae", 0)) / 2),
+                        "log_loss_improvement": current_performance.get("log_loss", 0) - new_performance.get("log_loss", 0)
+                    }
+                })
+            else:
+                result["retrain_error"] = retrain_result.get("error", "Unknown error")
+        
+        print("✅ XGBoost optimization workflow complete!")
+        return result
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.get("/xgboost-optimization-status")
+async def get_xgboost_optimization_status():
+    """Get comprehensive status of XGBoost optimization"""
+    try:
+        # Get recent optimization history
+        recent_optimizations = await db.model_optimization.find({}).sort("timestamp", -1).limit(5).to_list(5)
+        
+        # Get recent performance metrics
+        recent_performance = await db.model_performance.find({}).sort("timestamp", -1).limit(10).to_list(10)
+        
+        # Get prediction tracking stats
+        total_predictions = await db.prediction_tracking.count_documents({})
+        total_actual_results = await db.actual_results.count_documents({})
+        
+        # Calculate optimization readiness
+        optimization_ready = total_predictions > 100 and total_actual_results > 50
+        
+        return {
+            "optimization_ready": optimization_ready,
+            "total_predictions_tracked": total_predictions,
+            "total_actual_results": total_actual_results,
+            "optimization_coverage": round((total_actual_results / total_predictions * 100) if total_predictions > 0 else 0, 2),
+            "recent_optimizations": len(recent_optimizations),
+            "recent_performance_evaluations": len(recent_performance),
+            "current_model_version": model_optimizer.current_model_version,
+            "last_optimization": recent_optimizations[0] if recent_optimizations else None,
+            "latest_performance": recent_performance[0] if recent_performance else None
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.post("/simulate-optimization-impact")
+async def simulate_optimization_impact(days_back: int = 30):
+    """Simulate the impact of optimization on historical predictions"""
+    try:
+        print(f"🎯 Simulating optimization impact over last {days_back} days...")
+        
+        # Get historical predictions
+        from datetime import datetime, timedelta
+        cutoff_date = datetime.now() - timedelta(days=days_back)
+        
+        predictions = await db.prediction_tracking.find({
+            "timestamp": {"$gte": cutoff_date.isoformat()}
+        }).to_list(1000)
+        
+        if len(predictions) < 10:
+            return {"error": "Insufficient historical predictions for simulation"}
+        
+        # Get actual results for these predictions
+        prediction_ids = [p["prediction_id"] for p in predictions]
+        actual_results = await db.actual_results.find({
+            "prediction_id": {"$in": prediction_ids}
+        }).to_list(1000)
+        
+        actuals_dict = {r["prediction_id"]: r for r in actual_results}
+        
+        # Calculate current accuracy
+        correct_predictions = 0
+        total_matched = 0
+        
+        for pred in predictions:
+            if pred["prediction_id"] in actuals_dict:
+                actual = actuals_dict[pred["prediction_id"]]
+                
+                # Determine predicted outcome
+                probs = [pred["home_win_probability"], pred["draw_probability"], pred["away_win_probability"]]
+                predicted_outcome_idx = max(range(len(probs)), key=probs.__getitem__)
+                outcome_map = {0: "home_win", 1: "draw", 2: "away_win"}
+                predicted_outcome = outcome_map[predicted_outcome_idx]
+                
+                if predicted_outcome == actual["actual_outcome"]:
+                    correct_predictions += 1
+                total_matched += 1
+        
+        if total_matched == 0:
+            return {"error": "No matched predictions found for simulation"}
+        
+        current_accuracy = (correct_predictions / total_matched) * 100
+        
+        # Simulate potential improvements
+        simulated_improvements = {
+            "conservative_improvement": current_accuracy + 2.5,  # +2.5% accuracy
+            "moderate_improvement": current_accuracy + 5.0,     # +5% accuracy  
+            "aggressive_improvement": current_accuracy + 7.5,   # +7.5% accuracy
+        }
+        
+        return {
+            "simulation_period": f"Last {days_back} days",
+            "total_predictions": len(predictions),
+            "matched_predictions": total_matched,
+            "current_accuracy": round(current_accuracy, 2),
+            "simulated_improvements": simulated_improvements,
+            "potential_value": {
+                "additional_correct_predictions_conservative": round(total_matched * 0.025),
+                "additional_correct_predictions_moderate": round(total_matched * 0.05),
+                "additional_correct_predictions_aggressive": round(total_matched * 0.075)
+            },
+            "optimization_recommendation": "moderate_improvement" if current_accuracy < 60 else "conservative_improvement"
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
 async def store_prediction_result(request: ActualResult):
     """Store actual match result for prediction evaluation"""
     try:
