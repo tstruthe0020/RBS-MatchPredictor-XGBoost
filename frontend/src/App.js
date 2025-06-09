@@ -407,7 +407,7 @@ function App() {
     formData.append('file', file);
 
     try {
-      const response = await axios.post(`${API}/upload-${datasetType}`, formData, {
+      const response = await axios.post(`${API}/upload/${datasetType}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
