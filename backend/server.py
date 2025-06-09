@@ -1476,9 +1476,14 @@ class MLMatchPredictor:
     
     def load_models(self):
         """Load trained models if they exist"""
-        model_paths = self.get_model_paths()
         try:
-            if all(os.path.exists(path) for path in model_paths.values()):
+            model_paths = self.get_model_paths()
+            
+            # Check if all model files exist
+            models_exist = all(os.path.exists(path) for path in model_paths.values())
+            
+            if models_exist:
+                print("Loading XGBoost models...")
                 self.models['classifier'] = joblib.load(model_paths['classifier'])
                 self.models['home_goals'] = joblib.load(model_paths['home_goals'])
                 self.models['away_goals'] = joblib.load(model_paths['away_goals'])
@@ -1489,9 +1494,19 @@ class MLMatchPredictor:
                 print("XGBoost models loaded successfully")
             else:
                 print("XGBoost models not found - will need to train first")
+                print(f"Models directory: {self.models_dir}")
+                # Initialize empty models dictionary
+                self.models = {}
+                self.scaler = StandardScaler()
+                self.feature_columns = []
+                
         except Exception as e:
             print(f"Error loading XGBoost models: {e}")
+            print(f"Models directory: {self.models_dir}")
+            # Initialize empty models to ensure server can start
             self.models = {}
+            self.scaler = StandardScaler()
+            self.feature_columns = []
     
     def save_models(self):
         """Save trained models"""
