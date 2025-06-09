@@ -5810,17 +5810,24 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
                 decay_config=decay_config if request.use_time_decay else None
             )
         
-        return result
+        # Convert result to dict and ensure NumPy types are handled
+        if hasattr(result, 'dict'):
+            result_dict = result.dict()
+        else:
+            result_dict = result
+        
+        return NumpyJSONResponse(content=result_dict)
         
     except Exception as e:
         print(f"Enhanced prediction error: {e}")
-        return MatchPredictionResponse(
+        error_result = MatchPredictionResponse(
             success=False,
             home_team=request.home_team,
             away_team=request.away_team,
             referee=request.referee_name,
             error=str(e)
         )
+        return NumpyJSONResponse(content=error_result.dict())
 
 @api_router.delete("/database/wipe")
 async def wipe_database():
