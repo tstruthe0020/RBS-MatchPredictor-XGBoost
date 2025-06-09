@@ -5536,6 +5536,60 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
             error=str(e)
         )
 
+@api_router.delete("/database/wipe")
+async def wipe_database():
+    """Wipe all data from the database (for development/testing purposes)"""
+    try:
+        # Clear all collections
+        collections_cleared = 0
+        
+        # Get all collection names
+        collection_names = await db.list_collection_names()
+        
+        for collection_name in collection_names:
+            if collection_name not in ['system.indexes']:  # Skip system collections
+                collection = db[collection_name]
+                delete_result = await collection.delete_many({})
+                print(f"Cleared {delete_result.deleted_count} documents from {collection_name}")
+                collections_cleared += 1
+        
+        return {
+            "success": True,
+            "message": f"Database wiped successfully. Cleared {collections_cleared} collections.",
+            "collections_cleared": collections_cleared,
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"Database wipe error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error wiping database: {str(e)}")
+
+@api_router.get("/database/stats")
+async def get_database_stats():
+    """Get database statistics for monitoring"""
+    try:
+        stats = {}
+        collection_names = await db.list_collection_names()
+        
+        for collection_name in collection_names:
+            if collection_name not in ['system.indexes']:
+                collection = db[collection_name]
+                count = await collection.count_documents({})
+                stats[collection_name] = count
+        
+        total_documents = sum(stats.values())
+        
+        return {
+            "success": True,
+            "total_documents": total_documents,
+            "collections": stats,
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"Database stats error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting database stats: {str(e)}")
+
 @api_router.post("/initialize-default-config")
 async def initialize_default_config():
     """Initialize default prediction configuration"""
