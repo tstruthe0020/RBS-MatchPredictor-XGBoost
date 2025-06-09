@@ -722,9 +722,9 @@ function App() {
         {/* Upload Data Tab */}
         {activeTab === 'upload' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">📁 Upload Football Data</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <h2 className="text-xl font-bold mb-4" style={{color: '#002629'}}>📁 Upload Football Data</h2>
+              <p className="mb-6" style={{color: '#002629', opacity: 0.8}}>
                 Upload your football datasets to enable predictions and analysis.
               </p>
 
@@ -734,20 +734,41 @@ function App() {
                   { id: 'team-stats', name: 'Team Stats', desc: 'Upload team-level statistics' },
                   { id: 'player-stats', name: 'Player Stats', desc: 'Upload individual player statistics' }
                 ].map(dataset => (
-                  <div key={dataset.id} className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2">{dataset.name}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{dataset.desc}</p>
+                  <div key={dataset.id} className="border-2 rounded-lg p-4" style={{borderColor: '#1C5D99', backgroundColor: '#F2E9E4'}}>
+                    <h3 className="font-semibold mb-2" style={{color: '#002629'}}>{dataset.name}</h3>
+                    <p className="text-sm mb-4" style={{color: '#002629', opacity: 0.8}}>{dataset.desc}</p>
                     
                     <input
                       type="file"
                       accept=".csv"
                       onChange={(e) => handleFileUpload(e, dataset.id)}
                       disabled={uploadingDataset}
-                      className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:text-white hover:file:opacity-90"
+                      style={{
+                        color: '#002629',
+                        caretColor: '#002629'
+                      }}
                     />
+                    <style jsx>{`
+                      input[type="file"]::file-selector-button {
+                        background-color: #1C5D99;
+                        color: white;
+                        border: none;
+                        margin-right: 1rem;
+                        padding: 0.5rem 1rem;
+                        border-radius: 0.5rem;
+                        font-size: 0.875rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: opacity 0.2s;
+                      }
+                      input[type="file"]::file-selector-button:hover {
+                        opacity: 0.9;
+                      }
+                    `}</style>
                     
                     {uploadStatus[dataset.id] && (
-                      <div className="mt-2 text-sm">
+                      <div className="mt-2 text-sm" style={{color: '#002629'}}>
                         {uploadStatus[dataset.id]}
                       </div>
                     )}
@@ -758,13 +779,13 @@ function App() {
               {/* Uploaded Datasets */}
               {datasets.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Uploaded Datasets</h3>
+                  <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>📊 Uploaded Datasets</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {datasets.map(dataset => (
-                      <div key={dataset.name} className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div className="font-medium text-green-900">{dataset.name}</div>
-                        <div className="text-sm text-green-700">{dataset.records} records</div>
-                        <div className="text-xs text-green-600">Uploaded: {new Date(dataset.uploaded_at).toLocaleDateString()}</div>
+                      <div key={dataset.name} className="p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#12664F'}}>
+                        <div className="font-medium" style={{color: '#002629'}}>{dataset.name}</div>
+                        <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>{dataset.records} records</div>
+                        <div className="text-xs" style={{color: '#002629', opacity: 0.6}}>Uploaded: {new Date(dataset.uploaded_at).toLocaleDateString()}</div>
                       </div>
                     ))}
                   </div>
