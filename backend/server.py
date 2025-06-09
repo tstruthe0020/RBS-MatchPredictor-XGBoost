@@ -2434,7 +2434,7 @@ class MLMatchPredictor:
             # If default XI generation fails, use standard prediction
             if not home_xi or not away_xi:
                 print(f"Warning: Could not generate default Starting XI for {home_team} and/or {away_team}, using standard prediction")
-                return await self.predict_match(home_team, away_team, referee, match_date, config_name)
+                return await self.predict_match(home_team, away_team, referee, match_date)
             
             return await self.predict_match_with_starting_xi(
                 home_team, away_team, referee, home_xi, away_xi, 
@@ -2445,7 +2445,7 @@ class MLMatchPredictor:
             print(f"Error making prediction with defaults: {e}")
             # Fallback to standard prediction
             try:
-                return await self.predict_match(home_team, away_team, referee, match_date, config_name)
+                return await self.predict_match(home_team, away_team, referee, match_date)
             except Exception as fallback_error:
                 print(f"Fallback prediction also failed: {fallback_error}")
                 return MatchPredictionResponse(
