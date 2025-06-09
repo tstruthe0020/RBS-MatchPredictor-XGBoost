@@ -5866,7 +5866,8 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
             referee=request.referee_name,
             error=str(e)
         )
-        return NumpyJSONResponse(content=error_result.dict())
+        error_dict = convert_numpy_types(error_result.dict())
+        return NumpyJSONResponse(content=error_dict)
 
 @api_router.delete("/database/wipe")
 async def wipe_database():
