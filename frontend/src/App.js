@@ -881,45 +881,45 @@ function App() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                  <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
                     <div className="text-center">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                      <h3 className="text-2xl font-bold mb-2" style={{color: '#002629'}}>
                         {predictionResult.home_team} vs {predictionResult.away_team}
                       </h3>
-                      <div className="text-lg text-gray-600 mb-2">
-                        Predicted Score: <span className="font-bold text-blue-600">{predictionResult.predicted_home_goals}</span>
+                      <div className="text-lg mb-2" style={{color: '#002629'}}>
+                        Predicted Score: <span className="font-bold" style={{color: '#1C5D99'}}>{predictionResult.predicted_home_goals}</span>
                         {' - '}
-                        <span className="font-bold text-red-600">{predictionResult.predicted_away_goals}</span>
+                        <span className="font-bold" style={{color: '#12664F'}}>{predictionResult.predicted_away_goals}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white p-4 border rounded-lg text-center">
-                      <div className="text-3xl font-bold text-green-600">{predictionResult.home_win_probability}%</div>
-                      <div className="text-gray-600">Home Win</div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number text-3xl">{predictionResult.home_win_probability}%</div>
+                      <div className="stat-card-label">Home Win</div>
                     </div>
-                    <div className="bg-white p-4 border rounded-lg text-center">
-                      <div className="text-3xl font-bold text-gray-600">{predictionResult.draw_probability}%</div>
-                      <div className="text-gray-600">Draw</div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number text-3xl">{predictionResult.draw_probability}%</div>
+                      <div className="stat-card-label">Draw</div>
                     </div>
-                    <div className="bg-white p-4 border rounded-lg text-center">
-                      <div className="text-3xl font-bold text-red-600">{predictionResult.away_win_probability}%</div>
-                      <div className="text-gray-600">Away Win</div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number text-3xl">{predictionResult.away_win_probability}%</div>
+                      <div className="stat-card-label">Away Win</div>
                     </div>
                   </div>
 
                   <div className="flex space-x-4">
                     <button
                       onClick={resetPrediction}
-                      className="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700"
+                      className="btn-dark px-6 py-3 font-medium rounded-lg"
                     >
                       🔄 New Prediction
                     </button>
                     <button
                       onClick={exportPDF}
                       disabled={exportingPDF}
-                      className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 flex items-center space-x-2"
+                      className="btn-secondary px-6 py-3 font-medium rounded-lg flex items-center space-x-2"
                     >
                       {exportingPDF ? (
                         <>
