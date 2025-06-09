@@ -552,6 +552,73 @@ function App() {
                   </button>
                 </div>
               </div>
+
+              {/* Database Management */}
+              <div className="mt-8 p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-900">🗄️ Database Management</h3>
+                    <p className="text-sm text-red-700 mt-1">Development tools for managing database content</p>
+                  </div>
+                  <button
+                    onClick={fetchDatabaseStats}
+                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    🔄 Refresh Stats
+                  </button>
+                </div>
+
+                {/* Database Statistics */}
+                {databaseStats && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-white p-3 rounded border border-red-200">
+                      <div className="text-lg font-bold text-red-600">{databaseStats.total_documents || 0}</div>
+                      <div className="text-xs text-red-700">Total Records</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border border-red-200">
+                      <div className="text-lg font-bold text-red-600">{databaseStats.collections?.matches || 0}</div>
+                      <div className="text-xs text-red-700">Matches</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border border-red-200">
+                      <div className="text-lg font-bold text-red-600">{databaseStats.collections?.team_stats || 0}</div>
+                      <div className="text-xs text-red-700">Team Stats</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border border-red-200">
+                      <div className="text-lg font-bold text-red-600">{databaseStats.collections?.player_stats || 0}</div>
+                      <div className="text-xs text-red-700">Player Stats</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Danger Zone */}
+                <div className="bg-red-100 p-4 rounded border border-red-300">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-red-900">⚠️ Danger Zone</h4>
+                      <p className="text-sm text-red-700 mt-1">
+                        Permanently delete all data from the database. This action cannot be undone.
+                      </p>
+                    </div>
+                    <button
+                      onClick={wipeDatabase}
+                      disabled={wipingDatabase}
+                      className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {wipingDatabase ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Wiping...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🗑️</span>
+                          <span>Wipe Database</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
