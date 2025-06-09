@@ -2632,36 +2632,290 @@ class MLMatchPredictor:
             return {}
     
     async def calculate_team_averages_with_decay(self, team_name, is_home, decay_config=None):
-        """Calculate team averages with time decay applied"""
+        """Calculate team averages with full time decay implementation"""
         try:
-            # Get the existing averages first
-            stats = await match_predictor.calculate_team_averages(team_name, is_home)
+            # Get the existing averages first for backward compatibility
+            base_stats = await match_predictor.calculate_team_averages(team_name, is_home)
             
-            if not decay_config or not stats:
-                return stats
+            if not decay_config:
+                return base_stats
             
-            # For now, return the existing stats - time decay will be fully implemented in phase 2
-            # This ensures backward compatibility while we implement the starting XI functionality
-            return stats
+            # Get all team stats for this team with time weighting
+            team_stats_cursor = db.team_stats.find({"team_name": team_name})
+            team_stats = await team_stats_cursor.to_list(10000)
+            
+            if not team_stats:
+                return base_stats
+            
+            # Calculate weighted averages with time decay
+            weighted_stats = {}
+            total_weights = 0
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            
+            for stat in team_stats:
+                # Get match date for time decay calculation
+                match_date = stat.get('match_date') or stat.get('date')
+                if not match_date:
+                    continue
+                
+                # Calculate time weight
+                weight = starting_xi_manager.calculate_time_weight(
+                    match_date, current_date, decay_config
+                )
+                
+                # Apply home/away filter if needed
+                stat_is_home = stat.get('is_home', True)
+                if is_home != stat_is_home:
+                    weight *= 0.8  # Reduce weight for opposite venue
+                
+                total_weights += weight
+                
+                # Aggregate weighted stats
+                for key, value in stat.items():
+                    if key not in ['_id', 'team_name', 'match_date', 'date', 'is_home'] and isinstance(value, (int, float)):
+                        if key not in weighted_stats:
+                            weighted_stats[key] = 0
+                        weighted_stats[key] += value * weight
+            
+            # Calculate weighted averages
+            if total_weights > 0:
+                for key in weighted_stats:
+                    weighted_stats[key] /= total_weights
+            
+            # Merge with base stats, preferring weighted values
+            final_stats = {**base_stats, **weighted_stats}
+            
+            return final_stats
             
         except Exception as e:
             print(f"Error calculating team averages with decay: {e}")
-            return None
+            return base_stats or None
     
     async def get_referee_bias_with_decay(self, team_name, referee, decay_config=None):
-        """Get referee bias with time decay (placeholder for now)"""
-        # Use existing method for now - will enhance in phase 2
-        return await self.get_referee_bias(team_name, referee)
+        """Get referee bias with full time decay implementation"""
+        try:
+            # Get existing bias for backward compatibility
+            base_bias, base_conf = await self.get_referee_bias(team_name, referee)
+            
+            if not decay_config:
+                return base_bias, base_conf
+            
+            # Get all matches with this referee and team with time weighting
+            matches_cursor = db.matches.find({
+                "$or": [
+                    {"home_team": team_name, "referee": referee},
+                    {"away_team": team_name, "referee": referee}
+                ]
+            })
+            matches = await matches_cursor.to_list(10000)
+            
+            if len(matches) < 3:
+                return base_bias, base_conf
+            
+            # Calculate time-weighted RBS
+            weighted_rbs_sum = 0
+            total_weights = 0
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            
+            for match in matches:
+                match_date = match.get('match_date') or match.get('date')
+                if not match_date:
+                    continue
+                
+                # Calculate time weight
+                weight = starting_xi_manager.calculate_time_weight(
+                    match_date, current_date, decay_config
+                )
+                
+                # Get team stats for this match to calculate RBS
+                team_stat = await db.team_stats.find_one({
+                    "team_name": team_name,
+                    "match_id": match.get('match_id')
+                })
+                
+                if team_stat:
+                    # Calculate RBS for this match
+                    cards = team_stat.get('yellow_cards', 0) + team_stat.get('red_cards', 0) * 2
+                    fouls = team_stat.get('fouls_committed', 0)
+                    
+                    # Simple RBS calculation (enhanced version)
+                    match_rbs = (cards * 0.5) + (fouls * 0.1)
+                    
+                    weighted_rbs_sum += match_rbs * weight
+                    total_weights += weight
+            
+            if total_weights > 0:
+                time_weighted_rbs = weighted_rbs_sum / total_weights
+                confidence = min(95, total_weights * 10)  # Confidence based on weighted sample size
+                return time_weighted_rbs, confidence
+            
+            return base_bias, base_conf
+            
+        except Exception as e:
+            print(f"Error calculating referee bias with decay: {e}")
+            return base_bias, base_conf
     
     async def get_head_to_head_stats_with_decay(self, home_team, away_team, decay_config=None):
-        """Get head-to-head stats with time decay (placeholder for now)"""
-        # Use existing method for now - will enhance in phase 2  
-        return await self.get_head_to_head_stats(home_team, away_team)
+        """Get head-to-head stats with full time decay implementation"""
+        try:
+            # Get existing H2H for backward compatibility
+            base_h2h = await self.get_head_to_head_stats(home_team, away_team)
+            
+            if not decay_config:
+                return base_h2h
+            
+            # Get all head-to-head matches with time weighting
+            h2h_matches_cursor = db.matches.find({
+                "$or": [
+                    {"home_team": home_team, "away_team": away_team},
+                    {"home_team": away_team, "away_team": home_team}
+                ]
+            })
+            h2h_matches = await h2h_matches_cursor.to_list(100)
+            
+            if len(h2h_matches) < 2:
+                return base_h2h
+            
+            # Calculate time-weighted H2H stats
+            weighted_home_wins = 0
+            weighted_away_wins = 0
+            weighted_draws = 0
+            weighted_home_goals = 0
+            weighted_away_goals = 0
+            total_weights = 0
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            
+            for match in h2h_matches:
+                match_date = match.get('match_date') or match.get('date')
+                if not match_date:
+                    continue
+                
+                # Calculate time weight
+                weight = starting_xi_manager.calculate_time_weight(
+                    match_date, current_date, decay_config
+                )
+                
+                home_goals = match.get('home_goals', 0)
+                away_goals = match.get('away_goals', 0)
+                
+                # Determine perspective (which team is "home" in our query)
+                if match.get('home_team') == home_team:
+                    # Normal perspective
+                    weighted_home_goals += home_goals * weight
+                    weighted_away_goals += away_goals * weight
+                    
+                    if home_goals > away_goals:
+                        weighted_home_wins += weight
+                    elif away_goals > home_goals:
+                        weighted_away_wins += weight
+                    else:
+                        weighted_draws += weight
+                else:
+                    # Reversed perspective
+                    weighted_home_goals += away_goals * weight
+                    weighted_away_goals += home_goals * weight
+                    
+                    if away_goals > home_goals:
+                        weighted_home_wins += weight
+                    elif home_goals > away_goals:
+                        weighted_away_wins += weight
+                    else:
+                        weighted_draws += weight
+                
+                total_weights += weight
+            
+            if total_weights > 0:
+                return {
+                    'home_wins': weighted_home_wins / total_weights * len(h2h_matches),
+                    'away_wins': weighted_away_wins / total_weights * len(h2h_matches),
+                    'draws': weighted_draws / total_weights * len(h2h_matches),
+                    'home_goals_avg': weighted_home_goals / total_weights,
+                    'away_goals_avg': weighted_away_goals / total_weights,
+                    'total_matches': len(h2h_matches),
+                    'time_decay_applied': True
+                }
+            
+            return base_h2h
+            
+        except Exception as e:
+            print(f"Error calculating H2H stats with decay: {e}")
+            return base_h2h
     
     async def get_team_form_with_decay(self, team_name, last_n=5, decay_config=None):
-        """Get team form with time decay (placeholder for now)"""
-        # Use existing method for now - will enhance in phase 2
-        return await self.get_team_form(team_name, last_n)
+        """Get team form with full time decay implementation"""
+        try:
+            # Get existing form for backward compatibility
+            base_form = await self.get_team_form(team_name, last_n)
+            
+            if not decay_config:
+                return base_form
+            
+            # Get recent matches with time weighting
+            recent_matches_cursor = db.matches.find({
+                "$or": [
+                    {"home_team": team_name},
+                    {"away_team": team_name}
+                ]
+            }).sort("match_date", -1).limit(last_n * 2)  # Get more to account for time decay
+            
+            recent_matches = await recent_matches_cursor.to_list(last_n * 2)
+            
+            if len(recent_matches) < 2:
+                return base_form
+            
+            # Calculate time-weighted form
+            weighted_points = 0
+            total_weights = 0
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            matches_considered = 0
+            
+            for match in recent_matches:
+                if matches_considered >= last_n:
+                    break
+                
+                match_date = match.get('match_date') or match.get('date')
+                if not match_date:
+                    continue
+                
+                # Calculate time weight
+                weight = starting_xi_manager.calculate_time_weight(
+                    match_date, current_date, decay_config
+                )
+                
+                # Calculate points for this match
+                home_goals = match.get('home_goals', 0)
+                away_goals = match.get('away_goals', 0)
+                
+                if match.get('home_team') == team_name:
+                    # Team was home
+                    if home_goals > away_goals:
+                        points = 3  # Win
+                    elif home_goals == away_goals:
+                        points = 1  # Draw
+                    else:
+                        points = 0  # Loss
+                else:
+                    # Team was away
+                    if away_goals > home_goals:
+                        points = 3  # Win
+                    elif away_goals == home_goals:
+                        points = 1  # Draw
+                    else:
+                        points = 0  # Loss
+                
+                weighted_points += points * weight
+                total_weights += weight
+                matches_considered += 1
+            
+            if total_weights > 0:
+                # Return weighted average points per game
+                return weighted_points / total_weights
+            
+            return base_form
+            
+        except Exception as e:
+            print(f"Error calculating team form with decay: {e}")
+            return base_form
 
 # Initialize ML Match Predictor
 ml_predictor = MLMatchPredictor()
