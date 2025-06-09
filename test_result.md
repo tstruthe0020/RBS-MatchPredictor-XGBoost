@@ -27,6 +27,31 @@ backend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the database management functionality. The GET /api/database/stats endpoint correctly returns collection statistics including total document count and per-collection counts. The DELETE /api/database/wipe endpoint properly clears all collections and returns success confirmation with stats. Both endpoints are accessible and working correctly. Fixed a bug in the database stats endpoint where datetime.datetime.now() was incorrectly referenced (changed to datetime.now())."
+  - task: "Database Accumulation Behavior"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Found a critical issue with the database accumulation behavior. The upload endpoints (/api/upload/matches, /api/upload/team-stats, /api/upload/player-stats) were replacing existing data instead of appending to it. Each endpoint was calling delete_many() on its respective collection before inserting new data, which was causing all previous data to be lost when new data was uploaded."
+      - working: true
+        agent: "testing"
+        comment: "Fixed the database accumulation behavior by removing the delete_many() calls from the upload endpoints. Now when data is uploaded, it is properly appended to the existing data rather than replacing it. Verified the fix by uploading multiple test datasets and confirming that the document counts increase with each upload."
+  - task: "ML Model Training Functionality"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the ML model training functionality. The POST /api/train-ml-models endpoint correctly trains and saves the ML models, and the GET /api/ml-models/status endpoint correctly reports the status of the models. The training process works with the accumulated data, and the models are saved and can be loaded. The training results show good accuracy and R² scores for the models."
 
 frontend:
   - task: "XGBoost Tab Functionality"
@@ -111,6 +136,10 @@ agent_communication:
     message: "I've verified that the uploaded data is correctly reflected in the Dashboard statistics. After uploading test files, the database statistics show 15550 Total Records, 522 Matches, 944 Team Stats, and 14084 Player Stats. This confirms that the file upload functionality is working correctly and the data is being properly stored in the database. The only remaining minor issue is that the 'Uploaded Datasets' section doesn't appear in the Upload Data tab, but this doesn't affect the core functionality. Overall, the Upload Data tab is now fully functional for its primary purpose of uploading match data, team stats, and player stats."
   - agent: "testing"
     message: "I've completed testing the Upload Data functionality with the datasets endpoint. All three upload sections (Match Data, Team Stats, Player Stats) work correctly. Files can be selected and uploaded successfully, with proper status messages displayed after upload. The 'Uploaded Datasets' section now appears after successful uploads and displays dataset information correctly, including dataset name, record counts, and upload dates. The Dashboard statistics are also updated correctly after uploads. The complete upload-to-display workflow is now fully functional. The datasets endpoint is working correctly and returns the expected data structure with information about uploaded datasets."
+  - agent: "testing"
+    message: "I've found and fixed a critical issue with the database accumulation behavior. The upload endpoints (/api/upload/matches, /api/upload/team-stats, /api/upload/player-stats) were replacing existing data instead of appending to it. Each endpoint was calling delete_many() on its respective collection before inserting new data, which was causing all previous data to be lost when new data was uploaded. I fixed this by removing the delete_many() calls from the upload endpoints. Now when data is uploaded, it is properly appended to the existing data rather than replacing it. I verified the fix by uploading multiple test datasets and confirming that the document counts increase with each upload."
+  - agent: "testing"
+    message: "I've successfully tested the ML model training functionality. The POST /api/train-ml-models endpoint correctly trains and saves the ML models, and the GET /api/ml-models/status endpoint correctly reports the status of the models. The training process works with the accumulated data, and the models are saved and can be loaded. The training results show good accuracy and R² scores for the models. This confirms that the ML model training functionality is working as expected."
 
 metadata:
   created_by: "testing_agent"
@@ -124,6 +153,8 @@ test_plan:
     - "Database Management Functionality"
     - "Database Management UI"
     - "Upload Data Tab Functionality"
+    - "Database Accumulation Behavior"
+    - "ML Model Training Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
