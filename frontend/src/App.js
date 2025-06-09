@@ -79,6 +79,11 @@ function App() {
   const [wipingDatabase, setWipingDatabase] = useState(false);
   const [databaseStats, setDatabaseStats] = useState(null);
 
+  // RBS Calculation states
+  const [rbsStatus, setRbsStatus] = useState(null);
+  const [calculatingRBS, setCalculatingRBS] = useState(false);
+  const [rbsResults, setRbsResults] = useState(null);
+
   // Regression Analysis states
   const [selectedVariables, setSelectedVariables] = useState([]);
   const [regressionTarget, setRegressionTarget] = useState('points_per_game');
