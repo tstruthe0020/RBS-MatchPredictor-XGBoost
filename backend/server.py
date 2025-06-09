@@ -3776,8 +3776,8 @@ async def upload_team_stats(file: UploadFile = File(...)):
         contents = await file.read()
         df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
         
-        # Clear existing team stats
-        await db.team_stats.delete_many({})
+        # No longer clearing existing team stats - we'll append instead
+        # await db.team_stats.delete_many({})
         
         # Replace NaN values with 0
         df = df.fillna(0)
