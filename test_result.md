@@ -17,11 +17,11 @@ backend:
 frontend:
   - task: "XGBoost Tab Functionality"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -32,6 +32,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Fixed the duplicate function issue in App.js. The XGBoost tab now loads correctly and displays all required components: model status section with refresh button, training controls, prediction form with team and referee selection dropdowns, and algorithm explanation. The tab shows the XGBoost Models status as 'Ready' and displays feature count (45). The prediction form includes home team, away team, and referee selection dropdowns, as well as an optional match date field. The XGBoost Predict button is present but had an issue with validation (it should be disabled when form is empty). Enhanced features like Starting XI toggle, time decay settings, and formation selection are not directly visible in the current implementation but may be accessible through other means. The interface handles empty database gracefully."
+      - working: false
+        agent: "testing"
+        comment: "Found a critical issue with API URL configuration in the frontend. The frontend is making API calls to the wrong URL. In App.js, the API URL is defined as 'const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';' but when making API calls, it's using '${API}/formations' instead of '${API}/api/formations'. This is causing all API calls to fail with 404 errors. The backend API endpoints are working correctly when accessed directly with the proper '/api' prefix, but the frontend is not including this prefix in its requests."
 
 agent_communication:
   - agent: "testing"
