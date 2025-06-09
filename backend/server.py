@@ -7294,4 +7294,14 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     import uvicorn
     print("Starting Football Analytics API Server...")
-    uvicorn.run(app, host="0.0.0.0", port=8001, reload=False)
+    print("Checking app initialization...")
+    
+    try:
+        print(f"App loaded successfully with {len(app.routes)} routes")
+        print("Attempting to start Uvicorn server on port 8001...")
+        uvicorn.run(app, host="0.0.0.0", port=8001, reload=False, log_level="info")
+    except Exception as e:
+        print(f"❌ ERROR starting server: {e}")
+        import traceback
+        traceback.print_exc()
+        input("Press Enter to exit...")  # Keep window open to see error
