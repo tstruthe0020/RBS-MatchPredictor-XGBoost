@@ -64,6 +64,32 @@ function App() {
   const [wipingDatabase, setWipingDatabase] = useState(false);
   const [databaseStats, setDatabaseStats] = useState(null);
 
+  // Regression Analysis states
+  const [selectedVariables, setSelectedVariables] = useState([]);
+  const [regressionTarget, setRegressionTarget] = useState('points_per_game');
+  const [regressionResults, setRegressionResults] = useState(null);
+  const [runningRegression, setRunningRegression] = useState(false);
+
+  // Prediction Config states
+  const [predictionConfigs, setPredictionConfigs] = useState([]);
+  const [currentPredictionConfig, setCurrentPredictionConfig] = useState(null);
+  const [editingPredictionConfig, setEditingPredictionConfig] = useState(false);
+
+  // RBS Config states
+  const [rbsConfigs, setRbsConfigs] = useState([]);
+  const [currentRbsConfig, setCurrentRbsConfig] = useState(null);
+  const [editingRbsConfig, setEditingRbsConfig] = useState(false);
+
+  // Formula Optimization states
+  const [optimizationResults, setOptimizationResults] = useState(null);
+  const [runningOptimization, setRunningOptimization] = useState(false);
+  const [optimizationType, setOptimizationType] = useState('rbs');
+
+  // Results Analysis states
+  const [refereeAnalysis, setRefereeAnalysis] = useState(null);
+  const [selectedReferee, setSelectedReferee] = useState('');
+  const [loadingResults, setLoadingResults] = useState(false);
+
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
