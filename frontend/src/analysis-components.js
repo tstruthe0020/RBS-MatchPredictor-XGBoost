@@ -125,16 +125,35 @@ export const savePredictionConfig = async (config, apiEndpoint) => {
 
 export const saveRBSConfig = async (config, apiEndpoint) => {
   try {
-    const response = await fetch(`${apiEndpoint}/api/rbs-configs`, {
+    // Ensure all required fields are present with correct types
+    const rbsConfig = {
+      config_name: config.config_name || 'default',
+      yellow_cards_weight: parseFloat(config.yellow_cards_weight || 0.3),
+      red_cards_weight: parseFloat(config.red_cards_weight || 0.5),
+      fouls_committed_weight: parseFloat(config.fouls_committed_weight || 0.1),
+      fouls_drawn_weight: parseFloat(config.fouls_drawn_weight || 0.1),
+      penalties_awarded_weight: parseFloat(config.penalties_awarded_weight || 0.5),
+      xg_difference_weight: parseFloat(config.xg_difference_weight || 0.4),
+      possession_percentage_weight: parseFloat(config.possession_percentage_weight || 0.2),
+      confidence_matches_multiplier: parseFloat(config.confidence_matches_multiplier || 4),
+      max_confidence: parseFloat(config.max_confidence || 95),
+      min_confidence: parseFloat(config.min_confidence || 10),
+      confidence_threshold_low: parseInt(config.confidence_threshold_low || 2),
+      confidence_threshold_medium: parseInt(config.confidence_threshold_medium || 5),
+      confidence_threshold_high: parseInt(config.confidence_threshold_high || 10)
+    };
+
+    const response = await fetch(`${apiEndpoint}/api/rbs-config`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(config)
+      body: JSON.stringify(rbsConfig)
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`);
     }
 
     return await response.json();
