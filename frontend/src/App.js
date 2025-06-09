@@ -941,24 +941,28 @@ function App() {
         )}        {/* Enhanced XGBoost Tab with Starting XI */}
         {activeTab === 'xgboost' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">🚀 Enhanced XGBoost with Starting XI</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="card">
+              <h2 className="card-header">🚀 Enhanced XGBoost with Starting XI</h2>
+              <p className="card-text mb-6">
                 Advanced match prediction using XGBoost with Starting XI player selection and time decay weighting. 
                 Select specific players for each team to get more accurate predictions based on actual lineups.
               </p>
 
               {/* Enhanced Features Control Panel */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <div className="mb-6 p-4 feature-card">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-blue-900">🎯 Enhanced Prediction Features</h3>
+                  <h3 className="text-lg font-semibold" style={{color: '#002629'}}>🎯 Enhanced Prediction Features</h3>
                   <button
                     onClick={() => setShowStartingXI(!showStartingXI)}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                       showStartingXI 
-                        ? 'bg-blue-600 text-white shadow-md' 
-                        : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-50'
+                        ? 'btn-primary shadow-md' 
+                        : 'bg-white border-2 hover:opacity-80'
                     }`}
+                    style={!showStartingXI ? {
+                      color: '#1C5D99',
+                      borderColor: '#1C5D99'
+                    } : {}}
                   >
                     {showStartingXI ? '✅ Starting XI Active' : '📋 Enable Starting XI'}
                   </button>
@@ -972,11 +976,12 @@ function App() {
                         type="checkbox"
                         checked={useTimeDecay}
                         onChange={(e) => setUseTimeDecay(e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 focus:ring-2"
+                        style={{accentColor: '#1C5D99'}}
                       />
-                      <span className="text-sm font-medium text-blue-900">Apply Time Decay</span>
+                      <span className="text-sm font-medium" style={{color: '#002629'}}>Apply Time Decay</span>
                     </label>
-                    <p className="text-xs text-blue-700 mt-1">Recent matches weighted higher than historical data</p>
+                    <p className="text-xs mt-1" style={{color: '#002629', opacity: 0.8}}>Recent matches weighted higher than historical data</p>
                   </div>
                   
                   <div>
