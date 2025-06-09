@@ -6430,9 +6430,144 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
         error_dict = convert_numpy_types(error_result.dict())
         return NumpyJSONResponse(content=error_dict)
 
+@api_router.post("/store-prediction-result")
+async def store_prediction_result(request: ActualResult):
+    """Store actual match result for prediction evaluation"""
+    try:
+        result = await model_optimizer.store_actual_result(
+            request.prediction_id,
+            request.actual_home_goals,
+            request.actual_away_goals,
+            request.match_played_date
+        )
+        return {"success": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/model-performance/{days}")
+async def get_model_performance(days: int = 30, model_version: str = None):
+    """Get model performance metrics for the last N days"""
+    try:
+        metrics = await model_optimizer.evaluate_model_performance(days, model_version)
+        return metrics
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.post("/optimize-hyperparameters")
+async def optimize_hyperparameters(method: str = "grid_search"):
+    """Optimize XGBoost hyperparameters based on historical performance"""
+    try:
+        if method not in ["grid_search", "random_search"]:
+            return {"error": "Method must be 'grid_search' or 'random_search'"}
+        
+        results = await model_optimizer.optimize_hyperparameters(method)
+        return results
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.get("/optimization-history")
+async def get_optimization_history():
+    """Get history of model optimizations"""
+    try:
+        history = await db.model_optimization.find({}).sort("timestamp", -1).limit(20).to_list(20)
+        return {"optimizations": history}
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.get("/prediction-accuracy-trends")
+async def get_prediction_accuracy_trends(days: int = 90):
+    """Get prediction accuracy trends over time"""
+    try:
+        from datetime import datetime, timedelta
+        
+        # Get performance metrics over time
+        cutoff_date = datetime.now() - timedelta(days=days)
+        
+        performance_history = await db.model_performance.find({
+            "timestamp": {"$gte": cutoff_date.isoformat()}
+        }).sort("timestamp", 1).to_list(100)
+        
+        if not performance_history:
+            return {"error": "No performance history found"}
+        
+        # Calculate trends
+        trends = {
+            "accuracy_trend": [p["outcome_accuracy"] for p in performance_history],
+            "goals_mae_trend": [(p["home_goals_mae"] + p["away_goals_mae"]) / 2 for p in performance_history],
+            "log_loss_trend": [p["log_loss"] for p in performance_history],
+            "timestamps": [p["timestamp"] for p in performance_history],
+            "total_periods": len(performance_history)
+        }
+        
+        return trends
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.post("/retrain-models-optimized")
+async def retrain_models_with_optimization():
+    """Retrain models using optimized hyperparameters"""
+    try:
+        # Get latest optimization results
+        latest_optimization = await db.model_optimization.find_one(
+            {}, sort=[("timestamp", -1)]
+        )
+        
+        if not latest_optimization:
+            return {"error": "No optimization results found. Run hyperparameter optimization first."}
+        
+        print("🔄 Retraining models with optimized parameters...")
+        
+        # Get optimized parameters
+        optimized_params = latest_optimization["results"]
+        
+        # Retrain with optimized parameters
+        result = await ml_predictor.train_models_with_params(optimized_params)
+        
+        if result.get("success"):
+            # Update model version
+            model_optimizer.current_model_version = f"2.{len(await db.model_optimization.find({}).to_list(1000))}"
+            print(f"✅ Models retrained successfully with version {model_optimizer.current_model_version}")
+        
+        return result
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.get("/model-comparison")
+async def compare_model_versions(version1: str = "1.0", version2: str = "2.0", days: int = 30):
+    """Compare performance between two model versions"""
+    try:
+        # Get performance for both versions
+        perf1 = await model_optimizer.evaluate_model_performance(days, version1)
+        perf2 = await model_optimizer.evaluate_model_performance(days, version2)
+        
+        if "error" in perf1 or "error" in perf2:
+            return {"error": "Could not find performance data for both versions"}
+        
+        # Calculate improvements
+        comparison = {
+            "version1": version1,
+            "version2": version2,
+            "improvements": {
+                "accuracy_change": perf2["outcome_accuracy"] - perf1["outcome_accuracy"],
+                "goals_mae_change": ((perf2["home_goals_mae"] + perf2["away_goals_mae"]) / 2) - 
+                                   ((perf1["home_goals_mae"] + perf1["away_goals_mae"]) / 2),
+                "log_loss_change": perf2["log_loss"] - perf1["log_loss"],
+                "r2_change": perf2["goals_r2_score"] - perf1["goals_r2_score"]
+            },
+            "version1_metrics": perf1,
+            "version2_metrics": perf2
+        }
+        
+        return comparison
+        
+    except Exception as e:
+        return {"error": str(e)}
+
 @api_router.delete("/database/wipe")
 async def wipe_database():
-    """Wipe all data from the database (for development/testing purposes)"""
+    """Wipe all data from the database"""
     try:
         # Clear all collections
         collections_cleared = 0
