@@ -1154,27 +1154,19 @@ function App() {
                                             <div className="w-12 text-xs font-medium text-blue-700">
                                               {position.position_id}
                                             </div>
-                                            <select
-                                              value={position.player?.player_name || ''}
-                                              onChange={(e) => {
-                                                const selectedPlayer = awayTeamPlayers.find(p => p.player_name === e.target.value);
-                                                updateStartingXIPlayer(false, position.position_id, selectedPlayer);
-                                              }}
-                                              className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                            >
-                                              <option value="">Select Player</option>
-                                              {awayTeamPlayers
-                                                .filter(player => 
-                                                  player.position === position.position_type || 
-                                                  !awayStartingXI.positions.some(pos => pos.player?.player_name === player.player_name)
-                                                )
-                                                .map(player => (
-                                                  <option key={player.player_name} value={player.player_name}>
-                                                    {player.player_name} ({player.matches_played} matches)
-                                                  </option>
-                                                ))
-                                              }
-                                            </select>
+                                            <div className="flex-1">
+                                              <PlayerSearchInput
+                                                positionId={position.position_id}
+                                                positionType={position.position_type}
+                                                isHomeTeam={false}
+                                                currentPlayer={position.player}
+                                                searchTerm={playerSearchTerms[`away_${position.position_id}`] || ''}
+                                                searchResults={searchResults[`away_${position.position_id}`] || []}
+                                                onSearch={(term) => handlePlayerSearch(term, false, position.position_type, position.position_id)}
+                                                onSelect={(player) => selectPlayerFromSearch(player, false, position.position_id)}
+                                                placeholder={`Search ${position.position_type} players...`}
+                                              />
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
