@@ -51,7 +51,27 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()  # Convert arrays to lists
         elif isinstance(obj, (pd.Timestamp, pd.Timestamp)):
             return obj.isoformat()
+        elif isinstance(obj, dict):
+            # Recursively handle dictionaries
+            return {k: self.default(v) if isinstance(v, (np.integer, np.floating, np.bool_, np.ndarray)) else v for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            # Recursively handle lists and tuples
+            return [self.default(item) if isinstance(item, (np.integer, np.floating, np.bool_, np.ndarray)) else item for item in obj]
         return super(NumpyEncoder, self).default(obj)
+
+def convert_numpy_types(obj):
+    """Recursively convert NumPy types to Python native types"""
+    if isinstance(obj, (np.integer, np.floating, np.bool_)):
+        return obj.item()
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, (pd.Timestamp, pd.Timestamp)):
+        return obj.isoformat()
+    return obj
 
 # Custom JSONResponse that handles NumPy types
 class NumpyJSONResponse(JSONResponse):
