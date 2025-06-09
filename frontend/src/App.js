@@ -2425,72 +2425,173 @@ function App() {
                       {detailedRefereeData.team_rbs_details && Object.keys(detailedRefereeData.team_rbs_details).length > 0 && (
                         <div className="feature-card">
                           <h5 className="font-semibold mb-3" style={{color: '#002629'}}>🔍 Team-Specific RBS Analysis & Stat Differentials</h5>
+                          
+                          {/* Explanation Header */}
+                          <div className="mb-4 p-3 rounded" style={{backgroundColor: '#A3D9FF', color: '#002629'}}>
+                            <div className="text-sm font-semibold mb-1">📊 How to Read Stat Differentials:</div>
+                            <div className="text-xs grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div><strong>🟢 Favorable (Green):</strong> Positive values = team benefits</div>
+                              <div><strong>🔴 Unfavorable (Red):</strong> Negative values = team penalized</div>
+                              <div><strong>Yellow Cards:</strong> Fewer cards = 🟢 Better | More cards = 🔴 Worse</div>
+                              <div><strong>Red Cards:</strong> Fewer cards = 🟢 Better | More cards = 🔴 Worse</div>
+                              <div><strong>Fouls Committed:</strong> Fewer fouls = 🟢 Better | More fouls = 🔴 Worse</div>
+                              <div><strong>Fouls Drawn:</strong> More fouls = 🟢 Better | Fewer fouls = 🔴 Worse</div>
+                              <div><strong>Penalties Awarded:</strong> More penalties = 🟢 Better | Fewer penalties = 🔴 Worse</div>
+                              <div><strong>xG Difference:</strong> Higher xG = 🟢 Better | Lower xG = 🔴 Worse</div>
+                              <div><strong>Possession:</strong> More possession = 🟢 Better | Less possession = 🔴 Worse</div>
+                            </div>
+                          </div>
+
                           <div className="space-y-3 max-h-96 overflow-y-auto">
                             {Object.entries(detailedRefereeData.team_rbs_details)
                               .sort(([,a], [,b]) => Math.abs(b.rbs_score) - Math.abs(a.rbs_score))
-                              .slice(0, 10)
-                              .map(([teamName, teamData]) => (
-                              <div key={teamName} className="p-4 rounded border-2" 
-                                   style={{backgroundColor: '#F2E9E4', borderColor: getRBSScoreColor(teamData.rbs_score)}}>
-                                
-                                {/* Team Header */}
-                                <div className="flex justify-between items-center mb-3">
-                                  <div>
-                                    <div className="font-bold text-lg" style={{color: '#002629'}}>{teamName}</div>
-                                    <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>
-                                      {teamData.matches_with_ref} matches • {teamData.confidence_level}% confidence
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-xl font-bold" 
-                                         style={{color: getRBSScoreColor(teamData.rbs_score)}}>
-                                      {formatScore(teamData.rbs_score)}
-                                    </div>
-                                    <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>RBS Score</div>
-                                  </div>
-                                </div>
+                              .map(([teamName, teamData]) => {
+                                // Helper function to determine if a stat differential is favorable
+                                const getStatDirection = (statName, value) => {
+                                  const favorableWhenPositive = ['fouls_drawn', 'penalties_awarded', 'xg_difference', 'possession_percentage'];
+                                  const favorableWhenNegative = ['yellow_cards', 'red_cards', 'fouls_committed'];
+                                  
+                                  if (favorableWhenPositive.includes(statName)) {
+                                    return value > 0 ? 'favorable' : 'unfavorable';
+                                  } else if (favorableWhenNegative.includes(statName)) {
+                                    return value < 0 ? 'favorable' : 'unfavorable';
+                                  }
+                                  return 'neutral';
+                                };
 
-                                {/* Stat Differentials Breakdown */}
-                                {teamData.stats_breakdown && (
-                                  <div>
-                                    <div className="text-sm font-semibold mb-2" style={{color: '#002629'}}>
-                                      📊 Statistical Differentials (vs League Average):
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                      {Object.entries(teamData.stats_breakdown).map(([statName, value]) => {
-                                        const isPositive = value > 0;
-                                        const isSignificant = Math.abs(value) > 0.1;
-                                        return (
-                                          <div key={statName} className="flex justify-between p-2 rounded"
-                                               style={{
-                                                 backgroundColor: isSignificant 
-                                                   ? (isPositive ? '#A3D9FF' : '#F2E9E4')
-                                                   : 'white',
-                                                 borderLeft: `3px solid ${isPositive ? '#12664F' : '#002629'}`
-                                               }}>
-                                            <span style={{color: '#002629'}} className="font-medium">
-                                              {statName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
-                                            </span>
-                                            <span style={{
-                                              color: isPositive ? '#12664F' : '#002629',
-                                              fontWeight: isSignificant ? 'bold' : 'normal'
-                                            }}>
-                                              {isPositive ? '+' : ''}{formatScore(value)}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
+                                const getStatIcon = (statName, value) => {
+                                  const direction = getStatDirection(statName, value);
+                                  if (Math.abs(value) < 0.05) return '➖'; // Minimal impact
+                                  return direction === 'favorable' ? '🟢' : '🔴';
+                                };
+
+                                const getStatColor = (statName, value) => {
+                                  const direction = getStatDirection(statName, value);
+                                  if (Math.abs(value) < 0.05) return '#002629'; // Neutral
+                                  return direction === 'favorable' ? '#12664F' : '#002629';
+                                };
+
+                                return (
+                                  <div key={teamName} className="p-4 rounded border-2" 
+                                       style={{backgroundColor: '#F2E9E4', borderColor: getRBSScoreColor(teamData.rbs_score)}}>
                                     
-                                    {/* Explanation */}
-                                    <div className="mt-2 text-xs p-2 rounded" style={{backgroundColor: '#A3D9FF', color: '#002629'}}>
-                                      <strong>How to read:</strong> Positive values mean the team gets more favorable calls 
-                                      with this referee compared to league average. Negative values indicate less favorable treatment.
+                                    {/* Team Header */}
+                                    <div className="flex justify-between items-center mb-3">
+                                      <div>
+                                        <div className="font-bold text-lg" style={{color: '#002629'}}>{teamName}</div>
+                                        <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>
+                                          {teamData.matches_with_ref} matches • {teamData.confidence_level}% confidence
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-xl font-bold" 
+                                             style={{color: getRBSScoreColor(teamData.rbs_score)}}>
+                                          {formatScore(teamData.rbs_score)}
+                                        </div>
+                                        <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>RBS Score</div>
+                                      </div>
                                     </div>
+
+                                    {/* Stat Differentials Breakdown */}
+                                    {teamData.stats_breakdown && (
+                                      <div>
+                                        <div className="text-sm font-semibold mb-3" style={{color: '#002629'}}>
+                                          📊 Statistical Differentials vs League Average:
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                          {Object.entries(teamData.stats_breakdown).map(([statName, value]) => {
+                                            const isSignificant = Math.abs(value) > 0.1;
+                                            const direction = getStatDirection(statName, value);
+                                            const icon = getStatIcon(statName, value);
+                                            const color = getStatColor(statName, value);
+                                            
+                                            return (
+                                              <div key={statName} className="flex justify-between items-center p-3 rounded border"
+                                                   style={{
+                                                     backgroundColor: direction === 'favorable' && isSignificant 
+                                                       ? '#A3D9FF' 
+                                                       : direction === 'unfavorable' && isSignificant
+                                                       ? '#F2E9E4'
+                                                       : 'white',
+                                                     borderColor: direction === 'favorable' ? '#12664F' : direction === 'unfavorable' ? '#002629' : '#1C5D99',
+                                                     borderWidth: isSignificant ? '2px' : '1px'
+                                                   }}>
+                                                <div className="flex items-center space-x-2">
+                                                  <span className="text-lg">{icon}</span>
+                                                  <div>
+                                                    <div style={{color: '#002629'}} className="font-medium">
+                                                      {statName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                    </div>
+                                                    <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>
+                                                      {direction === 'favorable' ? 'Favorable treatment' : 
+                                                       direction === 'unfavorable' ? 'Unfavorable treatment' : 'Neutral'}
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                <div className="text-right">
+                                                  <div style={{
+                                                    color: color,
+                                                    fontWeight: isSignificant ? 'bold' : 'normal',
+                                                    fontSize: isSignificant ? '1.1em' : '1em'
+                                                  }}>
+                                                    {value > 0 ? '+' : ''}{formatScore(value)}
+                                                  </div>
+                                                  {isSignificant && (
+                                                    <div className="text-xs" style={{color: color}}>
+                                                      {Math.abs(value) > 0.3 ? 'Highly Significant' : 'Notable'}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                        
+                                        {/* Overall Bias Interpretation */}
+                                        <div className="mt-3 p-3 rounded" 
+                                             style={{
+                                               backgroundColor: teamData.rbs_score > 0.3 ? '#A3D9FF' :
+                                                              teamData.rbs_score < -0.3 ? '#F2E9E4' : 'white',
+                                               borderLeft: `4px solid ${getRBSScoreColor(teamData.rbs_score)}`
+                                             }}>
+                                          <div className="text-sm font-semibold" style={{color: '#002629'}}>
+                                            🎯 Overall Bias Assessment:
+                                          </div>
+                                          <div className="text-sm mt-1" style={{color: '#002629'}}>
+                                            {teamData.rbs_score > 0.3 ? 
+                                              `${teamName} receives significantly favorable treatment from this referee. Key benefits in ${
+                                                Object.entries(teamData.stats_breakdown || {})
+                                                  .filter(([stat, val]) => getStatDirection(stat, val) === 'favorable' && Math.abs(val) > 0.1)
+                                                  .map(([stat]) => stat.replace(/_/g, ' '))
+                                                  .join(', ')
+                                              }.` :
+                                             teamData.rbs_score < -0.3 ?
+                                              `${teamName} receives unfavorable treatment from this referee. Key disadvantages in ${
+                                                Object.entries(teamData.stats_breakdown || {})
+                                                  .filter(([stat, val]) => getStatDirection(stat, val) === 'unfavorable' && Math.abs(val) > 0.1)
+                                                  .map(([stat]) => stat.replace(/_/g, ' '))
+                                                  .join(', ')
+                                              }.` :
+                                              `${teamName} receives relatively neutral treatment from this referee.`
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            ))}
+                                );
+                              })}
+                          </div>
+                          
+                          {/* Summary Statistics */}
+                          <div className="mt-4 p-3 rounded" style={{backgroundColor: '#A3D9FF', color: '#002629'}}>
+                            <div className="text-sm font-semibold mb-1">
+                              📈 Analysis Summary for {detailedRefereeData.referee_name}:
+                            </div>
+                            <div className="text-xs">
+                              Showing RBS analysis for all {Object.keys(detailedRefereeData.team_rbs_details).length} teams 
+                              with calculated bias scores. Teams are ordered by bias magnitude (strongest bias first).
+                            </div>
                           </div>
                         </div>
                       )}
