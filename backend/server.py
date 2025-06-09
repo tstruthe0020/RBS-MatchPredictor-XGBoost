@@ -2456,7 +2456,7 @@ class MLMatchPredictor:
                 draw_prob = (draw_prob / total_prob) * 100
                 away_win_prob = (away_win_prob / total_prob) * 100
             
-            # Enhanced prediction breakdown
+            # Enhanced prediction breakdown with optimization support
             prediction_breakdown = {
                 'model_confidence': {
                     'classifier_confidence': max(outcome_probs),
@@ -2479,7 +2479,10 @@ class MLMatchPredictor:
                     'half_life_months': decay_config.half_life_months if decay_config else None,
                     'decay_rate_per_month': decay_config.decay_rate_per_month if decay_config else None,
                     'description': decay_config.description if decay_config else None
-                } if decay_config else None
+                } if decay_config else None,
+                # 🎯 Add features for optimization tracking
+                'features_used_dict': features if features else {},
+                'optimization_ready': True
             }
             
             return MatchPredictionResponse(
