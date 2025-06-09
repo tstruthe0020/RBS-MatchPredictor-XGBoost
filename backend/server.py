@@ -7290,3 +7290,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Database client cleanup is now handled by the lifespan context manager above
+
+if __name__ == "__main__":
+    import uvicorn
+    print("Starting Football Analytics API Server...")
+    uvicorn.run(app, host="0.0.0.0", port=8001, reload=True)
