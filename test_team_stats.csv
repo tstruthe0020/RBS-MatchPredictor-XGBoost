@@ -1,0 +1,7 @@
+match_id,team_name,is_home,yellow_cards,red_cards,fouls,possession_pct,shots_total,shots_on_target,fouls_drawn,penalties_awarded,penalty_attempts,penalty_goals,penalty_conversion_rate,xg
+test_match_1,Arsenal,True,2,0,10,55,15,8,8,1,1,1,100,2.3
+test_match_1,Chelsea,False,3,0,12,45,10,5,10,0,0,0,0,1.5
+test_match_2,Liverpool,True,1,0,8,60,18,10,6,0,0,0,0,3.2
+test_match_2,Manchester United,False,4,1,14,40,6,2,8,0,0,0,0,0.8
+test_match_3,Manchester City,True,2,0,9,65,20,8,7,0,0,0,0,2.1
+test_match_3,Tottenham,False,3,0,11,35,8,4,9,1,1,1,100,1.4

@@ -1,0 +1,4 @@
+match_id,referee,home_team,away_team,home_score,away_score,result,season,competition,match_date
+test_match_1,Mike Dean,Arsenal,Chelsea,2,1,H,2022/23,Premier League,2022-09-01
+test_match_2,Michael Oliver,Liverpool,Manchester United,3,0,H,2022/23,Premier League,2022-09-02
+test_match_3,Anthony Taylor,Manchester City,Tottenham,1,1,D,2022/23,Premier League,2022-09-03

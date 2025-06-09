@@ -1,0 +1,4 @@
+match_id,referee,home_team,away_team,home_score,away_score,result,season,competition,match_date
+test_match_4,Martin Atkinson,Arsenal,Tottenham,1,1,D,2022/23,Premier League,2022-09-10
+test_match_5,Andre Marriner,Chelsea,Liverpool,0,2,A,2022/23,Premier League,2022-09-11
+test_match_6,Stuart Attwell,Manchester United,Manchester City,1,3,A,2022/23,Premier League,2022-09-12
