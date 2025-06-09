@@ -730,6 +730,58 @@ function App() {
                 </div>
               </div>
 
+              {/* RBS Calculation Status */}
+              <div className="mt-8 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{color: '#002629'}}>⚖️ Referee Bias Score (RBS) Status</h3>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className={`inline-block w-3 h-3 rounded-full ${rbsStatus?.calculated ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className="text-sm font-medium" style={{color: '#002629'}}>
+                        {rbsStatus?.calculated ? '✅ RBS Calculations Available' : '❌ RBS Not Calculated'}
+                      </span>
+                      {rbsStatus?.last_calculated && (
+                        <span className="text-xs" style={{color: '#002629', opacity: 0.7}}>
+                          (Last calculated: {new Date(rbsStatus.last_calculated).toLocaleDateString()})
+                        </span>
+                      )}
+                    </div>
+                    {rbsStatus?.calculated && (
+                      <div className="mt-2 text-sm" style={{color: '#002629', opacity: 0.8}}>
+                        {rbsStatus.referees_analyzed} referees analyzed • {rbsStatus.teams_covered} teams covered • {rbsStatus.total_calculations} bias scores
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={checkRBSStatus}
+                      className="px-3 py-1 text-sm text-white rounded hover:opacity-90 transition-opacity"
+                      style={{backgroundColor: '#1C5D99'}}
+                    >
+                      🔄 Check Status
+                    </button>
+                    <button
+                      onClick={calculateRBS}
+                      disabled={calculatingRBS}
+                      className="px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-opacity"
+                      style={{backgroundColor: '#12664F'}}
+                    >
+                      {calculatingRBS ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Calculating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>⚖️</span>
+                          <span>Calculate RBS</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Database Management */}
               <div className="mt-8 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#002629'}}>
                 <div className="flex items-center justify-between mb-4">
