@@ -2361,13 +2361,18 @@ class MLMatchPredictor:
             if not self.models or len(self.models) != 5:
                 raise ValueError("ML models not trained. Please train models first.")
             
+            print(f"🚀 Using XGBoost Enhanced Prediction with Starting XI")
+            print(f"   Home XI: {'✅ Provided' if home_starting_xi else '❌ None'}")
+            print(f"   Away XI: {'✅ Provided' if away_starting_xi else '❌ None'}")
+            print(f"   Time Decay: {'✅ Enabled' if decay_config else '❌ Disabled'}")
+            
             # Extract features with starting XI filtering
             features = await self.extract_features_for_match_enhanced(
                 home_team, away_team, referee, match_date, 
                 home_starting_xi, away_starting_xi, decay_config
             )
             if features is None:
-                raise ValueError("Could not extract features for prediction")
+                raise ValueError("Could not extract enhanced features for prediction")
             
             # Convert to DataFrame and ensure correct column order
             import pandas as pd
@@ -2377,12 +2382,18 @@ class MLMatchPredictor:
             # Scale features
             X_scaled = self.scaler.transform(X)
             
-            # Make predictions
+            print(f"   Features extracted: {len(features)} features")
+            print(f"   Using XGBoost models for prediction...")
+            
+            # Make predictions using XGBoost models
             outcome_probs = self.models['classifier'].predict_proba(X_scaled)[0]
             home_goals = max(0, self.models['home_goals'].predict(X_scaled)[0])
             away_goals = max(0, self.models['away_goals'].predict(X_scaled)[0])
             home_xg = max(0, self.models['home_xg'].predict(X_scaled)[0])
             away_xg = max(0, self.models['away_xg'].predict(X_scaled)[0])
+            
+            print(f"   ✅ XGBoost Prediction Complete!")
+            print(f"   Home Goals: {home_goals:.2f}, Away Goals: {away_goals:.2f}")
             
             # Get outcome probabilities (convert to percentages)
             home_win_prob = outcome_probs[0] * 100
@@ -2406,7 +2417,8 @@ class MLMatchPredictor:
                 'feature_importance': {
                     'top_features': self._get_top_feature_importance(5)
                 },
-                'prediction_method': 'Enhanced ML with Starting XI',
+                'prediction_method': 'XGBoost Enhanced ML with Starting XI',
+                'model_type': 'XGBoost Gradient Boosting',
                 'starting_xi_used': {
                     'home_team': home_starting_xi is not None,
                     'away_team': away_starting_xi is not None
@@ -2437,13 +2449,18 @@ class MLMatchPredictor:
             )
             
         except Exception as e:
-            print(f"Error making enhanced ML prediction: {e}")
+            print(f"❌ Error making XGBoost enhanced ML prediction: {e}")
+            print(f"   This should NOT fallback to other models!")
             return MatchPredictionResponse(
                 success=False,
-                error=str(e),
+                error=f"XGBoost Enhanced Prediction Failed: {str(e)}",
                 home_team=home_team,
                 away_team=away_team,
-                referee=referee
+                referee=referee,
+                prediction_breakdown={
+                    'prediction_method': 'FAILED - XGBoost Enhanced ML with Starting XI',
+                    'error_details': str(e)
+                }
             )
     
     async def predict_match_with_defaults(self, home_team, away_team, referee, match_date=None, config_name="default", decay_config=None):
