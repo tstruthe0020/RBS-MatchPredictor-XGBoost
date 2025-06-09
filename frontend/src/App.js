@@ -217,6 +217,69 @@ function App() {
       ...currentXI,
       positions: updatedPositions
     });
+
+    // Clear search term after selection
+    const searchKey = `${isHomeTeam ? 'home' : 'away'}_${positionId}`;
+    setPlayerSearchTerms(prev => ({
+      ...prev,
+      [searchKey]: selectedPlayer ? selectedPlayer.player_name : ''
+    }));
+    setSearchResults(prev => ({
+      ...prev,
+      [searchKey]: []
+    }));
+  };
+
+  // Player search functionality
+  const searchPlayers = (searchTerm, isHomeTeam, positionType, positionId) => {
+    const teamPlayers = isHomeTeam ? homeTeamPlayers : awayTeamPlayers;
+    const currentXI = isHomeTeam ? homeStartingXI : awayStartingXI;
+    const searchKey = `${isHomeTeam ? 'home' : 'away'}_${positionId}`;
+    
+    if (!searchTerm.trim()) {
+      setSearchResults(prev => ({
+        ...prev,
+        [searchKey]: []
+      }));
+      return;
+    }
+
+    const filtered = teamPlayers
+      .filter(player => {
+        // Filter by search term
+        const nameMatch = player.player_name.toLowerCase().includes(searchTerm.toLowerCase());
+        // Prefer players of same position, but allow others
+        const positionMatch = player.position === positionType;
+        // Exclude already selected players
+        const notSelected = !currentXI?.positions.some(pos => pos.player?.player_name === player.player_name);
+        
+        return nameMatch && notSelected;
+      })
+      .sort((a, b) => {
+        // Sort by position match first, then by matches played
+        if (a.position === positionType && b.position !== positionType) return -1;
+        if (b.position === positionType && a.position !== positionType) return 1;
+        return (b.matches_played || 0) - (a.matches_played || 0);
+      })
+      .slice(0, 8); // Limit to 8 results
+
+    setSearchResults(prev => ({
+      ...prev,
+      [searchKey]: filtered
+    }));
+  };
+
+  const handlePlayerSearch = (searchTerm, isHomeTeam, positionType, positionId) => {
+    const searchKey = `${isHomeTeam ? 'home' : 'away'}_${positionId}`;
+    setPlayerSearchTerms(prev => ({
+      ...prev,
+      [searchKey]: searchTerm
+    }));
+    searchPlayers(searchTerm, isHomeTeam, positionType, positionId);
+  };
+
+  const selectPlayerFromSearch = (player, isHomeTeam, positionId) => {
+    updateStartingXIPlayer(isHomeTeam, positionId, player);
   };
 
   const validateStartingXI = (startingXI) => {
