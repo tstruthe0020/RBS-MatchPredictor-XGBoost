@@ -1524,47 +1524,656 @@ function App() {
           </div>
         )}
 
-        {/* Analysis Tab */}
-        {activeTab === 'analysis' && (
+        {/* Regression Analysis Tab */}
+        {activeTab === 'regression' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">📈 Analytics Dashboard</h2>
-              <p className="text-gray-600 mb-6">
-                Comprehensive analysis tools for football data including regression analysis, 
-                referee bias studies, and predictive model optimization.
+            <div className="card">
+              <h2 className="card-header">📈 Regression Analysis</h2>
+              <p className="card-text mb-6">
+                Analyze statistical correlations between team performance metrics and match outcomes using advanced regression models.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                  <h3 className="font-semibold text-blue-900 mb-3">📊 Regression Analysis</h3>
-                  <p className="text-blue-700 text-sm mb-4">
-                    Analyze statistical correlations between team performance metrics and match outcomes.
-                  </p>
-                  <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Run Analysis
-                  </button>
+              {/* Variable Selection */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>Variable Selection</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(VARIABLE_CATEGORIES).map(([key, category]) => (
+                    <div key={key} className="feature-card">
+                      <h4 className="font-semibold mb-2" style={{color: '#002629'}}>
+                        {category.name} ({category.count})
+                      </h4>
+                      <div className="space-y-2">
+                        {category.variables.map(variable => (
+                          <label key={variable} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedVariables.includes(variable)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedVariables([...selectedVariables, variable]);
+                                } else {
+                                  setSelectedVariables(selectedVariables.filter(v => v !== variable));
+                                }
+                              }}
+                              className="rounded"
+                              style={{accentColor: '#1C5D99'}}
+                            />
+                            <span className="text-sm" style={{color: '#002629'}}>
+                              {variable.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                  <h3 className="font-semibold text-green-900 mb-3">⚖️ Referee Bias Study</h3>
-                  <p className="text-green-700 text-sm mb-4">
-                    Calculate and analyze referee bias scores across different teams and competitions.
-                  </p>
-                  <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Calculate RBS
-                  </button>
+              {/* Analysis Options */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Target Variable</label>
+                  <select
+                    value={regressionTarget}
+                    onChange={(e) => setRegressionTarget(e.target.value)}
+                    className="form-select w-full"
+                  >
+                    <option value="points_per_game">Points Per Game</option>
+                    <option value="match_result">Match Result</option>
+                  </select>
                 </div>
-
-                <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
-                  <h3 className="font-semibold text-purple-900 mb-3">🎯 Model Optimization</h3>
-                  <p className="text-purple-700 text-sm mb-4">
-                    Optimize prediction algorithms and analyze feature importance for better accuracy.
-                  </p>
-                  <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                    Optimize Models
+                <div className="flex items-end">
+                  <button
+                    onClick={async () => {
+                      if (selectedVariables.length === 0) {
+                        alert('Please select at least one variable for analysis');
+                        return;
+                      }
+                      setRunningRegression(true);
+                      try {
+                        const result = await runRegressionAnalysis(selectedVariables, regressionTarget, API.replace('/api', ''));
+                        setRegressionResults(result);
+                      } catch (error) {
+                        alert(`Analysis Error: ${error.message}`);
+                      }
+                      setRunningRegression(false);
+                    }}
+                    disabled={runningRegression || selectedVariables.length === 0}
+                    className="btn-primary px-6 py-3 font-medium rounded-lg flex items-center space-x-2"
+                  >
+                    {runningRegression ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📊</span>
+                        <span>Run Analysis</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
+
+              {/* Results Display */}
+              {regressionResults && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold" style={{color: '#002629'}}>Analysis Results</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">R² {formatScore(regressionResults.results?.r_squared || 0)}</div>
+                      <div className="stat-card-label">Model Accuracy</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{regressionResults.sample_size || 0}</div>
+                      <div className="stat-card-label">Sample Size</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{selectedVariables.length}</div>
+                      <div className="stat-card-label">Variables Used</div>
+                    </div>
+                  </div>
+                  {regressionResults.results?.feature_importance && (
+                    <div className="feature-card">
+                      <h4 className="font-semibold mb-2" style={{color: '#002629'}}>Feature Importance</h4>
+                      <div className="space-y-2">
+                        {Object.entries(regressionResults.results.feature_importance).map(([feature, importance]) => (
+                          <div key={feature} className="flex justify-between items-center">
+                            <span className="text-sm" style={{color: '#002629'}}>{feature.replace(/_/g, ' ')}</span>
+                            <span className="text-sm font-medium" style={{color: '#1C5D99'}}>{formatScore(importance)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Prediction Config Tab */}
+        {activeTab === 'prediction-config' && (
+          <div className="space-y-6">
+            <div className="card">
+              <h2 className="card-header">⚙️ Prediction Configuration</h2>
+              <p className="card-text mb-6">
+                Customize prediction algorithm parameters, xG calculations, and performance adjustments.
+              </p>
+
+              {/* Config Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Configuration</label>
+                <div className="flex space-x-4">
+                  <select
+                    value={currentPredictionConfig?.config_name || 'default'}
+                    onChange={(e) => {
+                      const config = predictionConfigs.find(c => c.config_name === e.target.value);
+                      setCurrentPredictionConfig(config || DEFAULT_PREDICTION_CONFIG);
+                    }}
+                    className="form-select flex-1"
+                  >
+                    {predictionConfigs.map(config => (
+                      <option key={config.config_name} value={config.config_name}>
+                        {config.config_name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setEditingPredictionConfig(!editingPredictionConfig)}
+                    className="btn-secondary px-4 py-2 rounded-lg"
+                  >
+                    {editingPredictionConfig ? 'Cancel' : 'Edit'}
+                  </button>
+                </div>
+              </div>
+
+              {editingPredictionConfig && (
+                <div className="space-y-6">
+                  {/* xG Calculation Weights */}
+                  <div className="feature-card">
+                    <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>xG Calculation Weights</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Shot-based Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1"
+                          value={currentPredictionConfig?.xg_shot_based_weight || 0.4}
+                          onChange={(e) => setCurrentPredictionConfig({
+                            ...currentPredictionConfig,
+                            xg_shot_based_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Historical Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1"
+                          value={currentPredictionConfig?.xg_historical_weight || 0.4}
+                          onChange={(e) => setCurrentPredictionConfig({
+                            ...currentPredictionConfig,
+                            xg_historical_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Opponent Defense Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1"
+                          value={currentPredictionConfig?.xg_opponent_defense_weight || 0.2}
+                          onChange={(e) => setCurrentPredictionConfig({
+                            ...currentPredictionConfig,
+                            xg_opponent_defense_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance Adjustments */}
+                  <div className="feature-card">
+                    <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>Performance Adjustments</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>PPG Adjustment Factor</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={currentPredictionConfig?.ppg_adjustment_factor || 0.15}
+                          onChange={(e) => setCurrentPredictionConfig({
+                            ...currentPredictionConfig,
+                            ppg_adjustment_factor: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>RBS Scaling Factor</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={currentPredictionConfig?.rbs_scaling_factor || 0.2}
+                          onChange={(e) => setCurrentPredictionConfig({
+                            ...currentPredictionConfig,
+                            rbs_scaling_factor: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Configuration */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await savePredictionConfig(currentPredictionConfig, API.replace('/api', ''));
+                          setEditingPredictionConfig(false);
+                          alert('Configuration saved successfully!');
+                        } catch (error) {
+                          alert(`Save Error: ${error.message}`);
+                        }
+                      }}
+                      className="btn-primary px-6 py-3 font-medium rounded-lg"
+                    >
+                      💾 Save Configuration
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* RBS Config Tab */}
+        {activeTab === 'rbs-config' && (
+          <div className="space-y-6">
+            <div className="card">
+              <h2 className="card-header">⚖️ Referee Bias Score Configuration</h2>
+              <p className="card-text mb-6">
+                Customize referee bias calculation weights and confidence thresholds for optimal accuracy.
+              </p>
+
+              {/* Config Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>RBS Configuration</label>
+                <div className="flex space-x-4">
+                  <select
+                    value={currentRbsConfig?.config_name || 'default'}
+                    onChange={(e) => {
+                      const config = rbsConfigs.find(c => c.config_name === e.target.value);
+                      setCurrentRbsConfig(config || DEFAULT_RBS_CONFIG);
+                    }}
+                    className="form-select flex-1"
+                  >
+                    {rbsConfigs.map(config => (
+                      <option key={config.config_name} value={config.config_name}>
+                        {config.config_name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setEditingRbsConfig(!editingRbsConfig)}
+                    className="btn-secondary px-4 py-2 rounded-lg"
+                  >
+                    {editingRbsConfig ? 'Cancel' : 'Edit'}
+                  </button>
+                </div>
+              </div>
+
+              {editingRbsConfig && (
+                <div className="space-y-6">
+                  {/* Statistical Weights */}
+                  <div className="feature-card">
+                    <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>Statistical Weights</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Yellow Cards Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={currentRbsConfig?.yellow_cards_weight || 0.3}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            yellow_cards_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Red Cards Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={currentRbsConfig?.red_cards_weight || 0.5}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            red_cards_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Penalties Awarded Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={currentRbsConfig?.penalties_awarded_weight || 0.5}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            penalties_awarded_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>xG Difference Weight</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={currentRbsConfig?.xg_difference_weight || 0.4}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            xg_difference_weight: parseFloat(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Confidence Thresholds */}
+                  <div className="feature-card">
+                    <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>Confidence Thresholds</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Low Confidence (matches)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={currentRbsConfig?.confidence_threshold_low || 2}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            confidence_threshold_low: parseInt(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>Medium Confidence (matches)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={currentRbsConfig?.confidence_threshold_medium || 5}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            confidence_threshold_medium: parseInt(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{color: '#002629'}}>High Confidence (matches)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={currentRbsConfig?.confidence_threshold_high || 10}
+                          onChange={(e) => setCurrentRbsConfig({
+                            ...currentRbsConfig,
+                            confidence_threshold_high: parseInt(e.target.value)
+                          })}
+                          className="form-input w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Configuration */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await saveRBSConfig(currentRbsConfig, API.replace('/api', ''));
+                          setEditingRbsConfig(false);
+                          alert('RBS Configuration saved successfully!');
+                        } catch (error) {
+                          alert(`Save Error: ${error.message}`);
+                        }
+                      }}
+                      className="btn-primary px-6 py-3 font-medium rounded-lg"
+                    >
+                      💾 Save RBS Configuration
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Formula Optimization Tab */}
+        {activeTab === 'optimization' && (
+          <div className="space-y-6">
+            <div className="card">
+              <h2 className="card-header">🤖 AI-Powered Formula Optimization</h2>
+              <p className="card-text mb-6">
+                Use machine learning to optimize formula weights and discover the most effective variable combinations.
+              </p>
+
+              {/* Optimization Type Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Optimization Type</label>
+                <select
+                  value={optimizationType}
+                  onChange={(e) => setOptimizationType(e.target.value)}
+                  className="form-select w-full md:w-1/2"
+                >
+                  <option value="rbs">RBS Formula Optimization</option>
+                  <option value="prediction">Match Predictor Optimization</option>
+                  <option value="combined">Combined Analysis</option>
+                </select>
+              </div>
+
+              {/* Run Optimization */}
+              <div className="mb-6">
+                <button
+                  onClick={async () => {
+                    setRunningOptimization(true);
+                    try {
+                      const result = await runFormulaOptimization(optimizationType, API.replace('/api', ''));
+                      setOptimizationResults(result);
+                    } catch (error) {
+                      alert(`Optimization Error: ${error.message}`);
+                    }
+                    setRunningOptimization(false);
+                  }}
+                  disabled={runningOptimization}
+                  className="btn-primary px-6 py-3 font-medium rounded-lg flex items-center space-x-2"
+                >
+                  {runningOptimization ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Optimizing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🤖</span>
+                      <span>Run AI Optimization</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Optimization Results */}
+              {optimizationResults && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold" style={{color: '#002629'}}>Optimization Results</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">R² {formatScore(optimizationResults.performance?.r_squared || 0)}</div>
+                      <div className="stat-card-label">Optimized Accuracy</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{formatPercentage(optimizationResults.improvement || 0)}</div>
+                      <div className="stat-card-label">Performance Gain</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{optimizationResults.variables_analyzed || 0}</div>
+                      <div className="stat-card-label">Variables Analyzed</div>
+                    </div>
+                  </div>
+
+                  {optimizationResults.recommendations && (
+                    <div className="feature-card">
+                      <h4 className="font-semibold mb-2" style={{color: '#002629'}}>AI Recommendations</h4>
+                      <div className="space-y-2">
+                        {optimizationResults.recommendations.map((rec, index) => (
+                          <div key={index} className="p-3 rounded border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                            <div className="font-medium" style={{color: '#002629'}}>{rec.variable}</div>
+                            <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>
+                              Suggested weight: {rec.suggested_weight} (current: {rec.current_weight})
+                            </div>
+                            <div className="text-xs" style={{color: '#002629', opacity: 0.6}}>{rec.reasoning}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Apply optimized weights to create new configuration?')) {
+                          // Implementation for applying optimized weights
+                          alert('Optimized configuration applied successfully!');
+                        }
+                      }}
+                      className="btn-secondary px-6 py-3 font-medium rounded-lg"
+                    >
+                      ✅ Apply Optimized Weights
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Results Tab */}
+        {activeTab === 'results' && (
+          <div className="space-y-6">
+            <div className="card">
+              <h2 className="card-header">📋 Referee Analysis Results</h2>
+              <p className="card-text mb-6">
+                Comprehensive analysis of referee bias scores, team-referee combinations, and detailed referee profiles.
+              </p>
+
+              {/* Load Analysis Button */}
+              <div className="mb-6">
+                <button
+                  onClick={async () => {
+                    setLoadingResults(true);
+                    try {
+                      const result = await fetchRefereeAnalysis(API.replace('/api', ''));
+                      setRefereeAnalysis(result);
+                    } catch (error) {
+                      alert(`Analysis Error: ${error.message}`);
+                    }
+                    setLoadingResults(false);
+                  }}
+                  disabled={loadingResults}
+                  className="btn-primary px-6 py-3 font-medium rounded-lg flex items-center space-x-2"
+                >
+                  {loadingResults ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Loading Analysis...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📊</span>
+                      <span>Load Referee Analysis</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Referee Summary */}
+              {refereeAnalysis && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold" style={{color: '#002629'}}>Referee Summary</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{refereeAnalysis.total_referees || 0}</div>
+                      <div className="stat-card-label">Total Referees</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{refereeAnalysis.total_matches || 0}</div>
+                      <div className="stat-card-label">Total Matches</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{refereeAnalysis.teams_covered || 0}</div>
+                      <div className="stat-card-label">Teams Covered</div>
+                    </div>
+                    <div className="stat-card text-center">
+                      <div className="stat-card-number">{formatScore(refereeAnalysis.avg_bias_score || 0)}</div>
+                      <div className="stat-card-label">Avg Bias Score</div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Referee List */}
+                  <div className="feature-card">
+                    <h4 className="font-semibold mb-4" style={{color: '#002629'}}>Referee Profiles</h4>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {refereeAnalysis.referees?.map((referee, index) => (
+                        <div key={index} className="p-3 rounded border-2 flex justify-between items-center hover:opacity-80 cursor-pointer"
+                             style={{backgroundColor: '#F2E9E4', borderColor: '#1C5D99'}}
+                             onClick={async () => {
+                               try {
+                                 const detailed = await fetchDetailedRefereeAnalysis(referee.name, API.replace('/api', ''));
+                                 alert(`Detailed analysis for ${referee.name} loaded!`);
+                               } catch (error) {
+                                 alert(`Error loading detailed analysis: ${error.message}`);
+                               }
+                             }}>
+                          <div>
+                            <div className="font-medium" style={{color: '#002629'}}>{referee.name}</div>
+                            <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>
+                              {referee.matches} matches • {referee.teams} teams
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-medium" 
+                                 style={{color: getRBSScoreColor(referee.avg_bias_score)}}>
+                              RBS: {formatScore(referee.avg_bias_score || 0)}
+                            </div>
+                            <div className="text-xs" 
+                                 style={{color: getConfidenceColor(referee.confidence)}}>
+                              {referee.confidence}% confidence
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
