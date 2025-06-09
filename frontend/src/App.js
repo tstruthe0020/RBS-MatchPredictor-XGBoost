@@ -799,9 +799,9 @@ function App() {
         {/* Standard Prediction Tab */}
         {activeTab === 'predict' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">🎯 Standard Match Prediction</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="card">
+              <h2 className="card-header">🎯 Standard Match Prediction</h2>
+              <p className="card-text mb-6">
                 Standard prediction using team-level statistics and historical data.
               </p>
 
@@ -809,11 +809,11 @@ function App() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Home Team *</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Home Team *</label>
                       <select
                         value={predictionForm.home_team}
                         onChange={(e) => handlePredictionFormChange('home_team', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="form-select w-full"
                       >
                         <option value="">Select Home Team</option>
                         {teams.map(team => (
@@ -823,11 +823,11 @@ function App() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Away Team *</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Away Team *</label>
                       <select
                         value={predictionForm.away_team}
                         onChange={(e) => handlePredictionFormChange('away_team', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="form-select w-full"
                       >
                         <option value="">Select Away Team</option>
                         {teams.filter(team => team !== predictionForm.home_team).map(team => (
@@ -837,11 +837,11 @@ function App() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Referee *</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Referee *</label>
                       <select
                         value={predictionForm.referee_name}
                         onChange={(e) => handlePredictionFormChange('referee_name', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="form-select w-full"
                       >
                         <option value="">Select Referee</option>
                         {referees.map(referee => (
@@ -851,12 +851,12 @@ function App() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Match Date (Optional)</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Match Date (Optional)</label>
                       <input
                         type="date"
                         value={predictionForm.match_date}
                         onChange={(e) => handlePredictionFormChange('match_date', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="form-input w-full"
                       />
                     </div>
                   </div>
@@ -864,7 +864,7 @@ function App() {
                   <button
                     onClick={predictMatch}
                     disabled={predicting || !predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name}
-                    className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                    className="btn-primary px-6 py-3 font-medium rounded-lg flex items-center space-x-2"
                   >
                     {predicting ? (
                       <>
