@@ -108,6 +108,8 @@ test_plan:
     - "XGBoost Tab Functionality"
     - "Database Management Functionality"
     - "Database Management UI"
-  stuck_tasks: []
+    - "Upload Data Tab Functionality"
+  stuck_tasks: 
+    - "Upload Data Tab Functionality"
   test_all: false
   test_priority: "high_first"
