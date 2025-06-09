@@ -2178,26 +2178,26 @@ function App() {
           </div>
         )}
 
-        {/* Configuration Tab */}
+        {/* System Configuration Tab */}
         {activeTab === 'config' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">⚙️ System Configuration</h2>
-              <p className="text-gray-600 mb-6">
-                Configure prediction algorithms, time decay settings, and system parameters.
+            <div className="card">
+              <h2 className="card-header">🔧 System Configuration</h2>
+              <p className="card-text mb-6">
+                Configure global system settings, default parameters, and user preferences.
               </p>
 
               <div className="space-y-8">
                 {/* Time Decay Configuration */}
-                <div className="border-b pb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">⏰ Time Decay Settings</h3>
+                <div className="border-b pb-6" style={{borderColor: '#A3D9FF'}}>
+                  <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>⏰ Time Decay Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Default Decay Preset</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Default Decay Preset</label>
                       <select
                         value={decayPreset}
                         onChange={(e) => setDecayPreset(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="form-select w-full"
                       >
                         {decayPresets.map(preset => (
                           <option key={preset.preset_name} value={preset.preset_name}>
@@ -2207,30 +2207,31 @@ function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Apply by Default</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Apply by Default</label>
                       <label className="flex items-center space-x-2">
                         <input
                           type="checkbox"
                           checked={useTimeDecay}
                           onChange={(e) => setUseTimeDecay(e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded"
+                          style={{accentColor: '#1C5D99'}}
                         />
-                        <span className="text-sm text-gray-600">Enable time decay by default</span>
+                        <span className="text-sm" style={{color: '#002629'}}>Enable time decay by default</span>
                       </label>
                     </div>
                   </div>
                 </div>
 
                 {/* Formation Settings */}
-                <div className="border-b pb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">⚽ Formation Settings</h3>
+                <div className="border-b pb-6" style={{borderColor: '#A3D9FF'}}>
+                  <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>⚽ Formation Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Default Formation</label>
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Default Formation</label>
                       <select
                         value={selectedFormation}
                         onChange={(e) => setSelectedFormation(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="form-select w-full"
                       >
                         {availableFormations.map(formation => (
                           <option key={formation} value={formation}>{formation}</option>
@@ -2238,9 +2239,14 @@ function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Available Formations</label>
-                      <div className="text-sm text-gray-600">
-                        {availableFormations.join(', ')}
+                      <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Available Formations</label>
+                      <div className="text-sm space-y-1" style={{color: '#002629'}}>
+                        {availableFormations.map(formation => (
+                          <div key={formation} className="flex items-center space-x-2">
+                            <span>⚽</span>
+                            <span>{formation}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -2248,18 +2254,17 @@ function App() {
 
                 {/* System Status */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">🔧 System Status</h3>
+                  <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>📊 System Status</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">XGBoost Models</h4>
-                      <div className="flex items-center space-x-2">
-                        <span className={`inline-block w-3 h-3 rounded-full ${mlStatus?.models_loaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        <span className="text-sm">{mlStatus?.models_loaded ? 'Loaded' : 'Not Loaded'}</span>
+                    <div className="stat-card">
+                      <div className="stat-card-label mb-2">XGBoost Models Status</div>
+                      <div className="stat-card-number text-lg">
+                        {mlStatus?.models_loaded ? '✅ Loaded' : '❌ Not Loaded'}
                       </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">Data Status</h4>
-                      <div className="text-sm text-gray-600">
+                    <div className="stat-card">
+                      <div className="stat-card-label mb-2">Data Status</div>
+                      <div className="stat-card-number text-lg">
                         {teams.length} teams, {referees.length} referees
                       </div>
                     </div>
