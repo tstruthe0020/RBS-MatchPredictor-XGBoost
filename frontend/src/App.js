@@ -288,6 +288,17 @@ function App() {
     return startingXI.positions.filter(pos => pos.player).length === 11;
   };
 
+  const getButtonTooltip = () => {
+    if (!predictionForm.home_team) return "Select home team";
+    if (!predictionForm.away_team) return "Select away team"; 
+    if (!predictionForm.referee_name) return "Select referee";
+    if (showStartingXI && predictionForm.home_team && predictionForm.away_team) {
+      if (!validateStartingXI(homeStartingXI)) return "Complete home team Starting XI (11 players)";
+      if (!validateStartingXI(awayStartingXI)) return "Complete away team Starting XI (11 players)";
+    }
+    return "";
+  };
+
   // Prediction Functions
   const handlePredictionFormChange = (field, value) => {
     setPredictionForm(prev => ({
