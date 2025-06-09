@@ -1201,7 +1201,8 @@ function App() {
                         !predictionForm.home_team || 
                         !predictionForm.away_team || 
                         !predictionForm.referee_name ||
-                        (showStartingXI && (!validateStartingXI(homeStartingXI) || !validateStartingXI(awayStartingXI)))
+                        (showStartingXI && predictionForm.home_team && predictionForm.away_team && 
+                         (!validateStartingXI(homeStartingXI) || !validateStartingXI(awayStartingXI)))
                       }
                       className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md"
                     >
