@@ -13,6 +13,20 @@ backend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the Starting XI and Time Decay functionality. The GET /api/formations endpoint correctly returns 5 available formations (4-4-2, 4-3-3, 3-5-2, 4-5-1, 3-4-3). The GET /api/time-decay/presets endpoint correctly returns 5 decay presets (aggressive, moderate, conservative, linear, none) with proper descriptions. The GET /api/teams/{team_name}/players endpoint exists and responds correctly, though it returns empty results as expected since there are no teams/players in the database. The POST /api/predict-match-enhanced endpoint exists and responds correctly, though it cannot be fully tested without team data. The StartingXIManager and TimeDecayManager classes are properly initialized and integrated into the system."
+  - task: "Database Management Functionality"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented database management functionality with endpoints for database stats and database wipe."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the database management functionality. The GET /api/database/stats endpoint correctly returns collection statistics including total document count and per-collection counts. The DELETE /api/database/wipe endpoint properly clears all collections and returns success confirmation with stats. Both endpoints are accessible and working correctly. Fixed a bug in the database stats endpoint where datetime.datetime.now() was incorrectly referenced (changed to datetime.now())."
 
 frontend:
   - task: "XGBoost Tab Functionality"
@@ -48,6 +62,8 @@ agent_communication:
     message: "I've tested the Enhanced XGBoost functionality and found a critical issue with the API URL configuration in the frontend. The UI components for the Enhanced XGBoost tab are implemented correctly, including the Starting XI toggle, time decay settings, formation selection, and team selection dropdowns. However, all API calls are failing with 404 errors because the frontend is making requests to the wrong URL. In App.js, the API URL is defined as 'const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';' but when making API calls, it's using '${API}/formations' instead of '${API}/api/formations'. The backend API endpoints are working correctly when accessed directly with the proper '/api' prefix, but the frontend is not including this prefix in its requests. This needs to be fixed by either modifying the API URL in App.js to include the '/api' prefix or updating all API calls to include the prefix."
   - agent: "testing"
     message: "I've completed testing the Enhanced XGBoost functionality after the API URL issue was fixed. The Enhanced XGBoost tab now loads correctly and all UI components are visible and functional. The Starting XI toggle button works properly, allowing users to enable/disable the Starting XI functionality. The time decay checkbox and settings are also working correctly - when the checkbox is unchecked, the decay preset dropdown is disabled, and when checked, it's enabled. The formation dropdown is visible and can be changed when Starting XI is enabled. The team and referee dropdowns are also present and functional. The interface handles empty database gracefully by showing the appropriate UI elements even when no data is available. All the required API endpoints (/api/formations, /api/time-decay/presets, /api/teams, /api/referees) are now being called correctly, and the UI is responding appropriately to user interactions."
+  - agent: "testing"
+    message: "I've successfully tested the database management functionality. The GET /api/database/stats endpoint correctly returns collection statistics including total document count and per-collection counts. The DELETE /api/database/wipe endpoint properly clears all collections and returns success confirmation with stats. Both endpoints are accessible and working correctly. I found and fixed a bug in the database stats endpoint where datetime.datetime.now() was incorrectly referenced (changed to datetime.now()). The same issue was present in the database wipe endpoint, which I also fixed. After these fixes, both endpoints are working properly."
 
 metadata:
   created_by: "testing_agent"
@@ -58,6 +74,7 @@ test_plan:
   current_focus:
     - "Starting XI and Time Decay Functionality"
     - "XGBoost Tab Functionality"
+    - "Database Management Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
