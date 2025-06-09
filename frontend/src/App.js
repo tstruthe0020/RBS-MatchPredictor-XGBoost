@@ -1987,6 +1987,89 @@ function App() {
                   )}
                 </div>
               )}
+
+              {/* Enhanced RBS Analysis Section */}
+              <div className="mt-8 p-6 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🔍 Enhanced RBS Analysis</h3>
+                <p className="text-sm mb-6" style={{color: '#002629', opacity: 0.8}}>
+                  Advanced referee variance analysis for specific team-referee combinations with detailed statistical breakdowns.
+                </p>
+
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Team</label>
+                    <select
+                      value={selectedTeamForAnalysis}
+                      onChange={(e) => setSelectedTeamForAnalysis(e.target.value)}
+                      className="form-select w-full"
+                    >
+                      <option value="">Select Team</option>
+                      {teams.map(team => (
+                        <option key={team} value={team}>{team}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Referee</label>
+                    <select
+                      value={selectedRefereeForAnalysis}
+                      onChange={(e) => setSelectedRefereeForAnalysis(e.target.value)}
+                      className="form-select w-full"
+                    >
+                      <option value="">Select Referee</option>
+                      {referees.map(referee => (
+                        <option key={referee} value={referee}>{referee}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="pt-6">
+                    <button
+                      onClick={() => fetchEnhancedRBSForTeamReferee(selectedTeamForAnalysis, selectedRefereeForAnalysis)}
+                      disabled={!selectedTeamForAnalysis || !selectedRefereeForAnalysis || loadingEnhancedRBS}
+                      className="px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      style={{backgroundColor: '#12664F'}}
+                    >
+                      {loadingEnhancedRBS ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🔍</span>
+                          <span>Analyze</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {enhancedRBSData && (
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-3">📈 Enhanced Analysis Results</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-800">{enhancedRBSData.team_matches_with_referee || 'N/A'}</div>
+                          <div className="text-xs text-gray-600">Matches Together</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-800">{enhancedRBSData.rbs_score?.toFixed(3) || 'N/A'}</div>
+                          <div className="text-xs text-gray-600">RBS Score</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-800">{enhancedRBSData.confidence || 'N/A'}</div>
+                          <div className="text-xs text-gray-600">Confidence Level</div>
+                        </div>
+                      </div>
+                      
+                      {enhancedRBSData.variance_analysis && (
+                        <RBSVarianceAnalysis varianceData={enhancedRBSData.variance_analysis} />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
