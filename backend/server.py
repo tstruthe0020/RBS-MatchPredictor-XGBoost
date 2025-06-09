@@ -788,15 +788,10 @@ class RBSCalculator:
         penalties_diff = with_ref_stats['penalties_awarded'] - without_ref_stats['penalties_awarded']
         rbs_components['penalties_awarded'] = penalties_diff * config.penalties_awarded_weight
         
-        # xG difference (higher = better for team)
-        xg_diff = with_ref_stats['xg_difference'] - without_ref_stats['xg_difference']
-        rbs_components['xg_difference'] = xg_diff * config.xg_difference_weight
+        # REMOVED: xG difference and possession percentage from RBS calculation per user request
+        # These components have been temporarily disabled for testing
         
-        # Possession percentage (higher = better for team)
-        possession_diff = with_ref_stats['possession_percentage'] - without_ref_stats['possession_percentage']
-        rbs_components['possession_percentage'] = possession_diff * config.possession_percentage_weight
-        
-        # Sum all components to get raw RBS
+        # Sum all components to get raw RBS (excluding xG diff and possession)
         rbs_raw = sum(rbs_components.values())
         
         # Apply tanh normalization to get RBS between -1 and +1
