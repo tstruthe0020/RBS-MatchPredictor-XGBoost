@@ -648,15 +648,16 @@ function App() {
               </div>
 
               {/* Database Management */}
-              <div className="mt-8 p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200">
+              <div className="mt-8 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#002629'}}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-red-900">🗄️ Database Management</h3>
-                    <p className="text-sm text-red-700 mt-1">Development tools for managing database content</p>
+                    <h3 className="text-lg font-semibold" style={{color: '#002629'}}>🗄️ Database Management</h3>
+                    <p className="text-sm mt-1" style={{color: '#002629', opacity: 0.8}}>Development tools for managing database content</p>
                   </div>
                   <button
                     onClick={fetchDatabaseStats}
-                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                    className="px-3 py-1 text-sm text-white rounded hover:opacity-90 transition-opacity"
+                    style={{backgroundColor: '#002629'}}
                   >
                     🔄 Refresh Stats
                   </button>
@@ -665,38 +666,39 @@ function App() {
                 {/* Database Statistics */}
                 {databaseStats && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div className="bg-white p-3 rounded border border-red-200">
-                      <div className="text-lg font-bold text-red-600">{databaseStats.total_documents || 0}</div>
-                      <div className="text-xs text-red-700">Total Records</div>
+                    <div className="bg-white p-3 rounded border-2" style={{borderColor: '#002629'}}>
+                      <div className="text-lg font-bold" style={{color: '#002629'}}>{databaseStats.total_documents || 0}</div>
+                      <div className="text-xs" style={{color: '#002629', opacity: 0.8}}>Total Records</div>
                     </div>
-                    <div className="bg-white p-3 rounded border border-red-200">
-                      <div className="text-lg font-bold text-red-600">{databaseStats.collections?.matches || 0}</div>
-                      <div className="text-xs text-red-700">Matches</div>
+                    <div className="bg-white p-3 rounded border-2" style={{borderColor: '#002629'}}>
+                      <div className="text-lg font-bold" style={{color: '#002629'}}>{databaseStats.collections?.matches || 0}</div>
+                      <div className="text-xs" style={{color: '#002629', opacity: 0.8}}>Matches</div>
                     </div>
-                    <div className="bg-white p-3 rounded border border-red-200">
-                      <div className="text-lg font-bold text-red-600">{databaseStats.collections?.team_stats || 0}</div>
-                      <div className="text-xs text-red-700">Team Stats</div>
+                    <div className="bg-white p-3 rounded border-2" style={{borderColor: '#002629'}}>
+                      <div className="text-lg font-bold" style={{color: '#002629'}}>{databaseStats.collections?.team_stats || 0}</div>
+                      <div className="text-xs" style={{color: '#002629', opacity: 0.8}}>Team Stats</div>
                     </div>
-                    <div className="bg-white p-3 rounded border border-red-200">
-                      <div className="text-lg font-bold text-red-600">{databaseStats.collections?.player_stats || 0}</div>
-                      <div className="text-xs text-red-700">Player Stats</div>
+                    <div className="bg-white p-3 rounded border-2" style={{borderColor: '#002629'}}>
+                      <div className="text-lg font-bold" style={{color: '#002629'}}>{databaseStats.collections?.player_stats || 0}</div>
+                      <div className="text-xs" style={{color: '#002629', opacity: 0.8}}>Player Stats</div>
                     </div>
                   </div>
                 )}
 
                 {/* Danger Zone */}
-                <div className="bg-red-100 p-4 rounded border border-red-300">
+                <div className="p-4 rounded border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold text-red-900">⚠️ Danger Zone</h4>
-                      <p className="text-sm text-red-700 mt-1">
+                      <h4 className="font-semibold" style={{color: '#002629'}}>⚠️ Danger Zone</h4>
+                      <p className="text-sm mt-1" style={{color: '#002629', opacity: 0.8}}>
                         Permanently delete all data from the database. This action cannot be undone.
                       </p>
                     </div>
                     <button
                       onClick={wipeDatabase}
                       disabled={wipingDatabase}
-                      className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                      className="px-4 py-2 text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-opacity"
+                      style={{backgroundColor: '#002629'}}
                     >
                       {wipingDatabase ? (
                         <>
