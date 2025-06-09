@@ -6407,6 +6407,26 @@ async def predict_match_enhanced(request: EnhancedMatchPredictionRequest):
                 decay_config=decay_config if request.use_time_decay else None
             )
         
+        # 🎯 OPTIMIZATION INTEGRATION: Auto-track XGBoost predictions for optimization
+        if result.success:
+            try:
+                prediction_id = await model_optimizer.store_prediction(
+                    prediction_result=result,
+                    prediction_method="XGBoost Enhanced with Starting XI",
+                    starting_xi_used=bool(request.home_starting_xi or request.away_starting_xi),
+                    time_decay_used=bool(request.use_time_decay),
+                    features_used=result.prediction_breakdown.get('features_used') if hasattr(result, 'prediction_breakdown') else None
+                )
+                
+                # Add prediction ID to result for tracking
+                if hasattr(result, 'prediction_breakdown'):
+                    result.prediction_breakdown['prediction_id'] = prediction_id
+                    result.prediction_breakdown['optimization_tracking'] = '✅ Enabled'
+                    print(f"📊 XGBoost prediction tracked for optimization: {prediction_id}")
+                
+            except Exception as opt_error:
+                print(f"Warning: Could not track prediction for optimization: {opt_error}")
+        
         # Convert result to dict and ensure NumPy types are handled
         if hasattr(result, 'dict'):
             result_dict = result.dict()
