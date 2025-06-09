@@ -151,7 +151,7 @@ function App() {
 
   const checkMLStatus = async () => {
     try {
-      const response = await axios.get(`${API}/ml-status`);
+      const response = await axios.get(`${API}/ml-models/status`);
       setMlStatus(response.data);
     } catch (error) {
       console.error('Error checking ML status:', error);
