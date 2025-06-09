@@ -5583,7 +5583,7 @@ async def get_database_stats():
             "success": True,
             "total_documents": total_documents,
             "collections": stats,
-            "timestamp": datetime.datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
