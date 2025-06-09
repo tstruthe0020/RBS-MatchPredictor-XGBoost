@@ -520,21 +520,21 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{backgroundColor: '#F2E9E4'}}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div style={{backgroundColor: '#002629'}} className="shadow-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">⚽ Football Analytics Suite</h1>
-              <span className="text-sm text-gray-500">Enhanced with Starting XI & Time Decay</span>
+              <h1 className="text-2xl font-bold text-white">⚽ Football Analytics Suite</h1>
+              <span className="text-sm" style={{color: '#A3D9FF'}}>Enhanced with Starting XI & Time Decay</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white shadow-sm">
+      <div style={{backgroundColor: '#12664F'}} className="shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8 overflow-x-auto">
             {[
@@ -548,11 +548,14 @@ function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-6 text-sm font-medium border-b-2 whitespace-nowrap ${
+                className={`py-4 px-6 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'text-white border-white'
+                    : 'border-transparent hover:border-white/50'
                 }`}
+                style={{
+                  color: activeTab === tab.id ? '#FFFFFF' : '#A3D9FF'
+                }}
               >
                 <span className="mr-2">{tab.icon}</span>
                 {tab.name}
