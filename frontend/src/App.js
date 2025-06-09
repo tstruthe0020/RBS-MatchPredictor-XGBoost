@@ -73,7 +73,8 @@ function App() {
         fetchStats(),
         fetchFormations(),
         fetchDecayPresets(),
-        checkMLStatus()
+        checkMLStatus(),
+        fetchDatabaseStats()
       ]);
     } catch (error) {
       console.error('Error fetching initial data:', error);
