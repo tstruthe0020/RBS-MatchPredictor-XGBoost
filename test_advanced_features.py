@@ -169,19 +169,25 @@ def test_team_performance():
     home_stats = data.get('home_stats', {})
     away_stats = data.get('away_stats', {})
     
-    print("\nHome Stats:")
-    print(f"  Matches: {home_stats.get('matches_count', 0)}")
-    print(f"  xG per shot: {home_stats.get('xg_per_shot', 0)}")
-    print(f"  Shots per game: {home_stats.get('shots_total', 0)}")
-    print(f"  Shot accuracy: {home_stats.get('shot_accuracy', 0)}")
-    print(f"  Conversion rate: {home_stats.get('conversion_rate', 0)}")
+    if home_stats:
+        print("\nHome Stats:")
+        print(f"  Matches: {home_stats.get('matches_count', 0)}")
+        print(f"  xG per shot: {home_stats.get('xg_per_shot', 0)}")
+        print(f"  Shots per game: {home_stats.get('shots_total', 0)}")
+        print(f"  Shot accuracy: {home_stats.get('shot_accuracy', 0)}")
+        print(f"  Conversion rate: {home_stats.get('conversion_rate', 0)}")
+    else:
+        print("\nNo home stats available")
     
-    print("\nAway Stats:")
-    print(f"  Matches: {away_stats.get('matches_count', 0)}")
-    print(f"  xG per shot: {away_stats.get('xg_per_shot', 0)}")
-    print(f"  Shots per game: {away_stats.get('shots_total', 0)}")
-    print(f"  Shot accuracy: {away_stats.get('shot_accuracy', 0)}")
-    print(f"  Conversion rate: {away_stats.get('conversion_rate', 0)}")
+    if away_stats:
+        print("\nAway Stats:")
+        print(f"  Matches: {away_stats.get('matches_count', 0)}")
+        print(f"  xG per shot: {away_stats.get('xg_per_shot', 0)}")
+        print(f"  Shots per game: {away_stats.get('shots_total', 0)}")
+        print(f"  Shot accuracy: {away_stats.get('shot_accuracy', 0)}")
+        print(f"  Conversion rate: {away_stats.get('conversion_rate', 0)}")
+    else:
+        print("\nNo away stats available")
     
     return True
 
