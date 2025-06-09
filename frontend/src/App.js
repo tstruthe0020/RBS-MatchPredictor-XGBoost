@@ -454,8 +454,11 @@ function App() {
     
     setExportingPDF(true);
     try {
-      const response = await axios.post(`${API}/export-pdf`, {
-        prediction_data: predictionResult
+      const response = await axios.post(`${API}/export-prediction-pdf`, {
+        home_team: predictionResult.home_team,
+        away_team: predictionResult.away_team,
+        referee_name: predictionResult.referee,
+        match_date: predictionResult.match_date
       }, {
         responseType: 'blob'
       });
@@ -467,10 +470,14 @@ function App() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      
+      alert('✅ PDF exported successfully!');
     } catch (error) {
-      alert(`❌ Export Error: ${error.response?.data?.detail || error.message}`);
+      console.error('Error exporting PDF:', error);
+      alert(`❌ Error exporting PDF: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setExportingPDF(false);
     }
-    setExportingPDF(false);
   };
 
   // Database Management Functions
