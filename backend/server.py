@@ -2670,6 +2670,14 @@ class MLMatchPredictor:
             shots_per_match = total_weighted_shots / total_weights
             shots_on_target_per_match = total_weighted_shots_on_target / total_weights
             
+            # Debug logging for Starting XI effectiveness
+            print(f"Starting XI calculation for {team_name}:")
+            print(f"  Selected players: {len(selected_players)} - {selected_players[:3]}...")
+            print(f"  Matches found: {len(match_aggregates)}")
+            print(f"  Avg goals/match: {goals_per_match:.3f}")
+            print(f"  Avg xG/match: {xg_per_match:.3f}")
+            print(f"  Time decay applied: {decay_config is not None}")
+            
             # Calculate derived stats with safety checks
             xg_per_shot = (total_weighted_xg / total_weighted_shots) if total_weighted_shots > 0 else 0
             xg_per_shot = min(1.0, xg_per_shot)  # Cap at 1.0
