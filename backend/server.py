@@ -1428,7 +1428,7 @@ class MLMatchPredictor:
         self.models = {}
         self.scaler = StandardScaler()
         self.feature_columns = []
-        self.models_dir = "/app/backend/models"
+        self.models_dir = os.path.join(os.path.dirname(__file__), "models")
         self.ensure_models_dir()
         self.load_models()
         
