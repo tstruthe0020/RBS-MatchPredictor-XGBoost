@@ -979,6 +979,11 @@ function App() {
                       <div className="text-xs text-blue-700">
                         {mlStatus?.feature_columns_count || 0} features • Enhanced Engineering
                       </div>
+                      {mlStatus?.last_trained && (
+                        <div className="text-xs text-blue-600">
+                          Last trained: {new Date(mlStatus.last_trained).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
@@ -995,6 +1000,19 @@ function App() {
                         className="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-400"
                       >
                         {trainingModels ? '⏳ Training...' : '🧠 Train'}
+                      </button>
+                    )}
+                    {mlStatus?.models_loaded && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm('⚠️ Retrain models with current data?\n\nThis will:\n• Use all uploaded data for training\n• Update model accuracy\n• May take several minutes\n\nContinue?')) {
+                            trainMLModels();
+                          }
+                        }}
+                        disabled={trainingModels}
+                        className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+                      >
+                        {trainingModels ? '⏳ Retraining...' : '🔄 Retrain'}
                       </button>
                     )}
                   </div>
