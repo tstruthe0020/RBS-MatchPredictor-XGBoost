@@ -2325,14 +2325,7 @@ function App() {
                       {refereeAnalysis.referees?.map((referee, index) => (
                         <div key={index} className="p-3 rounded border-2 flex justify-between items-center hover:opacity-80 cursor-pointer"
                              style={{backgroundColor: '#F2E9E4', borderColor: '#1C5D99'}}
-                             onClick={async () => {
-                               try {
-                                 const detailed = await fetchDetailedRefereeAnalysis(referee.name, API.replace('/api', ''));
-                                 alert(`Detailed analysis for ${referee.name} loaded!`);
-                               } catch (error) {
-                                 alert(`Error loading detailed analysis: ${error.message}`);
-                               }
-                             }}>
+                             onClick={() => fetchDetailedRefereeAnalysis(referee.name)}>
                           <div>
                             <div className="font-medium" style={{color: '#002629'}}>{referee.name}</div>
                             <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>
@@ -2353,6 +2346,180 @@ function App() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Detailed Referee Analysis */}
+                  {detailedRefereeData && (
+                    <div className="mt-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-lg font-semibold" style={{color: '#002629'}}>
+                          📊 Detailed Analysis: {detailedRefereeData.referee_name}
+                        </h4>
+                        <button
+                          onClick={() => setDetailedRefereeData(null)}
+                          className="btn-secondary px-3 py-1 text-sm rounded"
+                        >
+                          ✕ Close
+                        </button>
+                      </div>
+
+                      {/* Summary Stats */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="stat-card text-center">
+                          <div className="stat-card-number">{detailedRefereeData.total_matches}</div>
+                          <div className="stat-card-label">Total Matches</div>
+                        </div>
+                        <div className="stat-card text-center">
+                          <div className="stat-card-number">{detailedRefereeData.teams_officiated}</div>
+                          <div className="stat-card-label">Teams Officiated</div>
+                        </div>
+                        <div className="stat-card text-center">
+                          <div className="stat-card-number">{formatScore(detailedRefereeData.avg_bias_score)}</div>
+                          <div className="stat-card-label">Avg Bias Score</div>
+                        </div>
+                        <div className="stat-card text-center">
+                          <div className="stat-card-number">{detailedRefereeData.rbs_calculations}</div>
+                          <div className="stat-card-label">RBS Calculations</div>
+                        </div>
+                      </div>
+
+                      {/* Match Outcomes */}
+                      {detailedRefereeData.match_outcomes && (
+                        <div className="feature-card">
+                          <h5 className="font-semibold mb-2" style={{color: '#002629'}}>Match Outcomes</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="text-center">
+                              <div className="text-lg font-bold" style={{color: '#12664F'}}>{detailedRefereeData.match_outcomes.home_wins}</div>
+                              <div className="text-sm" style={{color: '#002629'}}>Home Wins</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold" style={{color: '#1C5D99'}}>{detailedRefereeData.match_outcomes.draws}</div>
+                              <div className="text-sm" style={{color: '#002629'}}>Draws</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold" style={{color: '#002629'}}>{detailedRefereeData.match_outcomes.away_wins}</div>
+                              <div className="text-sm" style={{color: '#002629'}}>Away Wins</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold" style={{color: '#A3D9FF'}}>{detailedRefereeData.match_outcomes.home_win_percentage}%</div>
+                              <div className="text-sm" style={{color: '#002629'}}>Home Win %</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bias Analysis */}
+                      {detailedRefereeData.bias_analysis?.most_biased_team && (
+                        <div className="feature-card">
+                          <h5 className="font-semibold mb-2" style={{color: '#002629'}}>Bias Extremes</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-3 rounded border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#12664F'}}>
+                              <div className="font-medium" style={{color: '#002629'}}>Most Biased (Favored)</div>
+                              <div className="text-lg font-bold" style={{color: '#12664F'}}>
+                                {detailedRefereeData.bias_analysis.most_biased_team.team}
+                              </div>
+                              <div className="text-sm" style={{color: '#002629'}}>
+                                RBS: {formatScore(detailedRefereeData.bias_analysis.most_biased_team.rbs_score)} 
+                                ({detailedRefereeData.bias_analysis.most_biased_team.bias_direction})
+                              </div>
+                            </div>
+                            {detailedRefereeData.bias_analysis.least_biased_team && (
+                              <div className="p-3 rounded border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#1C5D99'}}>
+                                <div className="font-medium" style={{color: '#002629'}}>Least Biased (Neutral)</div>
+                                <div className="text-lg font-bold" style={{color: '#1C5D99'}}>
+                                  {detailedRefereeData.bias_analysis.least_biased_team.team}
+                                </div>
+                                <div className="text-sm" style={{color: '#002629'}}>
+                                  RBS: {formatScore(detailedRefereeData.bias_analysis.least_biased_team.rbs_score)}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Team RBS Details with Stat Differentials */}
+                      {detailedRefereeData.team_rbs_details && Object.keys(detailedRefereeData.team_rbs_details).length > 0 && (
+                        <div className="feature-card">
+                          <h5 className="font-semibold mb-3" style={{color: '#002629'}}>🔍 Team-Specific RBS Analysis & Stat Differentials</h5>
+                          <div className="space-y-3 max-h-96 overflow-y-auto">
+                            {Object.entries(detailedRefereeData.team_rbs_details)
+                              .sort(([,a], [,b]) => Math.abs(b.rbs_score) - Math.abs(a.rbs_score))
+                              .slice(0, 10)
+                              .map(([teamName, teamData]) => (
+                              <div key={teamName} className="p-4 rounded border-2" 
+                                   style={{backgroundColor: '#F2E9E4', borderColor: getRBSScoreColor(teamData.rbs_score)}}>
+                                
+                                {/* Team Header */}
+                                <div className="flex justify-between items-center mb-3">
+                                  <div>
+                                    <div className="font-bold text-lg" style={{color: '#002629'}}>{teamName}</div>
+                                    <div className="text-sm" style={{color: '#002629', opacity: 0.8}}>
+                                      {teamData.matches_with_ref} matches • {teamData.confidence_level}% confidence
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-xl font-bold" 
+                                         style={{color: getRBSScoreColor(teamData.rbs_score)}}>
+                                      {formatScore(teamData.rbs_score)}
+                                    </div>
+                                    <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>RBS Score</div>
+                                  </div>
+                                </div>
+
+                                {/* Stat Differentials Breakdown */}
+                                {teamData.stats_breakdown && (
+                                  <div>
+                                    <div className="text-sm font-semibold mb-2" style={{color: '#002629'}}>
+                                      📊 Statistical Differentials (vs League Average):
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                                      {Object.entries(teamData.stats_breakdown).map(([statName, value]) => {
+                                        const isPositive = value > 0;
+                                        const isSignificant = Math.abs(value) > 0.1;
+                                        return (
+                                          <div key={statName} className="flex justify-between p-2 rounded"
+                                               style={{
+                                                 backgroundColor: isSignificant 
+                                                   ? (isPositive ? '#A3D9FF' : '#F2E9E4')
+                                                   : 'white',
+                                                 borderLeft: `3px solid ${isPositive ? '#12664F' : '#002629'}`
+                                               }}>
+                                            <span style={{color: '#002629'}} className="font-medium">
+                                              {statName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                                            </span>
+                                            <span style={{
+                                              color: isPositive ? '#12664F' : '#002629',
+                                              fontWeight: isSignificant ? 'bold' : 'normal'
+                                            }}>
+                                              {isPositive ? '+' : ''}{formatScore(value)}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                    
+                                    {/* Explanation */}
+                                    <div className="mt-2 text-xs p-2 rounded" style={{backgroundColor: '#A3D9FF', color: '#002629'}}>
+                                      <strong>How to read:</strong> Positive values mean the team gets more favorable calls 
+                                      with this referee compared to league average. Negative values indicate less favorable treatment.
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Loading State for Detailed Analysis */}
+                  {loadingDetailedAnalysis && (
+                    <div className="mt-4 p-4 text-center feature-card">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-2" style={{borderColor: '#1C5D99'}}></div>
+                      <div style={{color: '#002629'}}>Loading detailed referee analysis...</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
