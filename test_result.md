@@ -375,7 +375,7 @@ agent_communication:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 7
+  test_sequence: 8
 
 test_plan:
   current_focus:
@@ -384,10 +384,15 @@ test_plan:
     - "Upload Data Tab Functionality"
     - "Standard Predict Tab Functionality"
     - "XGBoost Tab Functionality"
-    - "Analysis Tab Functionality"
-    - "Config Tab Functionality"
-    - "Cross-Tab Functionality"
-    - "Error Handling and Edge Cases"
+    - "Regression Analysis Tab Functionality"
+    - "Prediction Config Tab Functionality"
+    - "RBS Config Tab Functionality"
+    - "Formula Optimization Tab Functionality"
+    - "Results Tab Functionality"
+    - "System Config Tab Functionality"
+    - "Color Scheme and Styling"
+    - "Responsive Design"
+    - "Error Handling and Form Validation"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
