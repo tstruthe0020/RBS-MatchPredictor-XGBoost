@@ -108,6 +108,55 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Prediction tracking schema
+class PredictionRecord(BaseModel):
+    prediction_id: str
+    timestamp: str
+    home_team: str
+    away_team: str
+    referee: str
+    match_date: Optional[str] = None
+    prediction_method: str
+    predicted_home_goals: float
+    predicted_away_goals: float
+    home_xg: float
+    away_xg: float
+    home_win_probability: float
+    draw_probability: float
+    away_win_probability: float
+    features_used: Optional[dict] = None
+    model_version: Optional[str] = "1.0"
+    starting_xi_used: Optional[bool] = False
+    time_decay_used: Optional[bool] = False
+
+class ActualResult(BaseModel):
+    prediction_id: str
+    actual_home_goals: int
+    actual_away_goals: int
+    actual_outcome: str  # "home_win", "draw", "away_win"
+    match_played_date: str
+    additional_stats: Optional[dict] = None
+
+class ModelPerformanceMetrics(BaseModel):
+    model_version: str
+    evaluation_period: str
+    total_predictions: int
+    # Classification metrics
+    outcome_accuracy: float
+    home_win_precision: float
+    draw_precision: float
+    away_win_precision: float
+    log_loss: float
+    # Regression metrics
+    home_goals_mae: float
+    away_goals_mae: float
+    home_goals_rmse: float
+    away_goals_rmse: float
+    goals_r2_score: float
+    # Business metrics
+    profitable_predictions: Optional[float] = None
+    confidence_calibration: Optional[float] = None
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
