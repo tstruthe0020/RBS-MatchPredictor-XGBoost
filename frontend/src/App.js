@@ -534,7 +534,6 @@ function App() {
         setDatabaseStats(null);
         setMlStatus(null);
         setPredictionResult(null);
-        setEnhancedPredictionResult(null);
       }
     } catch (error) {
       console.error('Error wiping database:', error);
