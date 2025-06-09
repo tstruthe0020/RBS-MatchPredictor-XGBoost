@@ -303,7 +303,7 @@ function App() {
 
   const reloadMLModels = async () => {
     try {
-      await axios.post(`${API}/reload-ml-models`);
+      await axios.post(`${API}/ml-models/reload`);
       await checkMLStatus();
       alert('✅ Models reloaded successfully!');
     } catch (error) {
