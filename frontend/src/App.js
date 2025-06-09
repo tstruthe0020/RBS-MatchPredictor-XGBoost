@@ -36,6 +36,11 @@ import {
 
 const API = (process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001') + '/api';
 
+// Debug logging for backend URL
+console.log('🔍 Frontend Configuration Debug:');
+console.log('REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
+console.log('Final API URL:', API);
+
 function App() {
   // Navigation state
   const [activeTab, setActiveTab] = useState('dashboard');
