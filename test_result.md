@@ -77,6 +77,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "The API URL issue has been fixed. The Enhanced XGBoost tab now loads correctly and all UI components are visible and functional. The Starting XI toggle button works properly, allowing users to enable/disable the Starting XI functionality. The time decay checkbox and settings are also working correctly - when the checkbox is unchecked, the decay preset dropdown is disabled, and when checked, it's enabled. The formation dropdown is visible and can be changed when Starting XI is enabled. The team and referee dropdowns are also present and functional. The interface handles empty database gracefully by showing the appropriate UI elements even when no data is available."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the fixed ML model training functionality in the Enhanced XGBoost tab. The model status section is displayed correctly and shows the XGBoost Models status as 'Ready'. The feature count is correctly displayed as 45 features, which meets the requirement of 45+ features. The 'Refresh Status' button works properly and makes successful API calls to /api/ml-models/status without any 404 errors. No console errors were detected during testing. The API endpoints for model status and training are working correctly. The UI components for model status display and training controls are properly implemented and functional."
   - task: "Database Management UI"
     implemented: true
     working: true
