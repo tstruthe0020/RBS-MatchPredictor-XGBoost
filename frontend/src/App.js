@@ -322,6 +322,14 @@ function App() {
       return;
     }
 
+    // Check Starting XI validation only if XI mode is enabled and teams are selected
+    if (showStartingXI && predictionForm.home_team && predictionForm.away_team) {
+      if (!validateStartingXI(homeStartingXI) || !validateStartingXI(awayStartingXI)) {
+        alert('Please complete Starting XI selection for both teams (11 players each) or disable Starting XI mode');
+        return;
+      }
+    }
+
     setPredicting(true);
     try {
       const requestData = {
@@ -330,15 +338,18 @@ function App() {
         referee_name: predictionForm.referee_name,
         match_date: predictionForm.match_date,
         config_name: configName,
-        home_starting_xi: homeStartingXI,
-        away_starting_xi: awayStartingXI,
+        home_starting_xi: (showStartingXI && homeStartingXI) ? homeStartingXI : null,
+        away_starting_xi: (showStartingXI && awayStartingXI) ? awayStartingXI : null,
         use_time_decay: useTimeDecay,
         decay_preset: decayPreset
       };
       
+      console.log('Enhanced prediction request:', requestData);
       const response = await axios.post(`${API}/predict-match-enhanced`, requestData);
+      console.log('Enhanced prediction response:', response.data);
       setPredictionResult(response.data);
     } catch (error) {
+      console.error('Enhanced prediction error:', error);
       alert(`❌ Enhanced Prediction Error: ${error.response?.data?.detail || error.message}`);
     }
     setPredicting(false);
