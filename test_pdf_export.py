@@ -96,7 +96,7 @@ def make_prediction(test_case):
     
     try:
         response = requests.post(
-            f"{BACKEND_URL}/predict",
+            f"{BACKEND_URL}/predict-match",
             json=payload,
             timeout=30
         )
