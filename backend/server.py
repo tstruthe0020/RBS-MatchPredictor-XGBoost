@@ -2466,14 +2466,29 @@ class MLMatchPredictor:
     async def predict_match_with_defaults(self, home_team, away_team, referee, match_date=None, config_name="default", decay_config=None):
         """Prediction using default starting XIs based on most played players"""
         try:
+            print(f"🎯 Generating default Starting XI for XGBoost prediction...")
+            
             # Generate default starting XIs
             home_xi = await starting_xi_manager.generate_default_starting_xi(home_team)
             away_xi = await starting_xi_manager.generate_default_starting_xi(away_team)
             
-            # If default XI generation fails, use standard prediction
+            # If default XI generation fails, return error instead of fallback
             if not home_xi or not away_xi:
-                print(f"Warning: Could not generate default Starting XI for {home_team} and/or {away_team}, using standard prediction")
-                return await self.predict_match(home_team, away_team, referee, match_date)
+                error_msg = f"Cannot generate default Starting XI for {home_team} and/or {away_team}. Starting XI data required for XGBoost enhanced prediction."
+                print(f"❌ {error_msg}")
+                return MatchPredictionResponse(
+                    success=False,
+                    error=error_msg,
+                    home_team=home_team,
+                    away_team=away_team,
+                    referee=referee,
+                    prediction_breakdown={
+                        'prediction_method': 'FAILED - XGBoost Enhanced ML (Default XI)',
+                        'error_details': 'Could not generate default Starting XI'
+                    }
+                )
+            
+            print(f"✅ Default Starting XI generated successfully")
             
             return await self.predict_match_with_starting_xi(
                 home_team, away_team, referee, home_xi, away_xi, 
@@ -2481,19 +2496,19 @@ class MLMatchPredictor:
             )
             
         except Exception as e:
-            print(f"Error making prediction with defaults: {e}")
-            # Fallback to standard prediction
-            try:
-                return await self.predict_match(home_team, away_team, referee, match_date)
-            except Exception as fallback_error:
-                print(f"Fallback prediction also failed: {fallback_error}")
-                return MatchPredictionResponse(
-                    success=False,
-                    error=str(e),
-                    home_team=home_team,
-                    away_team=away_team,
-                    referee=referee
-                )
+            print(f"❌ Error making prediction with defaults: {e}")
+            # DO NOT fallback to standard prediction - return error instead
+            return MatchPredictionResponse(
+                success=False,
+                error=f"XGBoost Enhanced Prediction with Default XI Failed: {str(e)}",
+                home_team=home_team,
+                away_team=away_team,
+                referee=referee,
+                prediction_breakdown={
+                    'prediction_method': 'FAILED - XGBoost Enhanced ML (Default XI)',
+                    'error_details': str(e)
+                }
+            )
     
     async def extract_features_for_match_enhanced(self, home_team, away_team, referee, match_date=None, home_starting_xi=None, away_starting_xi=None, decay_config=None):
         """Enhanced feature extraction with starting XI filtering and time decay"""
