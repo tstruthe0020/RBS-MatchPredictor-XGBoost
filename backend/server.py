@@ -5557,7 +5557,7 @@ async def wipe_database():
             "success": True,
             "message": f"Database wiped successfully. Cleared {collections_cleared} collections.",
             "collections_cleared": collections_cleared,
-            "timestamp": datetime.datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
