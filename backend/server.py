@@ -7145,30 +7145,82 @@ async def get_detailed_referee_analysis(referee_name: str):
         # Get all matches for this referee
         matches = await db.matches.find({"referee": referee_name}).to_list(1000)
         
-        # Get RBS data
+        # Get RBS data for this referee
         rbs_data = await db.rbs_results.find({"referee": referee_name}).to_list(1000)
         
         # Calculate statistics
         total_matches = len(matches)
         teams_officiated = len(set([match["home_team"] for match in matches] + [match["away_team"] for match in matches]))
         
+        # Group RBS data by team
+        team_rbs_data = {}
+        total_bias = 0
+        for result in rbs_data:
+            team_name = result.get('team_name')
+            if team_name:
+                team_rbs_data[team_name] = {
+                    'rbs_score': round(result.get('rbs_score', 0), 3),
+                    'confidence_level': result.get('confidence_level', 0),
+                    'matches_with_ref': result.get('matches_with_ref', 0),
+                    'stats_breakdown': result.get('stats_breakdown', {}),
+                    'config_used': result.get('config_used', 'default')
+                }
+                total_bias += abs(result.get('rbs_score', 0))
+        
         # Calculate average bias score
-        avg_bias = 0
-        if rbs_data:
-            total_bias = sum(result.get('rbs_score', 0) for result in rbs_data)
-            avg_bias = total_bias / len(rbs_data)
+        avg_bias = round(total_bias / len(rbs_data), 3) if rbs_data else 0
+        
+        # Get match outcomes breakdown
+        home_wins = len([m for m in matches if m.get('home_score', 0) > m.get('away_score', 0)])
+        away_wins = len([m for m in matches if m.get('away_score', 0) > m.get('home_score', 0)])
+        draws = total_matches - home_wins - away_wins
+        
+        # Calculate cards and fouls statistics
+        total_yellow_cards = sum(match.get('yellow_cards_home', 0) + match.get('yellow_cards_away', 0) for match in matches)
+        total_red_cards = sum(match.get('red_cards_home', 0) + match.get('red_cards_away', 0) for match in matches)
+        
+        # Get most and least biased teams
+        if team_rbs_data:
+            most_biased_team = max(team_rbs_data.items(), key=lambda x: abs(x[1]['rbs_score']))
+            least_biased_team = min(team_rbs_data.items(), key=lambda x: abs(x[1]['rbs_score']))
+        else:
+            most_biased_team = least_biased_team = None
         
         return {
             "success": True,
             "referee_name": referee_name,
             "total_matches": total_matches,
             "teams_officiated": teams_officiated,
-            "avg_bias_score": round(avg_bias, 3),
+            "avg_bias_score": avg_bias,
             "rbs_calculations": len(rbs_data),
-            "detailed_rbs": rbs_data[:10]  # Return first 10 for detailed view
+            "match_outcomes": {
+                "home_wins": home_wins,
+                "away_wins": away_wins,
+                "draws": draws,
+                "home_win_percentage": round((home_wins / total_matches) * 100, 1) if total_matches > 0 else 0
+            },
+            "cards_and_fouls": {
+                "total_yellow_cards": total_yellow_cards,
+                "total_red_cards": total_red_cards,
+                "yellow_cards_per_match": round(total_yellow_cards / total_matches, 2) if total_matches > 0 else 0,
+                "red_cards_per_match": round(total_red_cards / total_matches, 2) if total_matches > 0 else 0
+            },
+            "bias_analysis": {
+                "most_biased_team": {
+                    "team": most_biased_team[0] if most_biased_team else None,
+                    "rbs_score": most_biased_team[1]['rbs_score'] if most_biased_team else 0,
+                    "bias_direction": "Favored" if most_biased_team and most_biased_team[1]['rbs_score'] > 0 else "Against" if most_biased_team else "Neutral"
+                } if most_biased_team else None,
+                "least_biased_team": {
+                    "team": least_biased_team[0] if least_biased_team else None,
+                    "rbs_score": least_biased_team[1]['rbs_score'] if least_biased_team else 0
+                } if least_biased_team else None
+            },
+            "team_rbs_details": team_rbs_data
         }
     
     except Exception as e:
+        print(f"Error in detailed referee analysis: {e}")
         raise HTTPException(status_code=500, detail=f"Error in detailed referee analysis: {str(e)}")
 
 # Include the router in the main app
