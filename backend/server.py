@@ -256,8 +256,8 @@ class RBSConfig(BaseModel):
     fouls_committed_weight: float = 0.1
     fouls_drawn_weight: float = 0.1
     penalties_awarded_weight: float = 0.5
-    xg_difference_weight: float = 0.4
-    possession_percentage_weight: float = 0.2
+    xg_difference_weight: float = 0.0  # DISABLED for testing
+    possession_percentage_weight: float = 0.0  # DISABLED for testing
     
     # Confidence calculation settings
     confidence_matches_multiplier: float = 4
