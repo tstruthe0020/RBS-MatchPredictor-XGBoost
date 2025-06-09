@@ -336,6 +336,62 @@ function App() {
     setExportingPDF(false);
   };
 
+  // Database Management Functions
+  const fetchDatabaseStats = async () => {
+    try {
+      const response = await axios.get(`${API}/database/stats`);
+      setDatabaseStats(response.data);
+    } catch (error) {
+      console.error('Error fetching database stats:', error);
+    }
+  };
+
+  const wipeDatabase = async () => {
+    // Double confirmation for safety
+    const firstConfirm = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL data from the database!\n\n' +
+      'This includes:\n' +
+      '• All match data\n' +
+      '• All team statistics\n' +
+      '• All player statistics\n' +
+      '• All referee bias scores\n' +
+      '• All configurations\n\n' +
+      'Are you sure you want to continue?'
+    );
+    
+    if (!firstConfirm) return;
+    
+    const secondConfirm = window.confirm(
+      '🚨 FINAL WARNING: This action cannot be undone!\n\n' +
+      'Type "DELETE" in the next prompt to confirm database wipe.'
+    );
+    
+    if (!secondConfirm) return;
+    
+    const finalConfirm = window.prompt(
+      'Type "DELETE" (in capital letters) to confirm:'
+    );
+    
+    if (finalConfirm !== 'DELETE') {
+      alert('❌ Database wipe cancelled - confirmation text did not match.');
+      return;
+    }
+    
+    setWipingDatabase(true);
+    try {
+      const response = await axios.delete(`${API}/database/wipe`);
+      
+      if (response.data.success) {
+        alert(`✅ ${response.data.message}`);
+        // Refresh all data after wipe
+        await fetchInitialData();
+      }
+    } catch (error) {
+      alert(`❌ Database Wipe Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setWipingDatabase(false);
+  };
+
   // File Upload Function
   const handleFileUpload = async (event, datasetType) => {
     const file = event.target.files[0];
