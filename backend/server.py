@@ -3116,6 +3116,404 @@ class MLMatchPredictor:
 
 # Initialize ML Match Predictor
 ml_predictor = MLMatchPredictor()
+
+class ModelOptimizer:
+    def __init__(self):
+        self.current_model_version = "1.0"
+        self.optimization_history = []
+        
+    async def store_prediction(self, prediction_result, prediction_method="XGBoost Enhanced", 
+                             starting_xi_used=False, time_decay_used=False, features_used=None):
+        """Store prediction for later evaluation"""
+        try:
+            import uuid
+            from datetime import datetime
+            
+            prediction_id = str(uuid.uuid4())
+            
+            prediction_record = {
+                "prediction_id": prediction_id,
+                "timestamp": datetime.now().isoformat(),
+                "home_team": prediction_result.home_team,
+                "away_team": prediction_result.away_team,
+                "referee": prediction_result.referee,
+                "prediction_method": prediction_method,
+                "predicted_home_goals": prediction_result.predicted_home_goals,
+                "predicted_away_goals": prediction_result.predicted_away_goals,
+                "home_xg": prediction_result.home_xg,
+                "away_xg": prediction_result.away_xg,
+                "home_win_probability": prediction_result.home_win_probability,
+                "draw_probability": prediction_result.draw_probability,
+                "away_win_probability": prediction_result.away_win_probability,
+                "features_used": features_used,
+                "model_version": self.current_model_version,
+                "starting_xi_used": starting_xi_used,
+                "time_decay_used": time_decay_used
+            }
+            
+            # Store in MongoDB
+            await db.prediction_tracking.insert_one(prediction_record)
+            print(f"📝 Stored prediction {prediction_id} for evaluation")
+            return prediction_id
+            
+        except Exception as e:
+            print(f"Error storing prediction: {e}")
+            return None
+    
+    async def store_actual_result(self, prediction_id, actual_home_goals, actual_away_goals, match_date=None):
+        """Store actual match result for comparison"""
+        try:
+            from datetime import datetime
+            
+            # Determine actual outcome
+            if actual_home_goals > actual_away_goals:
+                actual_outcome = "home_win"
+            elif actual_home_goals < actual_away_goals:
+                actual_outcome = "away_win"
+            else:
+                actual_outcome = "draw"
+            
+            actual_result = {
+                "prediction_id": prediction_id,
+                "actual_home_goals": actual_home_goals,
+                "actual_away_goals": actual_away_goals,
+                "actual_outcome": actual_outcome,
+                "match_played_date": match_date or datetime.now().isoformat(),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Store in MongoDB
+            await db.actual_results.insert_one(actual_result)
+            print(f"✅ Stored actual result for prediction {prediction_id}")
+            return True
+            
+        except Exception as e:
+            print(f"Error storing actual result: {e}")
+            return False
+    
+    async def evaluate_model_performance(self, days_back=30, model_version=None):
+        """Evaluate model performance against actual results"""
+        try:
+            from datetime import datetime, timedelta
+            import numpy as np
+            from sklearn.metrics import accuracy_score, precision_score, recall_score, log_loss, mean_absolute_error, mean_squared_error, r2_score
+            
+            # Get predictions from the last N days
+            cutoff_date = datetime.now() - timedelta(days=days_back)
+            
+            query = {"timestamp": {"$gte": cutoff_date.isoformat()}}
+            if model_version:
+                query["model_version"] = model_version
+            
+            predictions = await db.prediction_tracking.find(query).to_list(10000)
+            
+            if not predictions:
+                return {"error": "No predictions found for evaluation period"}
+            
+            # Get corresponding actual results
+            prediction_ids = [p["prediction_id"] for p in predictions]
+            actual_results = await db.actual_results.find(
+                {"prediction_id": {"$in": prediction_ids}}
+            ).to_list(10000)
+            
+            if not actual_results:
+                return {"error": "No actual results found for evaluation"}
+            
+            # Create lookup for actual results
+            actuals_dict = {r["prediction_id"]: r for r in actual_results}
+            
+            # Prepare data for evaluation
+            matched_predictions = []
+            for pred in predictions:
+                if pred["prediction_id"] in actuals_dict:
+                    actual = actuals_dict[pred["prediction_id"]]
+                    matched_predictions.append({
+                        "prediction": pred,
+                        "actual": actual
+                    })
+            
+            if not matched_predictions:
+                return {"error": "No matched prediction-result pairs found"}
+            
+            print(f"📊 Evaluating {len(matched_predictions)} prediction-result pairs")
+            
+            # Extract data for metrics calculation
+            predicted_outcomes = []
+            actual_outcomes = []
+            predicted_home_goals = []
+            predicted_away_goals = []
+            actual_home_goals = []
+            actual_away_goals = []
+            predicted_probabilities = []
+            
+            for match in matched_predictions:
+                pred = match["prediction"]
+                actual = match["actual"]
+                
+                # Outcome prediction
+                probs = [pred["home_win_probability"], pred["draw_probability"], pred["away_win_probability"]]
+                predicted_outcome_idx = np.argmax(probs)
+                outcome_map = {0: "home_win", 1: "draw", 2: "away_win"}
+                predicted_outcomes.append(outcome_map[predicted_outcome_idx])
+                actual_outcomes.append(actual["actual_outcome"])
+                
+                # Goals prediction
+                predicted_home_goals.append(pred["predicted_home_goals"])
+                predicted_away_goals.append(pred["predicted_away_goals"])
+                actual_home_goals.append(actual["actual_home_goals"])
+                actual_away_goals.append(actual["actual_away_goals"])
+                
+                # Probabilities for log loss
+                predicted_probabilities.append([p/100 for p in probs])  # Convert percentages
+            
+            # Calculate classification metrics
+            outcome_accuracy = accuracy_score(actual_outcomes, predicted_outcomes)
+            
+            # Precision for each outcome
+            unique_outcomes = ["home_win", "draw", "away_win"]
+            precisions = precision_score(actual_outcomes, predicted_outcomes, 
+                                      labels=unique_outcomes, average=None, zero_division=0)
+            
+            # Convert actual outcomes to one-hot for log loss
+            outcome_to_idx = {"home_win": 0, "draw": 1, "away_win": 2}
+            actual_probs = np.zeros((len(actual_outcomes), 3))
+            for i, outcome in enumerate(actual_outcomes):
+                actual_probs[i, outcome_to_idx[outcome]] = 1
+            
+            # Calculate log loss
+            try:
+                model_log_loss = log_loss(actual_probs, predicted_probabilities)
+            except:
+                model_log_loss = float('inf')
+            
+            # Calculate regression metrics
+            home_goals_mae = mean_absolute_error(actual_home_goals, predicted_home_goals)
+            away_goals_mae = mean_absolute_error(actual_away_goals, predicted_away_goals)
+            home_goals_rmse = np.sqrt(mean_squared_error(actual_home_goals, predicted_home_goals))
+            away_goals_rmse = np.sqrt(mean_squared_error(actual_away_goals, predicted_away_goals))
+            
+            # Combined goals R² score
+            all_actual_goals = actual_home_goals + actual_away_goals
+            all_predicted_goals = predicted_home_goals + predicted_away_goals
+            goals_r2 = r2_score(all_actual_goals, all_predicted_goals)
+            
+            # Calculate confidence calibration
+            confidence_calibration = self._calculate_calibration(predicted_probabilities, actual_probs)
+            
+            metrics = {
+                "model_version": model_version or self.current_model_version,
+                "evaluation_period": f"Last {days_back} days",
+                "total_predictions": len(matched_predictions),
+                "outcome_accuracy": round(outcome_accuracy * 100, 2),
+                "home_win_precision": round(precisions[0] * 100, 2) if len(precisions) > 0 else 0,
+                "draw_precision": round(precisions[1] * 100, 2) if len(precisions) > 1 else 0,
+                "away_win_precision": round(precisions[2] * 100, 2) if len(precisions) > 2 else 0,
+                "log_loss": round(model_log_loss, 4),
+                "home_goals_mae": round(home_goals_mae, 3),
+                "away_goals_mae": round(away_goals_mae, 3),
+                "home_goals_rmse": round(home_goals_rmse, 3),
+                "away_goals_rmse": round(away_goals_rmse, 3),
+                "goals_r2_score": round(goals_r2, 3),
+                "confidence_calibration": round(confidence_calibration, 3)
+            }
+            
+            # Store performance metrics
+            await db.model_performance.insert_one({
+                **metrics,
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            print(f"📈 Model Performance: {outcome_accuracy*100:.1f}% accuracy, {home_goals_mae:.2f} goals MAE")
+            return metrics
+            
+        except Exception as e:
+            print(f"Error evaluating model performance: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
+    
+    def _calculate_calibration(self, predicted_probs, actual_probs):
+        """Calculate confidence calibration score"""
+        try:
+            import numpy as np
+            
+            # Calculate Expected Calibration Error (ECE)
+            predicted_probs = np.array(predicted_probs)
+            actual_probs = np.array(actual_probs)
+            
+            # Get maximum predicted probability for each prediction
+            max_probs = np.max(predicted_probs, axis=1)
+            predictions = np.argmax(predicted_probs, axis=1)
+            actuals = np.argmax(actual_probs, axis=1)
+            
+            # Bin predictions by confidence
+            n_bins = 10
+            bin_boundaries = np.linspace(0, 1, n_bins + 1)
+            bin_lowers = bin_boundaries[:-1]
+            bin_uppers = bin_boundaries[1:]
+            
+            ece = 0
+            for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+                in_bin = (max_probs > bin_lower) & (max_probs <= bin_upper)
+                prop_in_bin = in_bin.mean()
+                
+                if prop_in_bin > 0:
+                    accuracy_in_bin = (predictions[in_bin] == actuals[in_bin]).mean()
+                    avg_confidence_in_bin = max_probs[in_bin].mean()
+                    ece += np.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
+            
+            return ece
+            
+        except Exception as e:
+            print(f"Error calculating calibration: {e}")
+            return 0.0
+    
+    async def optimize_hyperparameters(self, optimization_method="grid_search"):
+        """Optimize XGBoost hyperparameters based on historical performance"""
+        try:
+            from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+            from sklearn.metrics import make_scorer, log_loss
+            import numpy as np
+            
+            print("🔧 Starting hyperparameter optimization...")
+            
+            # Get training data
+            training_features, training_targets = await self._prepare_optimization_data()
+            
+            if training_features is None:
+                return {"error": "Insufficient data for optimization"}
+            
+            # Define parameter grids
+            if optimization_method == "grid_search":
+                param_grid = {
+                    'n_estimators': [100, 200, 300],
+                    'max_depth': [3, 4, 5, 6],
+                    'learning_rate': [0.01, 0.1, 0.2],
+                    'subsample': [0.8, 0.9, 1.0],
+                    'colsample_bytree': [0.8, 0.9, 1.0]
+                }
+            else:  # random_search
+                param_grid = {
+                    'n_estimators': np.arange(50, 500, 50),
+                    'max_depth': np.arange(3, 10),
+                    'learning_rate': np.uniform(0.01, 0.3, 20),
+                    'subsample': np.uniform(0.7, 1.0, 10),
+                    'colsample_bytree': np.uniform(0.7, 1.0, 10)
+                }
+            
+            # Optimize each model type
+            optimization_results = {}
+            
+            for model_type in ['classifier', 'home_goals', 'away_goals', 'home_xg', 'away_xg']:
+                print(f"   Optimizing {model_type}...")
+                
+                # Get appropriate targets
+                y = training_targets[model_type]
+                
+                # Create XGBoost model
+                if model_type == 'classifier':
+                    from xgboost import XGBClassifier
+                    model = XGBClassifier(random_state=42, objective='multi:softprob')
+                    scoring = 'neg_log_loss'
+                else:
+                    from xgboost import XGBRegressor
+                    model = XGBRegressor(random_state=42)
+                    scoring = 'neg_mean_absolute_error'
+                
+                # Perform optimization
+                if optimization_method == "grid_search":
+                    search = GridSearchCV(
+                        model, param_grid, cv=5, scoring=scoring, 
+                        n_jobs=-1, verbose=1
+                    )
+                else:
+                    search = RandomizedSearchCV(
+                        model, param_grid, cv=5, scoring=scoring,
+                        n_jobs=-1, verbose=1, n_iter=50, random_state=42
+                    )
+                
+                search.fit(training_features, y)
+                
+                optimization_results[model_type] = {
+                    'best_params': search.best_params_,
+                    'best_score': search.best_score_,
+                    'improvement': abs(search.best_score_) - abs(search.cv_results_['mean_test_score'].mean())
+                }
+                
+                print(f"   ✅ {model_type}: Score {search.best_score_:.4f}")
+            
+            # Store optimization results
+            await db.model_optimization.insert_one({
+                "timestamp": datetime.now().isoformat(),
+                "optimization_method": optimization_method,
+                "results": optimization_results,
+                "model_version": self.current_model_version
+            })
+            
+            print("🎯 Hyperparameter optimization complete!")
+            return optimization_results
+            
+        except Exception as e:
+            print(f"Error optimizing hyperparameters: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
+    
+    async def _prepare_optimization_data(self):
+        """Prepare training data for optimization"""
+        try:
+            # Get historical data with actual results
+            predictions = await db.prediction_tracking.find({}).to_list(10000)
+            actual_results = await db.actual_results.find({}).to_list(10000)
+            
+            if len(predictions) < 100:  # Need sufficient data
+                return None, None
+            
+            # Match predictions with actual results
+            actuals_dict = {r["prediction_id"]: r for r in actual_results}
+            matched_data = []
+            
+            for pred in predictions:
+                if pred["prediction_id"] in actuals_dict and pred.get("features_used"):
+                    actual = actuals_dict[pred["prediction_id"]]
+                    matched_data.append({
+                        "features": pred["features_used"],
+                        "outcomes": {
+                            "classifier": actual["actual_outcome"],
+                            "home_goals": actual["actual_home_goals"],
+                            "away_goals": actual["actual_away_goals"],
+                            "home_xg": pred["home_xg"],  # Use predicted xG as proxy if actual not available
+                            "away_xg": pred["away_xg"]
+                        }
+                    })
+            
+            if not matched_data:
+                return None, None
+            
+            # Convert to training format
+            import pandas as pd
+            
+            features_list = [item["features"] for item in matched_data]
+            X = pd.DataFrame(features_list)
+            
+            # Prepare targets
+            outcome_map = {"home_win": 0, "draw": 1, "away_win": 2}
+            targets = {
+                "classifier": [outcome_map[item["outcomes"]["classifier"]] for item in matched_data],
+                "home_goals": [item["outcomes"]["home_goals"] for item in matched_data],
+                "away_goals": [item["outcomes"]["away_goals"] for item in matched_data],
+                "home_xg": [item["outcomes"]["home_xg"] for item in matched_data],
+                "away_xg": [item["outcomes"]["away_xg"] for item in matched_data]
+            }
+            
+            return X, targets
+            
+        except Exception as e:
+            print(f"Error preparing optimization data: {e}")
+            return None, None
+
+# Initialize Model Optimizer
+model_optimizer = ModelOptimizer()
 class MatchPredictor:
     def __init__(self):
         self.default_config = PredictionConfig()
