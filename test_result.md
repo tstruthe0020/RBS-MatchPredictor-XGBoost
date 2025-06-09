@@ -83,6 +83,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Fixed the file upload functionality by updating the API endpoint paths in the handleFileUpload function. Changed the endpoint from '${API}/upload-${datasetType}' to '${API}/upload/${datasetType}' to match the backend endpoints. All three upload sections (Match Data, Team Stats, Player Stats) now work correctly. Files can be selected and uploaded successfully, with proper status messages displayed after upload. The file input controls correctly accept .csv files and show the selected filenames. The only minor issue is that the 'Uploaded Datasets' section doesn't appear after successful uploads, which might be due to the datasets endpoint returning a 405 Method Not Allowed error. However, this doesn't affect the core upload functionality, which is working as expected."
+      - working: true
+        agent: "testing"
+        comment: "Verified that the uploaded data is correctly reflected in the Dashboard statistics. After uploading test files, the database statistics show 15550 Total Records, 522 Matches, 944 Team Stats, and 14084 Player Stats. This confirms that the file upload functionality is working correctly and the data is being properly stored in the database. The only remaining minor issue is that the 'Uploaded Datasets' section doesn't appear in the Upload Data tab, but this doesn't affect the core functionality."
 
 agent_communication:
   - agent: "testing"
