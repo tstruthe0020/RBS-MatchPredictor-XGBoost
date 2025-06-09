@@ -41,6 +41,10 @@ function App() {
   const [awayStartingXI, setAwayStartingXI] = useState(null);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
 
+  // Player search states
+  const [playerSearchTerms, setPlayerSearchTerms] = useState({});
+  const [searchResults, setSearchResults] = useState({});
+
   // Time decay states
   const [useTimeDecay, setUseTimeDecay] = useState(true);
   const [decayPreset, setDecayPreset] = useState('moderate');
