@@ -2405,6 +2405,11 @@ class MLMatchPredictor:
             home_xi = await starting_xi_manager.generate_default_starting_xi(home_team)
             away_xi = await starting_xi_manager.generate_default_starting_xi(away_team)
             
+            # If default XI generation fails, use standard prediction
+            if not home_xi or not away_xi:
+                print(f"Warning: Could not generate default Starting XI for {home_team} and/or {away_team}, using standard prediction")
+                return await self.predict_match(home_team, away_team, referee, match_date, config_name)
+            
             return await self.predict_match_with_starting_xi(
                 home_team, away_team, referee, home_xi, away_xi, 
                 match_date, config_name, decay_config
@@ -2412,13 +2417,18 @@ class MLMatchPredictor:
             
         except Exception as e:
             print(f"Error making prediction with defaults: {e}")
-            return MatchPredictionResponse(
-                success=False,
-                error=str(e),
-                home_team=home_team,
-                away_team=away_team,
-                referee=referee
-            )
+            # Fallback to standard prediction
+            try:
+                return await self.predict_match(home_team, away_team, referee, match_date, config_name)
+            except Exception as fallback_error:
+                print(f"Fallback prediction also failed: {fallback_error}")
+                return MatchPredictionResponse(
+                    success=False,
+                    error=str(e),
+                    home_team=home_team,
+                    away_team=away_team,
+                    referee=referee
+                )
     
     async def extract_features_for_match_enhanced(self, home_team, away_team, referee, match_date=None, home_starting_xi=None, away_starting_xi=None, decay_config=None):
         """Enhanced feature extraction with starting XI filtering and time decay"""
