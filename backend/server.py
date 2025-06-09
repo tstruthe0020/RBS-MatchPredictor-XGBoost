@@ -1,30 +1,34 @@
-from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
+import asyncio
 import uuid
 from datetime import datetime
 import pandas as pd
 import numpy as np
 import io
+import json
+from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+import logging
+from contextlib import asynccontextmanager
+import pickle
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.metrics import accuracy_score, classification_report, r2_score, mean_squared_error, log_loss
+import warnings
+import os
+from scipy.stats import norm, poisson
+import tempfile
+from pathlib import Path
 from collections import defaultdict
 import csv
 import math
 import base64
 import joblib
-import os
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import classification_report, r2_score, mean_squared_error, log_loss
-from sklearn.model_selection import train_test_split
-from scipy.stats import poisson
-from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
@@ -32,6 +36,34 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from dotenv import load_dotenv
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Custom JSON encoder for NumPy types
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.floating, np.bool_)):
+            return obj.item()  # Convert to Python native types
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()  # Convert arrays to lists
+        elif isinstance(obj, (pd.Timestamp, pd.Timestamp)):
+            return obj.isoformat()
+        return super(NumpyEncoder, self).default(obj)
+
+# Custom JSONResponse that handles NumPy types
+class NumpyJSONResponse(JSONResponse):
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+            cls=NumpyEncoder,
+        ).encode("utf-8")
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
