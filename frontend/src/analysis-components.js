@@ -104,16 +104,39 @@ export const runRegressionAnalysis = async (selectedVariables, target, apiEndpoi
 // Configuration Management Functions
 export const savePredictionConfig = async (config, apiEndpoint) => {
   try {
-    const response = await fetch(`${apiEndpoint}/api/prediction-configs`, {
+    // Ensure all required fields are present with correct types
+    const predictionConfig = {
+      config_name: config.config_name || 'default',
+      xg_shot_based_weight: parseFloat(config.xg_shot_based_weight || 0.4),
+      xg_historical_weight: parseFloat(config.xg_historical_weight || 0.4),
+      xg_opponent_defense_weight: parseFloat(config.xg_opponent_defense_weight || 0.2),
+      ppg_adjustment_factor: parseFloat(config.ppg_adjustment_factor || 0.15),
+      possession_adjustment_per_percent: parseFloat(config.possession_adjustment_per_percent || 0.01),
+      fouls_drawn_factor: parseFloat(config.fouls_drawn_factor || 0.02),
+      fouls_drawn_baseline: parseFloat(config.fouls_drawn_baseline || 10.0),
+      fouls_drawn_min_multiplier: parseFloat(config.fouls_drawn_min_multiplier || 0.8),
+      fouls_drawn_max_multiplier: parseFloat(config.fouls_drawn_max_multiplier || 1.3),
+      penalty_xg_value: parseFloat(config.penalty_xg_value || 0.79),
+      rbs_scaling_factor: parseFloat(config.rbs_scaling_factor || 0.2),
+      min_conversion_rate: parseFloat(config.min_conversion_rate || 0.5),
+      max_conversion_rate: parseFloat(config.max_conversion_rate || 2.0),
+      min_xg_per_match: parseFloat(config.min_xg_per_match || 0.1),
+      confidence_matches_multiplier: parseFloat(config.confidence_matches_multiplier || 4),
+      max_confidence: parseFloat(config.max_confidence || 90),
+      min_confidence: parseFloat(config.min_confidence || 20)
+    };
+
+    const response = await fetch(`${apiEndpoint}/api/prediction-config`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(config)
+      body: JSON.stringify(predictionConfig)
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData}`);
     }
 
     return await response.json();
