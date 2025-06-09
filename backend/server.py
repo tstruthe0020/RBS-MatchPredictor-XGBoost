@@ -6733,15 +6733,43 @@ async def export_prediction_pdf(request: PDFExportRequest):
 
 @api_router.post("/train-ml-models")
 async def train_ml_models():
-    """Train ML models using all available data"""
+    """Train machine learning models"""
     try:
-        training_results = await ml_predictor.train_models()
-        return {
-            "success": True,
-            "message": "ML models trained successfully",
-            "training_results": training_results
-        }
+        # Get current data counts before training
+        matches_count = await db.matches.count_documents({})
+        team_stats_count = await db.team_stats.count_documents({})
+        player_stats_count = await db.player_stats.count_documents({})
+        total_data_points = matches_count + team_stats_count + player_stats_count
+        
+        print(f"Starting ML model training with {total_data_points} total data points")
+        
+        result = await ml_predictor.train_models()
+        
+        if result['success']:
+            # Save training metadata
+            training_metadata = {
+                'timestamp': datetime.now().isoformat(),
+                'data_count_at_training': total_data_points,
+                'data_breakdown': {
+                    'matches': matches_count,
+                    'team_stats': team_stats_count,
+                    'player_stats': player_stats_count
+                },
+                'training_results': result.get('training_results', {}),
+                'feature_count': len(ml_predictor.feature_columns) if hasattr(ml_predictor, 'feature_columns') else 0
+            }
+            
+            try:
+                with open('/tmp/model_training_metadata.json', 'w') as f:
+                    json.dump(training_metadata, f, indent=2)
+                print("Training metadata saved successfully")
+            except Exception as e:
+                print(f"Warning: Could not save training metadata: {e}")
+        
+        return result
+        
     except Exception as e:
+        print(f"Training error: {e}")
         raise HTTPException(status_code=500, detail=f"Training error: {str(e)}")
 
 @api_router.get("/ml-models/status")
