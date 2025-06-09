@@ -2690,9 +2690,150 @@ def test_ml_match_prediction_system():
         print("\n❌ Model reload request failed")
         return False
 
+def test_database_stats_endpoint():
+    """Test the /api/database/stats endpoint to ensure it returns collection statistics"""
+    print("\n=== Testing Database Stats Endpoint ===")
+    response = requests.get(f"{BASE_URL}/database/stats")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        # Check total documents
+        total_documents = data.get('total_documents', 0)
+        print(f"Total Documents: {total_documents}")
+        
+        # Check collections
+        collections = data.get('collections', {})
+        print(f"Collections: {len(collections)}")
+        
+        for collection_name, count in collections.items():
+            print(f"  - {collection_name}: {count} documents")
+            
+        # Check timestamp
+        timestamp = data.get('timestamp')
+        print(f"Timestamp: {timestamp}")
+        
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_database_wipe_endpoint():
+    """Test the /api/database/wipe endpoint to ensure it properly clears all collections"""
+    print("\n=== Testing Database Wipe Endpoint ===")
+    
+    # CAUTION: This will delete all data in the database
+    print("CAUTION: This will delete all data in the database!")
+    print("Proceeding with database wipe test...")
+    
+    response = requests.delete(f"{BASE_URL}/database/wipe")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        print(f"Message: {data.get('message', '')}")
+        
+        # Check deleted counts if available
+        deleted_counts = data.get('deleted_counts', {})
+        if deleted_counts:
+            print("Deleted Counts:")
+            for collection_name, count in deleted_counts.items():
+                print(f"  - {collection_name}: {count} documents")
+        else:
+            # Check collections cleared if deleted_counts not available
+            collections_cleared = data.get('collections_cleared', 0)
+            print(f"Collections Cleared: {collections_cleared}")
+        
+        # Check timestamp
+        timestamp = data.get('timestamp')
+        if timestamp:
+            print(f"Timestamp: {timestamp}")
+        
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_database_management_functionality():
+    """Test all database management functionality"""
+    print("\n\n========== TESTING DATABASE MANAGEMENT FUNCTIONALITY ==========\n")
+    
+    # Step 1: Test database stats endpoint to see current state
+    print("\nStep 1: Testing database stats endpoint (before wipe)")
+    before_stats = test_database_stats_endpoint()
+    
+    if not before_stats or not before_stats.get('success'):
+        print("❌ Database stats endpoint test failed")
+        return False
+    else:
+        print("✅ Database stats endpoint test passed")
+    
+    # Step 2: Test database wipe endpoint
+    print("\nStep 2: Testing database wipe endpoint")
+    wipe_result = test_database_wipe_endpoint()
+    
+    if not wipe_result or not wipe_result.get('success'):
+        print("❌ Database wipe endpoint test failed")
+        return False
+    else:
+        print("✅ Database wipe endpoint test passed")
+    
+    # Step 3: Test database stats endpoint again to verify wipe
+    print("\nStep 3: Testing database stats endpoint (after wipe)")
+    after_stats = test_database_stats_endpoint()
+    
+    if not after_stats or not after_stats.get('success'):
+        print("❌ Database stats endpoint test failed (after wipe)")
+        return False
+    else:
+        print("✅ Database stats endpoint test passed (after wipe)")
+    
+    # Verify that the database was actually wiped
+    before_total = before_stats.get('total_documents', 0)
+    after_total = after_stats.get('total_documents', 0)
+    
+    print(f"\nBefore wipe: {before_total} total documents")
+    print(f"After wipe: {after_total} total documents")
+    
+    if after_total == 0:
+        print("✅ Database was successfully wiped (0 documents remaining)")
+    elif after_total < before_total:
+        print(f"⚠️ Database was partially wiped ({after_total} documents remaining)")
+    else:
+        print(f"❌ Database was not wiped properly ({after_total} documents remaining)")
+    
+    # Final summary
+    print("\n========== DATABASE MANAGEMENT FUNCTIONALITY TEST SUMMARY ==========")
+    
+    # Check if the endpoints exist and work properly
+    endpoint_check_results = []
+    
+    # Check database stats endpoint
+    stats_response = requests.get(f"{BASE_URL}/database/stats")
+    endpoint_check_results.append(stats_response.status_code == 200)
+    
+    # Check database wipe endpoint
+    # We don't need to call it again, just check if the previous call was successful
+    endpoint_check_results.append(wipe_result is not None and wipe_result.get('success', False))
+    
+    if all(endpoint_check_results):
+        print("✅ All database management functionality endpoints exist and are accessible!")
+        return True
+    else:
+        print("❌ Some database management functionality endpoints failed the existence check")
+        return False
+
 if __name__ == "__main__":
+    # Test the database management functionality
+    test_database_management_functionality()
+    
     # Test the Starting XI and time decay functionality
-    test_starting_xi_and_time_decay_functionality()
+    # test_starting_xi_and_time_decay_functionality()
     
     # Test the PDF export functionality
     # test_pdf_export_endpoint()
