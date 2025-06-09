@@ -7294,4 +7294,4 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     import uvicorn
     print("Starting Football Analytics API Server...")
-    uvicorn.run(app, host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8001, reload=False)
