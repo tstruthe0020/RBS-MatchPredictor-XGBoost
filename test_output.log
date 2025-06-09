@@ -219,3 +219,14 @@ Error: 422
 ❌ Analyze Comprehensive Regression test failed
 
 ========== ADVANCED FEATURES TEST SUMMARY ==========
+✅ PDF Export endpoint exists
+✅ Enhanced RBS Analysis endpoint exists
+✅ Team Performance endpoint exists
+✅ Prediction Configs endpoint exists
+✅ RBS Configs endpoint exists
+✅ Suggest Prediction Config endpoint exists
+✅ Analyze RBS Optimization endpoint exists
+✅ Analyze Predictor Optimization endpoint exists
+✅ Analyze Comprehensive Regression endpoint exists
+
+✅ All advanced feature endpoints exist and are accessible!
