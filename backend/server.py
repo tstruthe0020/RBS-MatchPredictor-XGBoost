@@ -5590,6 +5590,46 @@ async def get_database_stats():
         print(f"Database stats error: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting database stats: {str(e)}")
 
+@api_router.get("/datasets")
+async def get_datasets():
+    """Get information about uploaded datasets"""
+    try:
+        datasets = []
+        collection_names = await db.list_collection_names()
+        
+        # Map collection names to user-friendly dataset names
+        dataset_mapping = {
+            'matches': {'name': 'Match Data', 'description': 'Match results and statistics'},
+            'team_stats': {'name': 'Team Statistics', 'description': 'Team-level performance data'},
+            'player_stats': {'name': 'Player Statistics', 'description': 'Individual player performance data'},
+            'rbs_results': {'name': 'RBS Results', 'description': 'Referee bias score calculations'}
+        }
+        
+        for collection_name in collection_names:
+            if collection_name in dataset_mapping and collection_name not in ['system.indexes']:
+                collection = db[collection_name]
+                count = await collection.count_documents({})
+                
+                if count > 0:  # Only include collections with data
+                    dataset_info = dataset_mapping[collection_name]
+                    datasets.append({
+                        'name': dataset_info['name'],
+                        'collection': collection_name,
+                        'records': count,
+                        'description': dataset_info['description'],
+                        'uploaded_at': datetime.now().isoformat()  # Placeholder - could be enhanced
+                    })
+        
+        return {
+            "success": True,
+            "datasets": datasets,
+            "total_datasets": len(datasets)
+        }
+        
+    except Exception as e:
+        print(f"Datasets error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting datasets: {str(e)}")
+
 @api_router.post("/initialize-default-config")
 async def initialize_default_config():
     """Initialize default prediction configuration"""
