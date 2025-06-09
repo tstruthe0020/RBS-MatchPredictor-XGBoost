@@ -94,7 +94,21 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-app = FastAPI(title="Soccer Referee Bias Analysis Platform")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    yield
+    # Shutdown
+    client.close()
+
+app = FastAPI(
+    title="Football Analytics API",
+    description="Advanced football match prediction and referee bias analysis",
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
