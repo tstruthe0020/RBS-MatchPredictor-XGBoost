@@ -3718,8 +3718,8 @@ async def upload_matches(file: UploadFile = File(...)):
         contents = await file.read()
         df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
         
-        # Clear existing matches
-        await db.matches.delete_many({})
+        # No longer clearing existing matches - we'll append instead
+        # await db.matches.delete_many({})
         
         # Replace NaN values with appropriate defaults
         df = df.fillna({
