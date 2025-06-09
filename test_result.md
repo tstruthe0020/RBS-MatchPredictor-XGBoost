@@ -17,11 +17,11 @@ backend:
 frontend:
   - task: "XGBoost Tab Functionality"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -35,6 +35,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "Found a critical issue with API URL configuration in the frontend. The frontend is making API calls to the wrong URL. In App.js, the API URL is defined as 'const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';' but when making API calls, it's using '${API}/formations' instead of '${API}/api/formations'. This is causing all API calls to fail with 404 errors. The backend API endpoints are working correctly when accessed directly with the proper '/api' prefix, but the frontend is not including this prefix in its requests."
+      - working: true
+        agent: "testing"
+        comment: "The API URL issue has been fixed. The Enhanced XGBoost tab now loads correctly and all UI components are visible and functional. The Starting XI toggle button works properly, allowing users to enable/disable the Starting XI functionality. The time decay checkbox and settings are also working correctly - when the checkbox is unchecked, the decay preset dropdown is disabled, and when checked, it's enabled. The formation dropdown is visible and can be changed when Starting XI is enabled. The team and referee dropdowns are also present and functional. The interface handles empty database gracefully by showing the appropriate UI elements even when no data is available."
 
 agent_communication:
   - agent: "testing"
