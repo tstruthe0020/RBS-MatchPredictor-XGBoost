@@ -543,8 +543,12 @@ function App() {
               { id: 'upload', name: '📁 Upload Data', icon: '📁' },
               { id: 'predict', name: '🎯 Standard Predict', icon: '🎯' },
               { id: 'xgboost', name: '🚀 Enhanced XGBoost', icon: '🚀' },
-              { id: 'analysis', name: '📈 Analysis', icon: '📈' },
-              { id: 'config', name: '⚙️ Config', icon: '⚙️' }
+              { id: 'regression', name: '📈 Regression Analysis', icon: '📈' },
+              { id: 'prediction-config', name: '⚙️ Prediction Config', icon: '⚙️' },
+              { id: 'rbs-config', name: '⚖️ RBS Config', icon: '⚖️' },
+              { id: 'optimization', name: '🤖 Formula Optimization', icon: '🤖' },
+              { id: 'results', name: '📋 Results', icon: '📋' },
+              { id: 'config', name: '🔧 System Config', icon: '🔧' }
             ].map(tab => (
               <button
                 key={tab.id}
