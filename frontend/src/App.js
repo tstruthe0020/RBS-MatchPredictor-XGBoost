@@ -669,7 +669,84 @@ function App() {
     }
   };
 
-  return (
+  // Advanced Features Functions
+  
+  // Enhanced RBS Analysis
+  const fetchEnhancedRBSForTeamReferee = async (teamName, refereeName) => {
+    setLoadingEnhancedRBS(true);
+    try {
+      const data = await fetchEnhancedRBSAnalysis(teamName, refereeName);
+      setEnhancedRBSData(data);
+    } catch (error) {
+      console.error('Error fetching enhanced RBS analysis:', error);
+      alert(`❌ Error loading enhanced RBS analysis: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingEnhancedRBS(false);
+    }
+  };
+
+  // Team Performance Analysis
+  const fetchTeamPerformanceData = async (teamName) => {
+    setLoadingTeamPerformance(true);
+    try {
+      const data = await fetchTeamPerformance(teamName);
+      setTeamPerformanceData(data);
+      setSelectedTeamForAnalysis(teamName);
+    } catch (error) {
+      console.error('Error fetching team performance:', error);
+      alert(`❌ Error loading team performance: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingTeamPerformance(false);
+    }
+  };
+
+  // Configuration Management Functions
+  const handleConfigEdit = (config) => {
+    setCurrentPredictionConfig(config);
+    setEditingPredictionConfig(true);
+    setShowConfigManager(false);
+  };
+
+  const handleConfigDelete = async (configName) => {
+    try {
+      await deletePredictionConfig(configName);
+      await loadAllConfigurations(); // Refresh the list
+      alert('✅ Configuration deleted successfully!');
+    } catch (error) {
+      alert(`❌ Error deleting configuration: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleRBSConfigEdit = (config) => {
+    setCurrentRbsConfig(config);
+    setEditingRbsConfig(true);
+    setShowRBSConfigManager(false);
+  };
+
+  const handleRBSConfigDelete = async (configName) => {
+    try {
+      await deleteRBSConfig(configName);
+      await loadAllConfigurations(); // Refresh the list
+      alert('✅ RBS Configuration deleted successfully!');
+    } catch (error) {
+      alert(`❌ Error deleting RBS configuration: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  // Advanced Optimization Functions
+  const runAdvancedOptimizationAnalysis = async (optimizationType) => {
+    setRunningAdvancedOptimization(true);
+    try {
+      const results = await runAdvancedOptimization(optimizationType);
+      const formattedResults = formatOptimizationResults(results, optimizationType);
+      setAdvancedOptimizationResults(formattedResults);
+    } catch (error) {
+      console.error('Error running advanced optimization:', error);
+      alert(`❌ Error running ${optimizationType}: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setRunningAdvancedOptimization(false);
+    }
+  };
     <div className="min-h-screen" style={{backgroundColor: '#F2E9E4'}}>
       {/* Header */}
       <div style={{backgroundColor: '#002629'}} className="shadow-lg border-b">
