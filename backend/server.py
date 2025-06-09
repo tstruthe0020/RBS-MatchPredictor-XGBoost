@@ -7542,13 +7542,7 @@ async def reload_ml_models():
             "message": "ML models reloaded successfully",
             "models_loaded": len(ml_predictor.models) == 5
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Reload error: {str(e)}")
 
-@api_router.delete("/database/wipe")
-async def wipe_database():
-    """Wipe all data from the database"""
-    try:
         # Count existing data before deletion
         matches_count = await db.matches.count_documents({})
         team_stats_count = await db.team_stats.count_documents({})
