@@ -2370,7 +2370,13 @@ class MLMatchPredictor:
                     'away_team': away_starting_xi is not None
                 },
                 'time_decay_applied': decay_config is not None,
-                'decay_preset': decay_config.preset_name if decay_config else None
+                'decay_preset': decay_config.preset_name if decay_config else None,
+                'time_decay_info': {
+                    'decay_type': decay_config.decay_type if decay_config else None,
+                    'half_life_months': decay_config.half_life_months if decay_config else None,
+                    'decay_rate_per_month': decay_config.decay_rate_per_month if decay_config else None,
+                    'description': decay_config.description if decay_config else None
+                } if decay_config else None
             }
             
             return MatchPredictionResponse(
