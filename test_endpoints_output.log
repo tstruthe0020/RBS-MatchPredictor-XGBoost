@@ -1,0 +1,21 @@
+
+========== TESTING ADVANCED FEATURES ENDPOINTS ==========
+
+
+--- High Priority Features ---
+
+Testing POST export-prediction-pdf...
+❌ POST export-prediction-pdf - Status: 500
+Response: {"detail":"PDF generation error: 400: Prediction failed: Could not extract features for prediction"}
+Testing GET enhanced-rbs-analysis/Arsenal/Michael Oliver...
+✅ GET enhanced-rbs-analysis/Arsenal/Michael Oliver - Status: 200 OK
+Testing GET team-performance/Arsenal...
+✅ GET team-performance/Arsenal - Status: 200 OK
+
+--- Medium Priority Features ---
+
+Testing GET prediction-configs...
+✅ GET prediction-configs - Status: 200 OK
+Testing GET rbs-configs...
+✅ GET rbs-configs - Status: 200 OK
+Testing POST suggest-prediction-config...

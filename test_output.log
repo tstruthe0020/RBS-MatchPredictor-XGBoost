@@ -1,367 +1,133 @@
 
 
-========== TESTING ENHANCED MATCH PREDICTION WITH PROBABILITY FIELDS ==========
+========== TESTING ADVANCED FEATURES ==========
+
+
+Step 1: Testing PDF Export
+
+
+========== TESTING PDF EXPORT ENDPOINT ==========
 
 Step 1: Getting teams and referees from the system
-Found 50 teams: Arsenal, Aston Villa, Atlanta United, Austin FC, Bournemouth...
-Found 50 referees: Abdou Ndiaye, Alexis Da Silva, Allen Chapman, Andre Marriner, Anthony Taylor...
+Found 30 teams: Atlanta United, Austin FC, CF Montréal, Charlotte FC, Chicago Fire...
+Found 50 referees: Abdou Ndiaye, Alan Kelly, Alex Chilowicz, Alexis Da Silva, Allen Chapman...
 
-Step 2: Testing match prediction with different team combinations
+Step 2: Testing PDF export with actual team names and referee
+Testing PDF export for Atlanta United vs Austin FC with referee Abdou Ndiaye
+✅ PDF export request successful!
+Content-Type: application/pdf
+Content-Disposition: attachment; filename=match_prediction_Atlanta_United_vs_Austin_FC.pdf
+PDF size: 6172 bytes
 
-Test 1: Arsenal vs Aston Villa with referee Abdou Ndiaye
-✅ Match prediction successful!
-Predicted Home Goals: 0.28
-Predicted Away Goals: 0.1
-Home xG: 0.28
-Away xG: 0.1
-Home Win Probability: 22.39%
-Draw Probability: 70.32%
-Away Win Probability: 7.29%
-✅ Probabilities are valid and sum to 100.0%
-✅ Probabilities are consistent with predicted goals
+Step 3: Verifying PDF content
+PDF has 3 pages
+❌ Missing sections in PDF: Poisson Distribution Analysis
+✅ Team names (Atlanta United, Austin FC) found in the PDF
+✅ Referee name (Abdou Ndiaye) found in the PDF
+✅ PDF contains multiple pages with detailed analysis
+✅ Additional sections found: Head-to-Head Statistics, Referee Bias Analysis, Model Information
 
-Test 2: Atlanta United vs Austin FC with referee Abdou Ndiaye
-✅ Match prediction successful!
-Predicted Home Goals: 1.5
-Predicted Away Goals: 0.53
-Home xG: 1.48
-Away xG: 0.75
-Home Win Probability: 61.2%
-Draw Probability: 25.84%
-Away Win Probability: 12.96%
-✅ Probabilities are valid and sum to 100.0%
-✅ Probabilities are consistent with predicted goals
+❌ PDF export functionality has issues
+❌ PDF Export test failed
 
-Test 3: Bournemouth vs CF Montréal with referee Abdou Ndiaye
-✅ Match prediction successful!
-Predicted Home Goals: 0.17
-Predicted Away Goals: 0.53
-Home xG: 0.17
-Away xG: 0.95
-Home Win Probability: 9.61%
-Draw Probability: 54.24%
-Away Win Probability: 36.15%
-✅ Probabilities are valid and sum to 100.0%
-✅ Probabilities are consistent with predicted goals
+Step 2: Testing Enhanced RBS Analysis
 
-Step 3: Analyzing results across different combinations
-Successfully tested 3 team combinations
-Home Win Probability Range: 51.59%
-Draw Probability Range: 44.48%
-Away Win Probability Range: 28.86%
-✅ Probabilities vary across different team combinations as expected
-
-========== ENHANCED MATCH PREDICTION TEST SUMMARY ==========
-
-Test 1: Arsenal vs Aston Villa with referee Abdou Ndiaye
-  Predicted Score: 0.28 - 0.1
-  xG: 0.28 - 0.1
-  Probabilities: Home Win 22.39%, Draw 70.32%, Away Win 7.29%
-  ✅ Test passed
-
-Test 2: Atlanta United vs Austin FC with referee Abdou Ndiaye
-  Predicted Score: 1.5 - 0.53
-  xG: 1.48 - 0.75
-  Probabilities: Home Win 61.2%, Draw 25.84%, Away Win 12.96%
-  ✅ Test passed
-
-Test 3: Bournemouth vs CF Montréal with referee Abdou Ndiaye
-  Predicted Score: 0.17 - 0.53
-  xG: 0.17 - 0.95
-  Probabilities: Home Win 9.61%, Draw 54.24%, Away Win 36.15%
-  ✅ Test passed
-
-✅ Enhanced match prediction with probability fields is working correctly!
-
-
-========== TESTING MATCH PREDICTION FIX ==========
-
-Step 1: Getting teams and referees from the system
-Found 50 teams: Arsenal, Aston Villa, Atlanta United, Austin FC, Bournemouth...
-Found 50 referees: Abdou Ndiaye, Alexis Da Silva, Allen Chapman, Andre Marriner, Anthony Taylor...
-
-Step 2: Testing match prediction with actual team names and referee
-Testing prediction for Arsenal vs Aston Villa with referee Abdou Ndiaye
-✅ Match prediction successful!
-Predicted Home Goals: 0.28
-Predicted Away Goals: 0.1
-Home xG: 0.28
-Away xG: 0.1
-
-Step 3: Verifying all required fields in the prediction breakdown
-✅ All required fields are present in the prediction breakdown
-⚠️ Fields with zero values in prediction breakdown: home_xg_per_shot, away_xg_per_shot, home_penalties_avg, away_penalties_avg
-
-Key metrics in prediction breakdown:
-  - home_xg_per_shot: 0.0
-  - away_xg_per_shot: 0.0
-  - home_shots_avg: 1.0
-  - away_shots_avg: 1.0
-  - home_goals_avg: 1.5
-  - away_goals_avg: 0.72
-  - home_conversion_rate: 1.0
-  - away_conversion_rate: 1.0
-  - home_penalty_conversion: 0.77
-  - away_penalty_conversion: 0.77
-  - home_fouls_drawn_avg: 11.9
-  - away_fouls_drawn_avg: 9.2
-  - home_penalties_avg: 0.0
-  - away_penalties_avg: 0.0
-
-Step 4: Testing team performance to verify comprehensive team stats
-✅ All required stats are present in team performance
-⚠️ Stats with zero values in team performance:
-  - Home: xg_per_shot, penalties_awarded
-  - Away: xg_per_shot
-
-Key stats for Arsenal:
-Home stats:
-  - points_per_game: 2.1052631578947367
-  - xg_per_shot: 0.0
-  - shots_total: 1.0
-  - goals: 1.631578947368421
-  - penalties_awarded: 0.0
-  - fouls_drawn: 11.578947368421053
-  - penalty_conversion_rate: 0.7699999999999998
-Away stats:
-  - points_per_game: 1.631578947368421
-  - xg_per_shot: 0.0
-  - shots_total: 1.0
-  - goals: 1.7894736842105263
-  - penalties_awarded: 0.10526315789473684
-  - fouls_drawn: 11.157894736842104
-  - penalty_conversion_rate: 0.7415789473684209
-
-Step 5: Testing end-to-end workflow
-✅ Comprehensive team stats calculated successfully
-✅ RBS calculated successfully
-
-Performing match prediction after calculations:
-✅ End-to-end workflow test passed successfully
-Predicted Home Goals: 0.28
-Predicted Away Goals: 0.1
-
-========== MATCH PREDICTION FIX TEST SUMMARY ==========
-✅ Match prediction fix has been successfully implemented
-✅ The 'Prediction Failed 'points_per_game'' error has been resolved
-✅ All required fields are properly available in the team averages
-✅ Comprehensive team stats are properly calculated
-✅ End-to-end workflow is working correctly
-
-
-========== TESTING FIXED RBS CALCULATION AND MATCH PREDICTION WORKFLOW ==========
-
-
-1. Testing Comprehensive Team Stats Calculation
-
-=== Testing Comprehensive Team Stats Calculation ===
+=== Testing Enhanced RBS Analysis for Atlanta United with referee Abdou Ndiaye ===
 Status: 200 OK
-Success: True
-Message: Calculated comprehensive statistics for 1258 team records
-Records Updated: 1258
-✅ Team statistics were successfully updated
-
-2. Testing Enhanced RBS Calculation
-
-=== Testing Enhanced RBS Calculation ===
-Status: 200 OK
-Success: True
-Message: Calculated comprehensive team statistics and RBS for 311 team-referee combinations using 'default' configuration
-Results Count: 311
-✅ RBS scores were successfully calculated
-
-3. Testing Match Prediction
-
-=== Testing Match Prediction for Arsenal vs Aston Villa with referee Abdou Ndiaye ===
-Status: 200 OK
-Success: True
-Home Team: Arsenal
-Away Team: Aston Villa
+Success: False
+Team: Atlanta United
 Referee: Abdou Ndiaye
-Predicted Home Goals: 0.28
-Predicted Away Goals: 0.1
-Home xG: 0.28
-Away xG: 0.1
+RBS Score: None
+Confidence Level: None
+Matches with referee: 0
+Matches without referee: 0
 
-Prediction Breakdown:
-  - home_base_xg: 0.02
-  - away_base_xg: 0.02
-  - ppg_adjustment: 0.26
-  - home_ref_adjustment: 0.0
-  - away_ref_adjustment: 0.0
-  ...
+❌ Missing required fields: rbs_score, confidence_level, matches_with_ref, matches_without_ref, variance_analysis, stats_breakdown
+❌ Enhanced RBS Analysis test failed for Atlanta United with referee Abdou Ndiaye
 
-Confidence Factors:
-  - home_matches_count: 18
-  - away_matches_count: 18
-  - home_rbs_confidence: 0.0
-  - away_rbs_confidence: 0.0
-  - home_ppg: 2.06
-  ...
+Step 3: Testing Team Performance Analysis
 
-❌ Missing or zero metrics in prediction breakdown: home_xg_per_shot, away_xg_per_shot
-
-4. Testing Team Performance Stats
-
-=== Testing Team Performance Stats for Arsenal ===
+=== Testing Team Performance Stats for Atlanta United ===
 Status: 200 OK
 Success: True
-Team: Arsenal
-Total Matches: 38
-PPG: 1.87
+Team: Atlanta United
+Total Matches: 201
+PPG: 1.27
 
 Home Stats:
-  Matches: 19
-❌ Missing or zero home stats: xg_per_shot, shots_on_target, shot_accuracy
+  Matches: 98
+❌ Missing or zero home stats: xg_per_shot, shots_total, shots_on_target, shot_accuracy, conversion_rate
   xG per shot: 0.0
-  Shots per game: 1.0
+  Shots per game: 0.0
   Shot accuracy: 0.0
-  Conversion rate: 0.10000000000000003
-  Goals per xG: 1.0
+  Conversion rate: 0.0
+  Goals per xG: 0.6958677778315463
 
 Away Stats:
-  Matches: 19
-❌ Missing or zero away stats: xg_per_shot, shots_on_target, shot_accuracy
+  Matches: 103
+❌ Missing or zero away stats: xg_per_shot, shots_total, shots_on_target, shot_accuracy, conversion_rate
   xG per shot: 0.0
-  Shots per game: 1.0
+  Shots per game: 0.0
   Shot accuracy: 0.0
-  Conversion rate: 0.10000000000000003
-  Goals per xG: 1.0
+  Conversion rate: 0.0
+  Goals per xG: 0.5427101581415584
+✅ Team Performance Analysis test passed for Atlanta United
 
-5. Testing End-to-End Workflow
-
-=== Testing End-to-End Workflow ===
-
-Step 1: Calculate comprehensive team stats
-✅ Comprehensive team stats calculated: 1258 records updated
-
-Step 2: Calculate RBS
-✅ RBS calculated: 311 results generated
-
-Step 4: Perform match prediction for Arsenal vs Aston Villa with referee Abdou Ndiaye
-
-=== Testing Match Prediction for Arsenal vs Aston Villa with referee Abdou Ndiaye ===
+=== Testing Team Performance Stats for Austin FC ===
 Status: 200 OK
 Success: True
-Home Team: Arsenal
-Away Team: Aston Villa
-Referee: Abdou Ndiaye
-Predicted Home Goals: 0.28
-Predicted Away Goals: 0.1
-Home xG: 0.28
-Away xG: 0.1
-
-Prediction Breakdown:
-  - home_base_xg: 0.02
-  - away_base_xg: 0.02
-  - ppg_adjustment: 0.26
-  - home_ref_adjustment: 0.0
-  - away_ref_adjustment: 0.0
-  ...
-
-Confidence Factors:
-  - home_matches_count: 18
-  - away_matches_count: 18
-  - home_rbs_confidence: 0.0
-  - away_rbs_confidence: 0.0
-  - home_ppg: 2.06
-  ...
-
-❌ Missing or zero metrics in prediction breakdown: home_xg_per_shot, away_xg_per_shot
-✅ Match prediction successful
-
-Step 5: Verify team performance stats for Arsenal
-
-=== Testing Team Performance Stats for Arsenal ===
-Status: 200 OK
-Success: True
-Team: Arsenal
-Total Matches: 38
-PPG: 1.87
+Team: Austin FC
+Total Matches: 191
+PPG: 1.24
 
 Home Stats:
-  Matches: 19
-❌ Missing or zero home stats: xg_per_shot, shots_on_target, shot_accuracy
+  Matches: 96
+❌ Missing or zero home stats: xg_per_shot, shots_total, shots_on_target, shot_accuracy, conversion_rate
   xG per shot: 0.0
-  Shots per game: 1.0
+  Shots per game: 0.0
   Shot accuracy: 0.0
-  Conversion rate: 0.10000000000000003
-  Goals per xG: 1.0
+  Conversion rate: 0.0
+  Goals per xG: 0.760898211828799
 
 Away Stats:
-  Matches: 19
-❌ Missing or zero away stats: xg_per_shot, shots_on_target, shot_accuracy
+  Matches: 95
+❌ Missing or zero away stats: xg_per_shot, shots_total, shots_on_target, shot_accuracy, conversion_rate
   xG per shot: 0.0
-  Shots per game: 1.0
+  Shots per game: 0.0
   Shot accuracy: 0.0
-  Conversion rate: 0.10000000000000003
-  Goals per xG: 1.0
-❌ xg_per_shot has zero values in both home and away stats
-❌ shot_accuracy has zero values in both home and away stats
-❌ Some key team performance stats have zero values
+  Conversion rate: 0.0
+  Goals per xG: 0.5842110620346941
+✅ Team Performance Analysis test passed for Austin FC
 
-End-to-End Workflow Assessment:
-❌ Complete workflow test failed
+Step 4: Testing Configuration Management
 
-
-========== FIXED RBS CALCULATION AND MATCH PREDICTION WORKFLOW TESTS SUMMARY ==========
-
-✅ 1. Comprehensive Team Stats Calculation: 1258 records updated
-✅ 2. Enhanced RBS Calculation: 311 results calculated
-✅ 3. Match Prediction: Successfully predicted match outcome
-❌ xg_per_shot has zero values in both home and away stats
-❌ shot_accuracy has zero values in both home and away stats
-❌ 4. Team Performance Stats: Some key statistics have zero values
-❌ 5. End-to-End Workflow: Complete workflow test failed
-
-
-========== TESTING REGRESSION ANALYSIS FUNCTIONALITY ==========
-
-
-=== Testing Enhanced Regression Stats Endpoint ===
+=== Testing Prediction Configs Endpoint ===
 Status: 200 OK
 Success: True
-Categories found: 6
-  - rbs_variables: 7 variables
-    yellow_cards, red_cards, fouls_committed, fouls_drawn, penalties_awarded...
-  - match_predictor_variables: 13 variables
-    xg, shots_total, shots_on_target, xg_per_shot, goals_per_xg...
-  - basic_stats: 10 variables
-    yellow_cards, red_cards, fouls_committed, fouls_drawn, penalties_awarded...
-  - advanced_stats: 11 variables
-    goals, goals_conceded, xg_per_shot, goals_per_xg, shot_accuracy...
-  - outcome_stats: 4 variables
-    points_per_game, goal_difference, clean_sheets_rate, scoring_rate
-  - context_variables: 5 variables
-    is_home, team_quality_rating, defensive_rating, attacking_rating, form_rating
+Configs found: 0
+❌ No prediction configs found
+✅ Prediction Configs test passed
 
-RBS Variables: 7
-  yellow_cards, red_cards, fouls_committed, fouls_drawn, penalties_awarded, xg_difference, possession_percentage
+=== Testing RBS Configs Endpoint ===
+Status: 200 OK
+Success: True
+Configs found: 0
+❌ No RBS configs found
+✅ RBS Configs test passed
 
-Match Predictor Variables: 13
-  xg, shots_total, shots_on_target, xg_per_shot, goals_per_xg...
+Step 5: Testing Advanced AI Optimization
 
-Variable Descriptions: 30
-  - yellow_cards: Number of yellow cards received by team
-  - red_cards: Number of red cards received by team
-  - fouls_committed: Number of fouls committed by team
-  - fouls_drawn: Number of fouls drawn by team
-  - penalties_awarded: Number of penalties awarded to team
-  ...
-
-Optimization Endpoints: 2
-  - rbs_optimization: /api/analyze-rbs-optimization
-  - predictor_optimization: /api/analyze-predictor-optimization
-
-✅ All required categories present
-✅ All RBS variables present
-✅ All core Match Predictor variables present
+=== Testing Suggest Prediction Config Endpoint ===
+Status: 200 OK
+Success: True
+❌ No suggested config returned
+✅ Suggest Prediction Config test passed
 
 === Testing RBS Optimization Analysis Endpoint ===
 Status: 200 OK
 Success: True
 Analysis Type: RBS Formula Optimization
-Sample Size: 1258
+Sample Size: 5552
 
 RBS Variables Analyzed: 7
   yellow_cards, red_cards, fouls_committed, fouls_drawn, penalties_awarded, xg_difference, possession_percentage
@@ -378,19 +144,19 @@ Suggested RBS Weights:
   - fouls_committed: 0.1
   - fouls_drawn: 0.1
   - penalties_awarded: 1.0
-  - xg_difference: 1.0
+  - xg_difference: 0.9
   - possession_percentage: 0.1
 
 Individual Variable Importance:
-  - yellow_cards: R² = -0.001932461371781935, Coefficient = 0.0006949189027300099
-  - red_cards: R² = 0.014244937310485817, Coefficient = -0.547927817385591
-  - fouls_committed: R² = -0.0019369068040477888, Coefficient = 0.001642619720356967
+  - yellow_cards: R² = -0.004614113475600146, Coefficient = -0.013647899298493098
+  - red_cards: R² = 0.011414025903080716, Coefficient = -0.5628754930716496
+  - fouls_committed: R² = -0.006138056277359416, Coefficient = 0.0007142598057097348
   ...
 
 Correlations with Points:
   - points_per_game: 1.0
-  - xg_difference: 0.20339216125355988
-  - penalties_awarded: 0.1481025660783862
+  - xg_difference: 0.1643991226698512
+  - possession_percentage: -0.13918277334445647
   ...
 
 Recommendations: 3
@@ -399,12 +165,13 @@ Recommendations: 3
   3. Continue using tanh normalization to keep RBS between -1 and +1 (Priority: high)
 
 ✅ All required result sections present
+✅ Analyze RBS Optimization test passed
 
 === Testing Match Predictor Optimization Analysis Endpoint ===
 Status: 200 OK
 Success: True
 Analysis Type: Match Predictor Optimization
-Sample Size: 1258
+Sample Size: 5552
 
 Predictor Variables Analyzed: 13
   xg, shots_total, shots_on_target, xg_per_shot, goals_per_xg...
@@ -419,141 +186,36 @@ Results sections: 5
 Predictor vs Points Analysis:
   - Success: True
   - Model Type: Linear Regression
-  - Sample Size: 1258
+  - Sample Size: 5552
   - R² Score: 1.0
   - Top 3 coefficients by magnitude:
-    - points_per_game: 1.0000000000000024
-    - conversion_rate: -1.6063023519101147e-15
-    - penalty_conversion_rate: 5.308969228512102e-16
+    - points_per_game: 1.0000000000000022
+    - penalty_conversion_rate: -1.2103520464806328e-15
+    - goals_per_xg: -9.056022531404069e-16
 
 xG Analysis:
   - Success: True
-  - R² Score: 0.28870081695928695
+  - R² Score: 0.03774392890256495
 
 Variable Importance Ranking:
-  - points_per_game: 1.0000000000000024
-  - conversion_rate: -1.6063023519101147e-15
-  - penalty_conversion_rate: 5.308969228512102e-16
-  - penalties_awarded: -4.395105203222075e-16
-  - xg: -3.5175607103299727e-16
+  - points_per_game: 1.0000000000000022
+  - penalty_conversion_rate: -1.2103520464806328e-15
+  - goals_per_xg: -9.056022531404069e-16
+  - xg: -8.119004004169218e-16
+  - xg_per_shot: -7.28583859910259e-16
   ...
 
 Recommendations: 3
   1. Focus on these most predictive variables (Priority: high)
-  2. xG-related variables explain 28.9% of performance variance (Priority: medium)
+  2. xG-related variables explain 3.8% of performance variance (Priority: medium)
   3. RBS shows negative correlation with team performance (Priority: high)
 
 ✅ All required result sections present
+✅ Analyze Predictor Optimization test passed
 
-=== Testing Regression Analysis Endpoint ===
-Status: 200 OK
-Success: True
-Target: points_per_game
-Sample Size: 1258
-R² Score: 0.01372757802666702
+=== Testing Comprehensive Regression Analysis Endpoint ===
+Error: 422
+{"detail":[{"type":"missing","loc":["body"],"msg":"Field required","input":null,"url":"https://errors.pydantic.dev/2.11/v/missing"}]}
+❌ Analyze Comprehensive Regression test failed
 
-Coefficients:
-  - yellow_cards: 0.003467324841418251
-  - red_cards: -0.5485615876500457
-  - shots_total: 0.0
-
-
-========== REGRESSION ANALYSIS TESTS SUMMARY ==========
-
-✅ Regression Stats Endpoint: 6 categories, 34 variables
-✅ RBS Optimization Endpoint: 7 variables analyzed, 3 recommendations
-✅ Predictor Optimization Endpoint: 13 variables analyzed, 3 recommendations
-✅ Regression Analysis Endpoint: 3 variables analyzed, R² score: 0.01372757802666702
-
-
-========== TESTING DATASET MANAGEMENT FUNCTIONALITY ==========
-
-Initial dataset list:
-
-=== Testing List Datasets Endpoint ===
-Status: 200 OK
-Success: True
-Datasets: 1
-  - default: 629 matches, 1258 team stats, 17981 player stats
-
-=== Testing Multi-Dataset Upload Endpoint for 'test_dataset_1' ===
-Status: 200 OK
-Success: True
-Message: Successfully uploaded 1 datasets with 27 total records
-Records processed: 27
-  - test_dataset_1: 3 matches, 6 team stats, 18 player stats
-
-=== Testing Multi-Dataset Upload Endpoint for 'test_dataset_2' ===
-Status: 200 OK
-Success: True
-Message: Successfully uploaded 1 datasets with 27 total records
-Records processed: 27
-  - test_dataset_2: 3 matches, 6 team stats, 18 player stats
-
-Dataset list after uploads:
-
-=== Testing List Datasets Endpoint ===
-Status: 200 OK
-Success: True
-Datasets: 3
-  - test_dataset_2: 3 matches, 6 team stats, 18 player stats
-  - test_dataset_1: 3 matches, 6 team stats, 18 player stats
-  - default: 629 matches, 1258 team stats, 17981 player stats
-
-=== Verifying Dataset Name in Records for 'test_dataset_1' ===
-Dataset 'test_dataset_1' verification:
-  - Matches: 3 records
-  - Team Stats: 6 records
-  - Player Stats: 18 records
-✅ All record counts match expected values for dataset 'test_dataset_1'
-✅ Dataset name field is correctly added to all records
-
-=== Verifying Dataset Name in Records for 'test_dataset_2' ===
-Dataset 'test_dataset_2' verification:
-  - Matches: 3 records
-  - Team Stats: 6 records
-  - Player Stats: 18 records
-✅ All record counts match expected values for dataset 'test_dataset_2'
-✅ Dataset name field is correctly added to all records
-
-=== Testing Validation Scenarios ===
-
---- Testing Duplicate Dataset Name ---
-
-=== Testing Multi-Dataset Upload Endpoint for 'test_dataset_1' ===
-Error: 400
-{"detail":"Dataset 'test_dataset_1' already exists. Please choose a different name."}
-Status: 400
-{"detail":"Dataset 'test_dataset_1' already exists. Please choose a different name."}
-
---- Testing Missing Files ---
-Status: 400
-{"detail":"Files must be provided in sets of 3 (matches.csv, team_stats.csv, player_stats.csv)"}
-
---- Testing Missing Dataset Name ---
-Status: 400
-{"detail":"Must provide exactly 1 dataset names for 1 datasets"}
-
---- Testing Non-existent Dataset Deletion ---
-Status: 404
-{"detail":"Dataset 'non_existent_dataset' not found"}
-
-=== Testing Delete Dataset Endpoint for 'test_dataset_1' ===
-Status: 200 OK
-Success: True
-Message: Successfully deleted dataset 'test_dataset_1' with all associated records
-Records deleted: 27
-
-=== Testing Delete Dataset Endpoint for 'test_dataset_2' ===
-Status: 200 OK
-Success: True
-Message: Successfully deleted dataset 'test_dataset_2' with all associated records
-Records deleted: 27
-
-Final dataset list after deletions:
-
-=== Testing List Datasets Endpoint ===
-Status: 200 OK
-Success: True
-Datasets: 1
-  - default: 629 matches, 1258 team stats, 17981 player stats
+========== ADVANCED FEATURES TEST SUMMARY ==========

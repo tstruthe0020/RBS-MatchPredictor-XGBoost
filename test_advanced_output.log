@@ -1,0 +1,39 @@
+
+========== TESTING ADVANCED FEATURES ==========
+
+
+=== Testing PDF Export Endpoint ===
+Testing PDF export for Arsenal vs Chelsea with referee Michael Oliver
+❌ PDF export request failed with status code 500
+{"detail":"PDF generation error: 400: Prediction failed: Could not extract features for prediction"}
+
+=== Testing Enhanced RBS Analysis ===
+Testing enhanced RBS analysis for Arsenal with referee Michael Oliver
+Success: False
+Team: Arsenal
+Referee: Michael Oliver
+RBS Score: None
+Confidence Level: None
+
+=== Testing Team Performance Endpoint ===
+Testing team performance for Arsenal
+Success: True
+Team: Arsenal
+Total Matches: 0
+PPG: 0
+
+No home stats available
+
+No away stats available
+
+=== Testing Prediction Configs Endpoint ===
+Success: True
+Configs found: 0
+❌ No prediction configs found
+
+=== Testing RBS Configs Endpoint ===
+Success: True
+Configs found: 0
+❌ No RBS configs found
+
+=== Testing Suggest Prediction Config Endpoint ===
