@@ -585,6 +585,21 @@ function App() {
     }
   };
 
+  // Function to fetch detailed referee analysis
+  const fetchDetailedRefereeAnalysis = async (refereeName) => {
+    setLoadingDetailedAnalysis(true);
+    try {
+      const response = await axios.get(`${API}/referee-analysis/${encodeURIComponent(refereeName)}`);
+      setDetailedRefereeData(response.data);
+      setSelectedRefereeForAnalysis(refereeName);
+    } catch (error) {
+      console.error('Error fetching detailed referee analysis:', error);
+      alert(`❌ Error loading detailed analysis: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingDetailedAnalysis(false);
+    }
+  };
+
   // File Upload Function
   const handleFileUpload = async (event, datasetType) => {
     const file = event.target.files[0];
