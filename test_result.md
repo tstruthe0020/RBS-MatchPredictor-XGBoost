@@ -271,6 +271,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the Results tab functionality. The tab displays correctly with a clear header 'Referee Analysis Results' and a description explaining comprehensive analysis of referee bias scores, team-referee combinations, and detailed referee profiles. The Load Referee Analysis button is present and properly enabled. The results display area is well-structured and ready to show analysis results when loaded. All elements are correctly styled according to the application's color scheme. The UI is responsive and maintains proper spacing and alignment."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the referee analysis functionality in the Results tab. The 'Load Referee Analysis' button works correctly and loads the referee analysis data without errors. The summary statistics are displayed correctly showing 51 total referees, 2254 total matches, 30 teams covered, and 0.558 average bias score. The referee profiles section displays 20 referee entries, each showing the referee name, number of matches officiated, number of teams covered, RBS score, and confidence level. The RBS scores show proper numerical values (both positive and negative) and are color-coded appropriately. Clicking on individual referee names successfully triggers the detailed analysis functionality. No console errors were detected during testing."
   - task: "System Config Tab Functionality"
     implemented: true
     working: true
