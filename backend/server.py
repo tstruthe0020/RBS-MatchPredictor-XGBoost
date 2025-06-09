@@ -94,8 +94,6 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-from contextlib import asynccontextmanager
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
