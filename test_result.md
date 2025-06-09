@@ -274,6 +274,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the referee analysis functionality in the Results tab. The 'Load Referee Analysis' button works correctly and loads the referee analysis data without errors. The summary statistics are displayed correctly showing 51 total referees, 2254 total matches, 30 teams covered, and 0.558 average bias score. The referee profiles section displays 20 referee entries, each showing the referee name, number of matches officiated, number of teams covered, RBS score, and confidence level. The RBS scores show proper numerical values (both positive and negative) and are color-coded appropriately. Clicking on individual referee names successfully triggers the detailed analysis functionality. No console errors were detected during testing."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the enhanced referee analysis functionality with RBS scores and stat differentials. When clicking on a referee (e.g., Joe Dickerson), the detailed analysis appears with all required components: summary statistics (Total Matches, Teams Officiated, Avg Bias Score, RBS Calculations), Match Outcomes breakdown (Home Wins, Draws, Away Wins, Home Win %), and Bias Analysis (Most/Least Biased teams). The Team-Specific RBS Analysis & Stat Differentials section is properly implemented, showing teams with their RBS scores and statistical differentials. The stat differentials display includes Yellow Cards, Red Cards, Fouls Committed, Fouls Drawn, Penalties Awarded, xG Difference, and Possession Percentage differentials, all properly color-coded for positive/negative values. The explanation of how to read the differentials is present and clearly explains that positive values indicate favorable treatment. The Close button works correctly to dismiss the detailed analysis."
   - task: "System Config Tab Functionality"
     implemented: true
     working: true
