@@ -2600,19 +2600,49 @@ class MLMatchPredictor:
             if not selected_player_stats:
                 return None
             
-            # Group player stats by match
+            # FIXED: First aggregate player stats by match, then apply time weights to match totals
             match_aggregates = {}
-            total_weights = 0
             
+            # Step 1: Group player stats by match and sum them up (without weights)
             for player_stat in selected_player_stats:
                 match_id = player_stat['match_id']
                 
+                if match_id not in match_aggregates:
+                    match_aggregates[match_id] = {
+                        'goals': 0, 'assists': 0, 'xg': 0, 'shots_total': 0, 
+                        'shots_on_target': 0, 'penalty_attempts': 0, 'penalty_goals': 0,
+                        'is_home': player_stat.get('is_home', is_home)
+                    }
+                
+                # Sum up all Starting XI players' stats for this match
+                match_aggregates[match_id]['goals'] += player_stat.get('goals', 0)
+                match_aggregates[match_id]['assists'] += player_stat.get('assists', 0)
+                match_aggregates[match_id]['xg'] += player_stat.get('xg', 0)
+                match_aggregates[match_id]['shots_total'] += player_stat.get('shots_total', 0)
+                match_aggregates[match_id]['shots_on_target'] += player_stat.get('shots_on_target', 0)
+                match_aggregates[match_id]['penalty_attempts'] += player_stat.get('penalty_attempts', 0)
+                match_aggregates[match_id]['penalty_goals'] += player_stat.get('penalty_goals', 0)
+            
+            if not match_aggregates:
+                return None
+            
+            # Step 2: Apply time decay weights to match totals and calculate weighted averages
+            total_weighted_goals = 0
+            total_weighted_assists = 0
+            total_weighted_xg = 0
+            total_weighted_shots = 0
+            total_weighted_shots_on_target = 0
+            total_weighted_penalties = 0
+            total_weighted_penalty_goals = 0
+            total_weights = 0
+            
+            for match_id, match_stats in match_aggregates.items():
                 # Find the match to get date for time decay
                 match_info = next((m for m in team_matches if m['match_id'] == match_id), None)
                 if not match_info:
                     continue
                 
-                # Calculate time weight
+                # Calculate time weight for this match
                 weight = 1.0
                 if decay_config and match_info.get('match_date'):
                     weight = starting_xi_manager.calculate_time_weight(
@@ -2621,48 +2651,33 @@ class MLMatchPredictor:
                         decay_config
                     )
                 
-                if match_id not in match_aggregates:
-                    match_aggregates[match_id] = {
-                        'goals': 0, 'assists': 0, 'xg': 0, 'shots_total': 0, 
-                        'shots_on_target': 0, 'penalty_attempts': 0, 'penalty_goals': 0,
-                        'weight': weight, 'is_home': player_stat.get('is_home', is_home)
-                    }
-                
-                # Aggregate player stats for this match
-                match_aggregates[match_id]['goals'] += player_stat.get('goals', 0) * weight
-                match_aggregates[match_id]['assists'] += player_stat.get('assists', 0) * weight
-                match_aggregates[match_id]['xg'] += player_stat.get('xg', 0) * weight
-                match_aggregates[match_id]['shots_total'] += player_stat.get('shots_total', 0) * weight
-                match_aggregates[match_id]['shots_on_target'] += player_stat.get('shots_on_target', 0) * weight
-                match_aggregates[match_id]['penalty_attempts'] += player_stat.get('penalty_attempts', 0) * weight
-                match_aggregates[match_id]['penalty_goals'] += player_stat.get('penalty_goals', 0) * weight
-                
+                # Apply weight to match totals
+                total_weighted_goals += match_stats['goals'] * weight
+                total_weighted_assists += match_stats['assists'] * weight
+                total_weighted_xg += match_stats['xg'] * weight
+                total_weighted_shots += match_stats['shots_total'] * weight
+                total_weighted_shots_on_target += match_stats['shots_on_target'] * weight
+                total_weighted_penalties += match_stats['penalty_attempts'] * weight
+                total_weighted_penalty_goals += match_stats['penalty_goals'] * weight
                 total_weights += weight
             
-            if not match_aggregates or total_weights == 0:
+            if total_weights == 0:
                 return None
             
-            # Calculate weighted averages
-            total_goals = sum(match['goals'] for match in match_aggregates.values())
-            total_xg = sum(match['xg'] for match in match_aggregates.values())
-            total_shots = sum(match['shots_total'] for match in match_aggregates.values())
-            total_shots_on_target = sum(match['shots_on_target'] for match in match_aggregates.values())
-            
-            match_count = len(match_aggregates)
+            # Calculate weighted averages per match
+            goals_per_match = total_weighted_goals / total_weights
+            xg_per_match = total_weighted_xg / total_weights
+            shots_per_match = total_weighted_shots / total_weights
+            shots_on_target_per_match = total_weighted_shots_on_target / total_weights
             
             # Calculate derived stats with safety checks
-            goals_per_match = total_goals / total_weights if total_weights > 0 else 0
-            xg_per_match = total_xg / total_weights if total_weights > 0 else 0
-            shots_per_match = total_shots / total_weights if total_weights > 0 else 0
-            shots_on_target_per_match = total_shots_on_target / total_weights if total_weights > 0 else 0
-            
-            xg_per_shot = (total_xg / total_shots) if total_shots > 0 else 0
+            xg_per_shot = (total_weighted_xg / total_weighted_shots) if total_weighted_shots > 0 else 0
             xg_per_shot = min(1.0, xg_per_shot)  # Cap at 1.0
             
-            shot_accuracy = (total_shots_on_target / total_shots) if total_shots > 0 else 0
+            shot_accuracy = (total_weighted_shots_on_target / total_weighted_shots) if total_weighted_shots > 0 else 0
             shot_accuracy = min(1.0, shot_accuracy)  # Cap at 1.0
             
-            conversion_rate = (total_goals / total_xg) if total_xg > 0 else 0
+            conversion_rate = (total_weighted_goals / total_weighted_xg) if total_weighted_xg > 0 else 0
             conversion_rate = min(2.0, conversion_rate)  # Cap at 2.0
             
             # Get team stats for possession and defensive stats (these don't change with starting XI)
