@@ -2216,6 +2216,40 @@ function App() {
                   </div>
                 </div>
               )}
+
+              {/* Configuration Management Section */}
+              <div className="mt-8 p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{color: '#002629'}}>📋 Configuration Management</h3>
+                    <p className="text-sm mt-1" style={{color: '#002629', opacity: 0.8}}>
+                      Manage, edit, and delete prediction configurations
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowConfigManager(!showConfigManager)}
+                    className="px-4 py-2 text-white font-medium rounded hover:opacity-90"
+                    style={{backgroundColor: showConfigManager ? '#002629' : '#1C5D99'}}
+                  >
+                    {showConfigManager ? '📝 Hide Manager' : '📋 Show All Configs'}
+                  </button>
+                </div>
+
+                {showConfigManager && (
+                  <div className="mt-4">
+                    <ConfigurationList
+                      configs={allPredictionConfigs}
+                      type="Prediction"
+                      onEdit={handleConfigEdit}
+                      onDelete={handleConfigDelete}
+                      onSelect={(config) => {
+                        setCurrentPredictionConfig(config);
+                        setShowConfigManager(false);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
