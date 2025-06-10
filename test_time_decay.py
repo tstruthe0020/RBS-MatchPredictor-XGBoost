@@ -44,12 +44,40 @@ def test_enhanced_prediction_with_time_decay(home_team, away_team, referee, deca
     """Test the enhanced prediction endpoint with a specific time decay preset"""
     print(f"\n=== Testing Enhanced Prediction with {decay_preset} Time Decay ===")
     
+    # Create a simple starting XI for testing
+    def create_test_starting_xi(formation="4-4-2"):
+        positions = []
+        for i in range(11):
+            position_type = "GK" if i == 0 else "DEF" if i < 5 else "MID" if i < 9 else "FWD"
+            position_id = f"{position_type}{i+1}"
+            player = {
+                "player_name": f"Test Player {i+1}",
+                "position": position_type,
+                "minutes_played": 900,
+                "matches_played": 10
+            }
+            positions.append({
+                "position_id": position_id,
+                "position_type": position_type,
+                "player": player
+            })
+        return {
+            "formation": formation,
+            "positions": positions
+        }
+    
+    # Create test starting XIs
+    home_xi = create_test_starting_xi()
+    away_xi = create_test_starting_xi()
+    
     request_data = {
         "home_team": home_team,
         "away_team": away_team,
         "referee_name": referee,
         "use_time_decay": True,
-        "decay_preset": decay_preset
+        "decay_preset": decay_preset,
+        "home_starting_xi": home_xi,
+        "away_starting_xi": away_xi
     }
     
     response = requests.post(f"{BASE_URL}/predict-match-enhanced", json=request_data)
