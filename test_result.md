@@ -390,12 +390,13 @@ agent_communication:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 11
+  test_sequence: 12
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Dashboard and Upload Data Modular Components"
+    - "Database Wipe Function"
+    - "Ensemble Model Training"
   stuck_tasks:
     - None
   test_all: false
