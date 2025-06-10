@@ -185,19 +185,6 @@ function App() {
     referee: ''
   });
 
-  // Ensemble Prediction States
-  const [ensemblePredictionData, setEnsemblePredictionData] = useState(null);
-  const [ensembleModelStatus, setEnsembleModelStatus] = useState(null);
-  const [ensembleComparison, setEnsembleComparison] = useState(null);
-  const [loadingEnsemblePrediction, setLoadingEnsemblePrediction] = useState(false);
-  const [loadingEnsembleTraining, setLoadingEnsembleTraining] = useState(false);
-  const [loadingComparison, setLoadingComparison] = useState(false);
-  const [selectedEnsembleTeams, setSelectedEnsembleTeams] = useState({
-    home: '',
-    away: '',
-    referee: ''
-  });
-
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
