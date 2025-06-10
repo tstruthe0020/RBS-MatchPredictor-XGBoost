@@ -173,7 +173,8 @@ function App() {
         checkMLStatus(),
         fetchDatabaseStats(),
         checkRBSStatus(),
-        loadAllConfigurations()
+        loadAllConfigurations(),
+        fetchOptimizationStatus()
       ]);
     } catch (error) {
       console.error('Error fetching initial data:', error);
