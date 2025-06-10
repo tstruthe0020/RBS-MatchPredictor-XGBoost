@@ -345,7 +345,7 @@ function App() {
     }
   };
 
-  // Ensemble Prediction API Functions
+  // Ensemble Prediction API Functions are defined above
   };
 
   const trainEnsembleModels = async () => {
