@@ -778,7 +778,7 @@ function App() {
       if (response.data.error) {
         alert(`⚠️ ${response.data.error}`);
       } else {
-        alert(`✅ Performance evaluated! Accuracy: ${response.data.outcome_accuracy}%, Goals MAE: ${response.data.home_goals_mae?.toFixed(3)}`);
+        alert(`✅ Performance evaluated!\nAccuracy: ${response.data.outcome_accuracy}%\nGoals MAE: ${response.data.home_goals_mae?.toFixed(3)}`);
       }
     } catch (error) {
       console.error('Error evaluating model performance:', error);
@@ -789,7 +789,7 @@ function App() {
   };
 
   const runXGBoostOptimization = async (method = 'grid_search', retrain = true) => {
-    if (!window.confirm(`🔧 Run XGBoost optimization with ${method}? This may take several minutes.`)) {
+    if (!window.confirm(`🔧 Run XGBoost optimization with ${method}?\nThis may take several minutes and will retrain your models.`)) {
       return;
     }
     
