@@ -7523,7 +7523,7 @@ async def compare_prediction_methods(request: MatchPredictionRequest):
             comparison = {
                 'success': True,
                 'match': f"{request.home_team} vs {request.away_team}",
-                'referee': request.referee,
+                'referee': request.referee_name,
                 'xgboost_prediction': xgboost_result,
                 'ensemble_prediction': ensemble_result,
                 'differences': differences,
@@ -7539,6 +7539,9 @@ async def compare_prediction_methods(request: MatchPredictionRequest):
                     'suggested_method': 'ensemble' if ensemble_result.get('ensemble_confidence', {}).get('overall_confidence') in ['High', 'Very High'] else 'xgboost'
                 }
             }
+            
+            # Convert any remaining NumPy types to Python native types
+            comparison = convert_numpy_types(comparison)
             
             return comparison
         else:
