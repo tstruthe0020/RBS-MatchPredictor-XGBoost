@@ -148,6 +148,13 @@ function App() {
   const [advancedOptimizationResults, setAdvancedOptimizationResults] = useState(null);
   const [runningAdvancedOptimization, setRunningAdvancedOptimization] = useState(false);
   const [selectedOptimizationType, setSelectedOptimizationType] = useState('prediction-suggestion');
+  
+  // XGBoost Optimization States
+  const [optimizationStatus, setOptimizationStatus] = useState(null);
+  const [optimizationResults, setOptimizationResults] = useState(null);
+  const [runningXGBoostOptimization, setRunningXGBoostOptimization] = useState(false);
+  const [modelPerformance, setModelPerformance] = useState(null);
+  const [simulationResults, setSimulationResults] = useState(null);
 
   // Initialize data on component mount
   useEffect(() => {
