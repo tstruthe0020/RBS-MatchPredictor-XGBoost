@@ -203,7 +203,7 @@ def test_referee_analysis_detail_endpoint(referee_name="Michael Oliver"):
         
         # Check team RBS details
         team_rbs_details = data.get('team_rbs_details', [])
-        if team_rbs_details:
+        if isinstance(team_rbs_details, list):
             print(f"\nTeam RBS Details: {len(team_rbs_details)} teams")
             
             for team_detail in team_rbs_details[:2]:  # Show first 2 team details
@@ -219,6 +219,27 @@ def test_referee_analysis_detail_endpoint(referee_name="Michael Oliver"):
             
             if len(team_rbs_details) > 2:
                 print("  ...")
+        elif isinstance(team_rbs_details, dict):
+            print(f"\nTeam RBS Details: {len(team_rbs_details.keys())} teams")
+            
+            for i, (team_name, team_detail) in enumerate(team_rbs_details.items()):
+                if i >= 2:  # Only show first 2 team details
+                    break
+                    
+                print(f"\n  Team: {team_name}")
+                print(f"  RBS Score: {team_detail.get('rbs_score')}")
+                
+                # Check stat differentials
+                stat_diffs = team_detail.get('stat_differentials', {})
+                if stat_diffs:
+                    print("  Stat Differentials:")
+                    for stat, diff in stat_diffs.items():
+                        print(f"    - {stat}: {diff}")
+            
+            if len(team_rbs_details) > 2:
+                print("  ...")
+        else:
+            print(f"\nTeam RBS Details: {team_rbs_details}")
         
         # Verify required sections
         required_sections = [
