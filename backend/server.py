@@ -1528,6 +1528,7 @@ class MLMatchPredictor:
     def ensure_models_dir(self):
         """Ensure models directory exists"""
         os.makedirs(self.models_dir, exist_ok=True)
+        os.makedirs(self.ensemble_dir, exist_ok=True)
     
     def get_model_paths(self):
         """Get file paths for all models"""
