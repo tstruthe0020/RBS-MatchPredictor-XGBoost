@@ -150,6 +150,12 @@ function App() {
   const [selectedOptimizationType, setSelectedOptimizationType] = useState('prediction-suggestion');
   
   // XGBoost Optimization States
+  const [xgboostOptimizationStatus, setXgboostOptimizationStatus] = useState(null);
+  const [runningXGBoostOptimization, setRunningXGBoostOptimization] = useState(false);
+  const [modelPerformance, setModelPerformance] = useState(null);
+  const [simulationResults, setSimulationResults] = useState(null);
+  
+  // XGBoost Optimization States
   const [optimizationStatus, setOptimizationStatus] = useState(null);
   const [runningXGBoostOptimization, setRunningXGBoostOptimization] = useState(false);
   const [modelPerformance, setModelPerformance] = useState(null);
