@@ -165,34 +165,34 @@ const Results = ({
               {refereeAnalysis.map((referee, index) => (
                 <div 
                   key={index}
-                  onClick={() => handleRefereeClick(referee.referee_name)}
+                  onClick={() => handleRefereeClick(referee.name)}
                   className="p-4 rounded-lg border-2 cursor-pointer hover:shadow-lg transition-all"
                   style={{
                     borderColor: '#1C5D99',
-                    backgroundColor: selectedRefereeForDetails === referee.referee_name ? '#A3D9FF' : 'white'
+                    backgroundColor: selectedRefereeForDetails === referee.name ? '#A3D9FF' : 'white'
                   }}
                 >
-                  <div className="font-medium mb-2" style={{color: '#002629'}}>{referee.referee_name}</div>
+                  <div className="font-medium mb-2" style={{color: '#002629'}}>{referee.name}</div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Matches</div>
-                      <div className="font-bold" style={{color: '#002629'}}>{referee.total_matches}</div>
+                      <div className="font-bold" style={{color: '#002629'}}>{referee.matches}</div>
                     </div>
                     <div>
                       <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Avg RBS</div>
-                      <div className="font-bold" style={{color: getRBSScoreColor(referee.average_rbs_score)}}>
-                        {referee.average_rbs_score?.toFixed(2) || 'N/A'}
+                      <div className="font-bold" style={{color: getRBSScoreColor(referee.avg_bias_score)}}>
+                        {referee.avg_bias_score?.toFixed(3) || 'N/A'}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Home Win %</div>
+                      <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Confidence</div>
                       <div className="font-bold" style={{color: '#002629'}}>
-                        {referee.home_win_percentage?.toFixed(1) || 0}%
+                        {referee.confidence || 0}%
                       </div>
                     </div>
                     <div>
                       <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Teams</div>
-                      <div className="font-bold" style={{color: '#002629'}}>{referee.teams_officiated}</div>
+                      <div className="font-bold" style={{color: '#002629'}}>{referee.teams}</div>
                     </div>
                   </div>
                 </div>
