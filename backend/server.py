@@ -7448,9 +7448,11 @@ async def get_ensemble_model_status():
     """Get status and performance of ensemble models"""
     try:
         status = {
+            "success": True,
             "models_available": {},
             "model_weights": ml_predictor.model_weights,
-            "ensemble_ready": True
+            "ensemble_ready": True,
+            "model_types": {}
         }
         
         # Check each model type
@@ -7458,6 +7460,10 @@ async def get_ensemble_model_status():
             if model_type == 'xgboost':
                 # Check XGBoost models
                 status["models_available"][model_type] = {
+                    "available": len(ml_predictor.models) == 5,
+                    "models": list(ml_predictor.models.keys()) if ml_predictor.models else []
+                }
+                status["model_types"][model_type] = {
                     "available": len(ml_predictor.models) == 5,
                     "models": list(ml_predictor.models.keys()) if ml_predictor.models else []
                 }
@@ -7469,9 +7475,18 @@ async def get_ensemble_model_status():
                     "available": available,
                     "models": list(ml_predictor.ensemble_models[model_type].keys()) if available else []
                 }
+                status["model_types"][model_type] = {
+                    "available": available,
+                    "models": list(ml_predictor.ensemble_models[model_type].keys()) if available else []
+                }
                 
                 if not available:
                     status["ensemble_ready"] = False
+        
+        # Convert NumPy types to Python native types
+        status = convert_numpy_types(status)
+        
+        return status
         
         return status
         
