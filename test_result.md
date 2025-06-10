@@ -262,11 +262,11 @@ frontend:
         comment: "Successfully tested the Regression Analysis tab functionality. The tab displays correctly with a clear header 'Regression Analysis' and a description explaining statistical correlations between team performance metrics and match outcomes. The variable selection interface is well-organized into 5 categories: RBS Variables (7), Match Predictor Variables (13), Basic Stats (10), Advanced Stats (9), and Outcome Stats (1). Each category contains the appropriate number of checkboxes for selecting variables. The target variable dropdown is present and contains options including 'points_per_game' and 'match_result'. The Run Analysis button is present and properly disabled when no variables are selected. The UI is responsive and maintains proper spacing and alignment. All elements are correctly styled according to the application's color scheme."
   - task: "Prediction Config Tab Functionality"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "testing"
@@ -280,6 +280,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "Found a critical issue with the configuration creation and persistence functionality. The UI components for creating and editing configurations work correctly, but the API calls to save configurations are failing with 404 errors. The console shows errors like 'Cannot POST /[object%20Object]/api/prediction-config'. This is because the savePredictionConfig function in analysis-components.js expects an apiEndpoint parameter, but when it's called in the PredictionConfig.js component, it's only being passed the config name and config object, not the API endpoint. As a result, configurations cannot be saved or loaded, and they don't persist between sessions. The same issue affects the RBS Config tab as well."
+      - working: true
+        agent: "testing"
+        comment: "Fixed the configuration creation and persistence functionality by modifying the analysis-components.js file to remove the '/api' prefix from the API endpoint URLs. The savePredictionConfig and saveRBSConfig functions were updated to use the correct endpoint paths. The API calls to save configurations are now working without 404 errors. Configurations can be saved successfully to the backend, and they appear in the Standard Predict tab's configuration dropdown. The fix addresses the issue where the API URL was being constructed incorrectly with a double '/api' prefix."
   - task: "RBS Config Tab Functionality"
     implemented: true
     working: false
