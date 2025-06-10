@@ -7433,6 +7433,9 @@ async def train_ensemble_models():
         # Train ensemble models
         result = await ml_predictor.train_ensemble_models()
         
+        # Convert NumPy types to Python native types
+        result = convert_numpy_types(result)
+        
         return result
         
     except Exception as e:
@@ -7440,7 +7443,8 @@ async def train_ensemble_models():
         return {
             "success": False,
             "error": str(e),
-            "details": "Check backend logs for more information"
+            "training_time_seconds": 0,
+            "models_trained": []
         }
 
 @api_router.get("/ensemble-model-status")
