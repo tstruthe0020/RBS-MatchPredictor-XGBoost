@@ -7385,6 +7385,167 @@ async def compare_model_versions(version1: str = "1.0", version2: str = "2.0", d
     except Exception as e:
         return {"error": str(e)}
 
+# ========================= ENSEMBLE PREDICTION ENDPOINTS =========================
+
+@api_router.post("/predict-match-ensemble")
+async def predict_match_ensemble(request: MatchPredictionRequest):
+    """Make ensemble match prediction using multiple ML models"""
+    try:
+        print(f"🤖 Ensemble prediction request: {request.home_team} vs {request.away_team}")
+        
+        # Make ensemble prediction
+        result = await ml_predictor.predict_match_ensemble(
+            request.home_team,
+            request.away_team,
+            request.referee,
+            request.match_date
+        )
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ Ensemble prediction error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "home_team": request.home_team,
+            "away_team": request.away_team,
+            "referee": request.referee
+        }
+
+@api_router.post("/train-ensemble-models")
+async def train_ensemble_models():
+    """Train all ensemble models (Random Forest, Gradient Boosting, Neural Network, Logistic Regression)"""
+    try:
+        print("🚀 Starting ensemble model training...")
+        
+        # Check if we have enough data for training
+        team_stats_count = await db.team_stats.count_documents({})
+        if team_stats_count < 50:
+            return {
+                "success": False,
+                "error": f"Insufficient data for training. Need at least 50 records, found {team_stats_count}"
+            }
+        
+        # Train ensemble models
+        result = await ml_predictor.train_ensemble_models()
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ Ensemble training error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "details": "Check backend logs for more information"
+        }
+
+@api_router.get("/ensemble-model-status")
+async def get_ensemble_model_status():
+    """Get status and performance of ensemble models"""
+    try:
+        status = {
+            "models_available": {},
+            "model_weights": ml_predictor.model_weights,
+            "ensemble_ready": True
+        }
+        
+        # Check each model type
+        for model_type in ['xgboost', 'random_forest', 'gradient_boost', 'neural_net', 'logistic']:
+            if model_type == 'xgboost':
+                # Check XGBoost models
+                status["models_available"][model_type] = {
+                    "available": len(ml_predictor.models) == 5,
+                    "models": list(ml_predictor.models.keys()) if ml_predictor.models else []
+                }
+            else:
+                # Check ensemble models
+                available = (model_type in ml_predictor.ensemble_models and 
+                           len(ml_predictor.ensemble_models[model_type]) == 5)
+                status["models_available"][model_type] = {
+                    "available": available,
+                    "models": list(ml_predictor.ensemble_models[model_type].keys()) if available else []
+                }
+                
+                if not available:
+                    status["ensemble_ready"] = False
+        
+        return status
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+@api_router.post("/compare-prediction-methods")
+async def compare_prediction_methods(request: MatchPredictionRequest):
+    """Compare XGBoost vs Ensemble predictions for the same match"""
+    try:
+        print(f"🔍 Comparing prediction methods: {request.home_team} vs {request.away_team}")
+        
+        # Get XGBoost prediction
+        xgboost_result = await ml_predictor.predict_match(
+            request.home_team,
+            request.away_team, 
+            request.referee,
+            request.match_date
+        )
+        
+        # Get Ensemble prediction
+        ensemble_result = await ml_predictor.predict_match_ensemble(
+            request.home_team,
+            request.away_team,
+            request.referee,
+            request.match_date
+        )
+        
+        # Calculate differences
+        if xgboost_result.get('success') and ensemble_result.get('success'):
+            differences = {
+                'home_win_prob_diff': abs(ensemble_result['home_win_probability'] - xgboost_result['home_win_probability']),
+                'draw_prob_diff': abs(ensemble_result['draw_probability'] - xgboost_result['draw_probability']),
+                'away_win_prob_diff': abs(ensemble_result['away_win_probability'] - xgboost_result['away_win_probability']),
+                'home_goals_diff': abs(ensemble_result['predicted_home_goals'] - xgboost_result['predicted_home_goals']),
+                'away_goals_diff': abs(ensemble_result['predicted_away_goals'] - xgboost_result['predicted_away_goals']),
+                'home_xg_diff': abs(ensemble_result['home_xg'] - xgboost_result['home_xg']),
+                'away_xg_diff': abs(ensemble_result['away_xg'] - xgboost_result['away_xg'])
+            }
+            
+            # Determine which method is more confident
+            xgb_confidence = max(xgboost_result['home_win_probability'], xgboost_result['draw_probability'], xgboost_result['away_win_probability'])
+            ensemble_confidence = max(ensemble_result['home_win_probability'], ensemble_result['draw_probability'], ensemble_result['away_win_probability'])
+            
+            comparison = {
+                'success': True,
+                'match': f"{request.home_team} vs {request.away_team}",
+                'referee': request.referee,
+                'xgboost_prediction': xgboost_result,
+                'ensemble_prediction': ensemble_result,
+                'differences': differences,
+                'confidence_comparison': {
+                    'xgboost_max_confidence': round(xgb_confidence, 2),
+                    'ensemble_max_confidence': round(ensemble_confidence, 2),
+                    'more_confident_method': 'ensemble' if ensemble_confidence > xgb_confidence else 'xgboost',
+                    'confidence_difference': abs(ensemble_confidence - xgb_confidence)
+                },
+                'recommendation': {
+                    'significant_differences': any(diff > 5 for diff in [differences['home_win_prob_diff'], differences['draw_prob_diff'], differences['away_win_prob_diff']]),
+                    'ensemble_agreement': ensemble_result.get('ensemble_confidence', {}).get('model_agreement', 0),
+                    'suggested_method': 'ensemble' if ensemble_result.get('ensemble_confidence', {}).get('overall_confidence') in ['High', 'Very High'] else 'xgboost'
+                }
+            }
+            
+            return comparison
+        else:
+            return {
+                'success': False,
+                'error': 'One or both prediction methods failed',
+                'xgboost_success': xgboost_result.get('success', False),
+                'ensemble_success': ensemble_result.get('success', False)
+            }
+        
+    except Exception as e:
+        print(f"❌ Prediction comparison error: {e}")
+        return {"success": False, "error": str(e)}
+
 @api_router.delete("/database/wipe")
 async def wipe_database():
     """Wipe all data from the database"""
