@@ -644,6 +644,57 @@ function App() {
     return "";
   };
 
+  // Ensemble Prediction Functions
+  const getEnsembleModelStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/ensemble-model-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting ensemble model status:', error);
+      throw error;
+    }
+  };
+
+  const trainEnsembleModels = async () => {
+    try {
+      const response = await axios.post(`${API}/train-ensemble-models`);
+      return response.data;
+    } catch (error) {
+      console.error('Error training ensemble models:', error);
+      throw error;
+    }
+  };
+
+  const makeEnsemblePrediction = async (homeTeam, awayTeam, referee) => {
+    try {
+      const requestData = {
+        home_team: homeTeam,
+        away_team: awayTeam,
+        referee_name: referee
+      };
+      const response = await axios.post(`${API}/predict-match-ensemble`, requestData);
+      return response.data;
+    } catch (error) {
+      console.error('Error making ensemble prediction:', error);
+      throw error;
+    }
+  };
+
+  const comparePredictionMethods = async (homeTeam, awayTeam, referee) => {
+    try {
+      const requestData = {
+        home_team: homeTeam,
+        away_team: awayTeam,
+        referee_name: referee
+      };
+      const response = await axios.post(`${API}/compare-prediction-methods`, requestData);
+      return response.data;
+    } catch (error) {
+      console.error('Error comparing prediction methods:', error);
+      throw error;
+    }
+  };
+
   // Model Performance API Functions
   const fetchModelPerformance = async (days = 30) => {
     try {
