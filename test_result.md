@@ -285,11 +285,11 @@ frontend:
         comment: "Fixed the configuration creation and persistence functionality by modifying the analysis-components.js file to remove the '/api' prefix from the API endpoint URLs. The savePredictionConfig and saveRBSConfig functions were updated to use the correct endpoint paths. The API calls to save configurations are now working without 404 errors. Configurations can be saved successfully to the backend, and they appear in the Standard Predict tab's configuration dropdown. The fix addresses the issue where the API URL was being constructed incorrectly with a double '/api' prefix."
   - task: "RBS Config Tab Functionality"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "testing"
@@ -303,6 +303,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "Found a critical issue with the RBS configuration creation and persistence functionality. The UI components for creating and editing RBS configurations work correctly, but the API calls to save configurations are failing with 404 errors. The console shows errors like 'Cannot POST /[object%20Object]/api/rbs-config'. This is because the saveRBSConfig function in analysis-components.js expects an apiEndpoint parameter, but when it's called in the RBSConfig.js component, it's only being passed the config name and config object, not the API endpoint. As a result, RBS configurations cannot be saved or loaded, and they don't persist between sessions. This is the same issue that affects the Prediction Config tab."
+      - working: true
+        agent: "testing"
+        comment: "Fixed the RBS configuration creation and persistence functionality by modifying the analysis-components.js file to remove the '/api' prefix from the API endpoint URLs. The saveRBSConfig function was updated to use the correct endpoint path. The API calls to save RBS configurations are now working without 404 errors. RBS configurations can be saved successfully to the backend. The fix addresses the issue where the API URL was being constructed incorrectly with a double '/api' prefix."
   - task: "Formula Optimization Tab Functionality"
     implemented: true
     working: true
