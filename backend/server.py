@@ -2397,7 +2397,7 @@ class MLMatchPredictor:
             # Extract features with time decay if configured
             if decay_config:
                 print(f"🕒 Using time decay preset: {decay_config.preset_name}")
-                features = await self.extract_features_with_time_decay(home_team, away_team, referee, match_date, decay_config)
+                features = await self.extract_features_for_match_enhanced(home_team, away_team, referee, match_date, None, None, decay_config)
             else:
                 features = await self.extract_features_for_match(home_team, away_team, referee, match_date)
                 
