@@ -155,6 +155,23 @@ function App() {
   const [modelPerformance, setModelPerformance] = useState(null);
   const [simulationResults, setSimulationResults] = useState(null);
 
+  // Model Performance Dashboard States
+  const [modelPerformanceData, setModelPerformanceData] = useState(null);
+  const [optimizationHistory, setOptimizationHistory] = useState(null);
+  const [accuracyTrends, setAccuracyTrends] = useState(null);
+  const [loadingModelPerformance, setLoadingModelPerformance] = useState(false);
+  const [performanceDays, setPerformanceDays] = useState(30);
+
+  // Enhanced Referee Analysis States
+  const [enhancedAnalysisData, setEnhancedAnalysisData] = useState(null);
+  const [loadingEnhancedAnalysis, setLoadingEnhancedAnalysis] = useState(false);
+
+  // Advanced Optimization States  
+  const [optimizationSuggestions, setOptimizationSuggestions] = useState(null);
+  const [rbsOptimizationData, setRbsOptimizationData] = useState(null);
+  const [predictorOptimizationData, setPredictorOptimizationData] = useState(null);
+  const [loadingOptimizationAnalysis, setLoadingOptimizationAnalysis] = useState(false);
+
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
