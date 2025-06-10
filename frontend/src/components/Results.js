@@ -313,21 +313,88 @@ const Results = ({
                   )}
                 </div>
 
-                {/* Team-Specific RBS Scores */}
-                {detailedRefereeAnalysis.team_rbs_scores && Object.keys(detailedRefereeAnalysis.team_rbs_scores).length > 0 && (
+                {/* Team-Specific RBS Analysis & Calculation Details */}
+                {detailedRefereeAnalysis.team_rbs_details && Object.keys(detailedRefereeAnalysis.team_rbs_details).length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3" style={{color: '#002629'}}>🏆 Team-Specific RBS Scores</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {Object.entries(detailedRefereeAnalysis.team_rbs_scores)
+                    <h4 className="font-semibold mb-3" style={{color: '#002629'}}>🏆 Team-Specific RBS Analysis & Calculation Details</h4>
+                    <div className="space-y-4">
+                      {Object.entries(detailedRefereeAnalysis.team_rbs_details)
                         .sort(([,a], [,b]) => (b.rbs_score || 0) - (a.rbs_score || 0))
                         .map(([team, data]) => (
-                          <div key={team} className="bg-white p-3 rounded border">
-                            <div className="font-medium text-sm" style={{color: '#002629'}}>{team}</div>
-                            <div className="text-lg font-bold" style={{color: getRBSScoreColor(data.rbs_score)}}>
-                              {data.rbs_score?.toFixed(2) || 'N/A'}
+                          <div key={team} className="bg-white p-4 rounded-lg border-2" style={{borderColor: '#1C5D99'}}>
+                            {/* Team Header */}
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center space-x-3">
+                                <h5 className="font-bold text-lg" style={{color: '#002629'}}>{team}</h5>
+                                <div className="px-3 py-1 rounded-full text-sm font-bold text-white" 
+                                     style={{backgroundColor: getRBSScoreColor(data.rbs_score || 0)}}>
+                                  RBS: {data.rbs_score ? data.rbs_score.toFixed(3) : 'N/A'}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium" style={{color: '#002629'}}>
+                                  Confidence: {data.confidence_level || 0}%
+                                </div>
+                                <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>
+                                  {data.matches_with_ref || 0} matches with referee
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>
-                              {data.matches} matches
+
+                            {/* RBS Calculation Breakdown */}
+                            {data.stats_breakdown && (
+                              <div>
+                                <h6 className="font-semibold mb-2 text-sm" style={{color: '#002629'}}>
+                                  📊 RBS Calculation Factors:
+                                </h6>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                  {Object.entries(data.stats_breakdown).map(([factor, value]) => {
+                                    const isPositive = value > 0;
+                                    const isNegative = value < 0;
+                                    return (
+                                      <div key={factor} className="bg-gray-50 p-2 rounded text-center">
+                                        <div className="text-xs font-medium mb-1" style={{color: '#002629'}}>
+                                          {factor.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </div>
+                                        <div className={`font-bold text-sm ${
+                                          isPositive ? 'text-green-600' : 
+                                          isNegative ? 'text-red-600' : 'text-gray-600'
+                                        }`}>
+                                          {value > 0 ? '+' : ''}{value.toFixed(4)}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <div className="mt-2 text-xs" style={{color: '#002629', opacity: 0.7}}>
+                                  <strong>How to read:</strong> Positive values indicate favorable treatment by the referee. 
+                                  Negative values indicate unfavorable treatment. Values are calculated as (average with referee) - (average with other referees).
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Additional RBS Stats */}
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>RBS Score</div>
+                                  <div className="font-bold" style={{color: getRBSScoreColor(data.rbs_score || 0)}}>
+                                    {data.rbs_score ? data.rbs_score.toFixed(3) : 'N/A'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Confidence</div>
+                                  <div className="font-bold" style={{color: '#002629'}}>
+                                    {data.confidence_level || 0}%
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Sample Size</div>
+                                  <div className="font-bold" style={{color: '#002629'}}>
+                                    {data.matches_with_ref || 0} matches
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
