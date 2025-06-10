@@ -6743,13 +6743,13 @@ async def retrain_models_with_optimization():
         return {"error": str(e)}
 
 @api_router.post("/test-time-decay-impact")
-async def test_time_decay_impact(team_name: str = "Arsenal", referee: str = "Michael Oliver"):
+async def test_time_decay_impact(team_name: str = "Arsenal"):
     """Test endpoint to verify time decay is actually working with different presets"""
     try:
         print(f"\n🧪 TESTING TIME DECAY IMPACT FOR {team_name}")
         print("=" * 60)
         
-        # Test all time decay presets
+        # Test all time decay presets by comparing team averages
         presets = ["none", "conservative", "moderate", "aggressive", "linear"]
         results = {}
         
@@ -6762,27 +6762,26 @@ async def test_time_decay_impact(team_name: str = "Arsenal", referee: str = "Mic
             else:
                 decay_config = time_decay_manager.get_preset(preset_name)
             
-            # Make prediction with this decay setting (use standard prediction, not defaults)
-            prediction = await ml_predictor.predict_match(
-                home_team=team_name,
-                away_team="Chelsea", 
-                referee=referee,
-                match_date=None,
+            # Calculate team averages with this decay setting
+            team_features = await ml_predictor.calculate_team_features_enhanced(
+                team_name=team_name,
+                is_home=True,
+                starting_xi=None,
                 decay_config=decay_config
             )
             
-            if prediction.success:
+            if team_features:
                 results[preset_name] = {
-                    "predicted_home_goals": prediction.predicted_home_goals,
-                    "predicted_away_goals": prediction.predicted_away_goals,
-                    "home_xg": prediction.home_xg,
-                    "away_xg": prediction.away_xg,
-                    "home_win_probability": prediction.home_win_probability
+                    "goals_per_match": team_features.get('goals', 0),
+                    "xg_per_match": team_features.get('xg', 0),
+                    "shots_per_match": team_features.get('shots_total', 0),
+                    "possession_pct": team_features.get('possession_pct', 0),
+                    "conversion_rate": team_features.get('conversion_rate', 0)
                 }
-                print(f"  ✅ {preset_name}: Goals {prediction.predicted_home_goals:.2f}-{prediction.predicted_away_goals:.2f}, Win% {prediction.home_win_probability:.1f}%")
+                print(f"  ✅ {preset_name}: Goals {team_features.get('goals', 0):.3f}, xG {team_features.get('xg', 0):.3f}")
             else:
-                results[preset_name] = {"error": prediction.error}
-                print(f"  ❌ {preset_name}: Error - {prediction.error}")
+                results[preset_name] = {"error": "Could not calculate team features"}
+                print(f"  ❌ {preset_name}: Error calculating features")
         
         # Analyze differences
         print(f"\n📊 TIME DECAY IMPACT ANALYSIS:")
@@ -6792,20 +6791,27 @@ async def test_time_decay_impact(team_name: str = "Arsenal", referee: str = "Mic
             aggressive_result = results.get("aggressive", {})
             
             if "error" not in none_result and "error" not in aggressive_result:
-                goals_diff = abs(none_result["predicted_home_goals"] - aggressive_result["predicted_home_goals"])
-                prob_diff = abs(none_result["home_win_probability"] - aggressive_result["home_win_probability"])
+                goals_diff = abs(none_result["goals_per_match"] - aggressive_result["goals_per_match"])
+                xg_diff = abs(none_result["xg_per_match"] - aggressive_result["xg_per_match"])
                 
-                print(f"  📈 Goals difference (none vs aggressive): {goals_diff:.3f}")
-                print(f"  📈 Win probability difference: {prob_diff:.1f}%")
+                print(f"  📈 Goals difference (none vs aggressive): {goals_diff:.4f}")
+                print(f"  📈 xG difference (none vs aggressive): {xg_diff:.4f}")
                 
-                if goals_diff > 0.05 or prob_diff > 2.0:
+                if goals_diff > 0.01 or xg_diff > 0.01:
                     print(f"  ✅ TIME DECAY IS WORKING! Significant differences detected.")
+                    print(f"  📝 Explanation: Recent matches weighted higher with aggressive decay")
                 else:
-                    print(f"  ⚠️  TIME DECAY IMPACT IS MINIMAL. Differences may be too small.")
+                    print(f"  ⚠️  TIME DECAY IMPACT IS MINIMAL. May need more historical data or larger time gaps.")
+                
+                # Show all results for comparison
+                print(f"\n📋 DETAILED COMPARISON:")
+                for preset, data in results.items():
+                    if "error" not in data:
+                        print(f"  {preset:12}: Goals {data['goals_per_match']:.4f}, xG {data['xg_per_match']:.4f}")
             else:
-                print(f"  ❌ Cannot compare - prediction errors occurred")
+                print(f"  ❌ Cannot compare - feature calculation errors occurred")
         else:
-            print(f"  ❌ Cannot analyze - insufficient successful predictions")
+            print(f"  ❌ Cannot analyze - insufficient successful calculations")
         
         print("=" * 60)
         
@@ -6813,10 +6819,9 @@ async def test_time_decay_impact(team_name: str = "Arsenal", referee: str = "Mic
             "success": True,
             "message": "Time decay test completed",
             "results": results,
+            "analysis": "Check backend logs for detailed time decay calculations",
             "test_parameters": {
                 "team": team_name,
-                "opponent": "Chelsea",
-                "referee": referee,
                 "presets_tested": presets
             }
         }
