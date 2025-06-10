@@ -2788,9 +2788,18 @@ class MLMatchPredictor:
             
             # Calculate weighted averages per match
             goals_per_match = total_weighted_goals / total_weights
+            assists_per_match = total_weighted_assists / total_weights
             xg_per_match = total_weighted_xg / total_weights
             shots_per_match = total_weighted_shots / total_weights
             shots_on_target_per_match = total_weighted_shots_on_target / total_weights
+            penalties_per_match = total_weighted_penalties / total_weights
+            penalty_goals_per_match = total_weighted_penalty_goals / total_weights
+            
+            # DEBUG: Show final weighted averages
+            print(f"  📈 Weighted averages: Goals {goals_per_match:.3f}, xG {xg_per_match:.3f}")
+            print(f"  📊 Total weights applied: {total_weights:.2f}")
+            print(f"  ⚽ Impact: Recent matches weighted higher than old ones: {decay_config is not None}")
+            print()  # Add space
             
             # Debug logging for Starting XI effectiveness
             print(f"Starting XI calculation for {team_name}:")
