@@ -7401,6 +7401,9 @@ async def predict_match_ensemble(request: MatchPredictionRequest):
             request.match_date
         )
         
+        # Convert NumPy types to Python native types
+        result = convert_numpy_types(result)
+        
         return result
         
     except Exception as e:
