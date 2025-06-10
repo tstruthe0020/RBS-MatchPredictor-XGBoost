@@ -1049,6 +1049,11 @@ function App() {
             setLoadingEnsembleTraining={setLoadingEnsembleTraining}
             loadingComparison={loadingComparison}
             setLoadingComparison={setLoadingComparison}
+            useTimeDecay={useTimeDecay}
+            setUseTimeDecay={setUseTimeDecay}
+            decayPreset={decayPreset}
+            setDecayPreset={setDecayPreset}
+            decayPresets={decayPresets}
             getEnsembleModelStatus={getEnsembleModelStatus}
             trainEnsembleModels={trainEnsembleModels}
             makeEnsemblePrediction={makeEnsemblePrediction}
