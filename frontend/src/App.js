@@ -346,19 +346,6 @@ function App() {
   };
 
   // Ensemble Prediction API Functions
-  const makeEnsemblePrediction = async (homeTeam, awayTeam, referee) => {
-    try {
-      const response = await axios.post(`${API}/predict-match-ensemble`, {
-        home_team: homeTeam,
-        away_team: awayTeam,
-        referee: referee,
-        match_date: new Date().toISOString().split('T')[0]
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error making ensemble prediction:', error);
-      return null;
-    }
   };
 
   const trainEnsembleModels = async () => {
