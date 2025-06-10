@@ -2153,6 +2153,91 @@ class MLMatchPredictor:
             print(f"Error training ML models: {e}")
             raise e
     
+    async def train_ensemble_models(self):
+        """Train all ensemble models with the same data as XGBoost"""
+        try:
+            print("🚀 Starting Ensemble Model Training...")
+            
+            # Get training data (same as XGBoost)
+            training_data = await self.prepare_training_data()
+            if not training_data:
+                raise ValueError("No training data available")
+            
+            X_train, X_test, y_outcome_train, y_outcome_test, y_home_goals_train, y_home_goals_test, y_away_goals_train, y_away_goals_test, y_home_xg_train, y_home_xg_test, y_away_xg_train, y_away_xg_test = training_data
+            
+            ensemble_results = {}
+            
+            # Train each ensemble model type
+            for model_type in ['random_forest', 'gradient_boost', 'neural_net', 'logistic']:
+                print(f"\n🤖 Training {model_type} models...")
+                
+                model_results = {}
+                models = self.ensemble_models[model_type]
+                
+                # Train classifier
+                print(f"  Training {model_type} classifier...")
+                models['classifier'].fit(X_train, y_outcome_train)
+                y_pred = models['classifier'].predict(X_test)
+                accuracy = accuracy_score(y_outcome_test, y_pred)
+                model_results['classifier'] = {'accuracy': accuracy, 'samples': len(y_outcome_test)}
+                print(f"    Accuracy: {accuracy:.3f}")
+                
+                # Train regressors
+                for target_name, y_train, y_test in [
+                    ('home_goals', y_home_goals_train, y_home_goals_test),
+                    ('away_goals', y_away_goals_train, y_away_goals_test),
+                    ('home_xg', y_home_xg_train, y_home_xg_test),
+                    ('away_xg', y_away_xg_train, y_away_xg_test)
+                ]:
+                    print(f"  Training {model_type} {target_name}...")
+                    models[target_name].fit(X_train, y_train)
+                    y_pred = models[target_name].predict(X_test)
+                    r2 = r2_score(y_test, y_pred)
+                    mse = mean_squared_error(y_test, y_pred)
+                    model_results[target_name] = {'r2_score': r2, 'mse': mse, 'samples': len(y_test)}
+                    print(f"    R² score: {r2:.3f}, MSE: {mse:.3f}")
+                
+                ensemble_results[model_type] = model_results
+                
+                # Update model weight based on performance
+                avg_performance = (
+                    model_results['classifier']['accuracy'] +
+                    model_results['home_goals']['r2_score'] +
+                    model_results['away_goals']['r2_score'] +
+                    model_results['home_xg']['r2_score'] +
+                    model_results['away_xg']['r2_score']
+                ) / 5
+                
+                # Adjust weight based on performance (higher performance = higher weight)
+                base_weight = self.model_weights.get(model_type, 0.2)
+                performance_multiplier = max(0.5, min(1.5, avg_performance + 0.5))
+                self.model_weights[model_type] = base_weight * performance_multiplier
+                
+                print(f"  Updated weight for {model_type}: {self.model_weights[model_type]:.3f}")
+            
+            # Normalize weights to sum to 1.0
+            total_weight = sum(self.model_weights.values())
+            if total_weight > 0:
+                for model_type in self.model_weights:
+                    self.model_weights[model_type] /= total_weight
+            
+            # Save ensemble models
+            self.save_ensemble_models()
+            
+            print("\n✅ Ensemble model training completed successfully!")
+            print(f"📊 Final Model Weights: {self.model_weights}")
+            
+            return {
+                'success': True,
+                'models_trained': list(ensemble_results.keys()),
+                'performance_results': ensemble_results,
+                'final_weights': self.model_weights
+            }
+            
+        except Exception as e:
+            print(f"❌ Error training ensemble models: {e}")
+            raise e
+    
     async def predict_match(self, home_team, away_team, referee, match_date=None):
         """Make match prediction using trained ML models"""
         try:
