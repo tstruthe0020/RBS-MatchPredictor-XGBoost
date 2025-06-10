@@ -369,6 +369,8 @@ class MatchPredictionRequest(BaseModel):
     referee_name: str
     match_date: Optional[str] = None
     config_name: Optional[str] = "default"  # Allow custom config selection
+    use_time_decay: Optional[bool] = True
+    decay_preset: Optional[str] = "moderate"
 
 class MatchPredictionResponse(BaseModel):
     success: bool
