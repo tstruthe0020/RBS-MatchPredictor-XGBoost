@@ -2385,7 +2385,7 @@ class MLMatchPredictor:
                 'referee': referee
             }
     
-    async def predict_match_ensemble(self, home_team, away_team, referee, match_date=None, ensemble_config=None):
+    async def predict_match_ensemble(self, home_team, away_team, referee, match_date=None, decay_config=None):
         """Make ensemble match prediction using multiple ML models with confidence scoring"""
         try:
             print(f"🤖 Making Ensemble Prediction: {home_team} vs {away_team}")
@@ -2394,8 +2394,13 @@ class MLMatchPredictor:
             if not self.models or len(self.models) != 5:
                 raise ValueError("XGBoost models not trained. Please train models first.")
             
-            # Extract features
-            features = await self.extract_features_for_match(home_team, away_team, referee, match_date)
+            # Extract features with time decay if configured
+            if decay_config:
+                print(f"🕒 Using time decay preset: {decay_config.preset_name}")
+                features = await self.extract_features_with_time_decay(home_team, away_team, referee, match_date, decay_config)
+            else:
+                features = await self.extract_features_for_match(home_team, away_team, referee, match_date)
+                
             if features is None:
                 raise ValueError("Could not extract features for prediction")
             
