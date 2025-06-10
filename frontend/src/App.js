@@ -709,6 +709,67 @@ function App() {
             datasets={datasets}
           />
         );
+      case 'predict':
+        return (
+          <StandardPredict
+            teams={teams}
+            referees={referees}
+            configs={configs}
+            predictionForm={predictionForm}
+            setPredictionForm={setPredictionForm}
+            configName={configName}
+            setConfigName={setConfigName}
+            predictionResult={predictionResult}
+            predicting={predicting}
+            predictMatch={predictMatch}
+            resetPrediction={resetPrediction}
+            exportPDF={exportPDF}
+            exportingPDF={exportingPDF}
+          />
+        );
+      case 'xgboost':
+        return (
+          <EnhancedXGBoost
+            teams={teams}
+            referees={referees}
+            predictionForm={predictionForm}
+            setPredictionForm={setPredictionForm}
+            predictionResult={predictionResult}
+            predicting={predicting}
+            showStartingXI={showStartingXI}
+            setShowStartingXI={setShowStartingXI}
+            selectedFormation={selectedFormation}
+            setSelectedFormation={setSelectedFormation}
+            availableFormations={availableFormations}
+            homeStartingXI={homeStartingXI}
+            awayStartingXI={awayStartingXI}
+            setHomeStartingXI={setHomeStartingXI}
+            setAwayStartingXI={setAwayStartingXI}
+            useTimeDecay={useTimeDecay}
+            setUseTimeDecay={setUseTimeDecay}
+            decayPreset={decayPreset}
+            setDecayPreset={setDecayPreset}
+            decayPresets={decayPresets}
+            mlStatus={mlStatus}
+            checkMLStatus={checkMLStatus}
+            trainMLModels={trainMLModels}
+            trainingModels={trainingModels}
+            reloadMLModels={reloadMLModels}
+            predictMatchEnhanced={predictMatchEnhanced}
+            resetPrediction={resetPrediction}
+            exportPDF={exportPDF}
+            exportingPDF={exportingPDF}
+            fetchTeamPlayers={fetchTeamPlayers}
+            loadingPlayers={loadingPlayers}
+            playerSearchTerms={playerSearchTerms}
+            searchResults={searchResults}
+            handlePlayerSearch={handlePlayerSearch}
+            selectPlayerFromSearch={selectPlayerFromSearch}
+            validateStartingXI={validateStartingXI}
+            getButtonTooltip={getButtonTooltip}
+            handleFormationChange={handleFormationChange}
+          />
+        );
       default:
         return (
           <div className="space-y-6">
