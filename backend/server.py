@@ -6762,11 +6762,12 @@ async def test_time_decay_impact(team_name: str = "Arsenal", referee: str = "Mic
             else:
                 decay_config = time_decay_manager.get_preset(preset_name)
             
-            # Make prediction with this decay setting
-            prediction = await ml_predictor.predict_match_with_defaults(
+            # Make prediction with this decay setting (use standard prediction, not defaults)
+            prediction = await ml_predictor.predict_match(
                 home_team=team_name,
                 away_team="Chelsea", 
                 referee=referee,
+                match_date=None,
                 decay_config=decay_config
             )
             
