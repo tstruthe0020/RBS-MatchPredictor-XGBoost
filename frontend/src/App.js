@@ -3606,10 +3606,7 @@ function App() {
 
                 {/* XGBoost Model Optimization */}
                 <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
-                
-                {/* Advanced AI Optimization Dashboard */}
-                <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
-                  <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🧠 Advanced AI Optimization Dashboard</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🚀 XGBoost Model Optimization</h3>
                   <p className="text-sm mb-6" style={{color: '#002629', opacity: 0.8}}>
                     Advanced optimization algorithms that analyze prediction patterns and suggest improvements
                   </p>
