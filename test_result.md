@@ -465,11 +465,14 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Prediction Config Tab Functionality"
+    - "RBS Config Tab Functionality"
     - "Confidence Values Display Fix"
     - "Time Decay in Ensemble Predictions"
     - "Referee Bias Functionality"
   stuck_tasks:
-    - None
+    - "Prediction Config Tab Functionality"
+    - "RBS Config Tab Functionality"
   test_all: false
   test_priority: "high_first"
 
