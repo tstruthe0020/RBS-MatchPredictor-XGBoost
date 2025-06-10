@@ -300,20 +300,20 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Successfully tested the enhanced referee analysis functionality with RBS scores and stat differentials. When clicking on a referee (e.g., Joe Dickerson), the detailed analysis appears with all required components: summary statistics (Total Matches, Teams Officiated, Avg Bias Score, RBS Calculations), Match Outcomes breakdown (Home Wins, Draws, Away Wins, Home Win %), and Bias Analysis (Most/Least Biased teams). The Team-Specific RBS Analysis & Stat Differentials section is properly implemented, showing teams with their RBS scores and statistical differentials. The stat differentials display includes Yellow Cards, Red Cards, Fouls Committed, Fouls Drawn, Penalties Awarded, xG Difference, and Possession Percentage differentials, all properly color-coded for positive/negative values. The explanation of how to read the differentials is present and clearly explains that positive values indicate favorable treatment. The Close button works correctly to dismiss the detailed analysis."
-  - task: "System Config Tab Functionality"
+  - task: "Dashboard and Upload Data Modular Components"
     implemented: true
     working: true
-    file: "/app/frontend/src/App.js"
+    file: "/app/frontend/src/components/Dashboard.js, /app/frontend/src/components/UploadData.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: "NA"
-        agent: "testing"
-        comment: "Testing the System Config tab functionality."
+        agent: "main"
+        comment: "Rebuilt the Dashboard and Upload Data tabs as modular components."
       - working: true
         agent: "testing"
-        comment: "Successfully tested the System Config tab functionality. The tab displays correctly with a clear header 'System Configuration' and a description explaining global system settings, default parameters, and user preferences. The Time Decay Settings section includes a dropdown for selecting the default decay preset with 5 options (Aggressive, Moderate, Conservative, Linear, None) and a checkbox for enabling time decay by default, which is checked. The Formation Settings section includes a dropdown for selecting the default formation (currently set to 4-4-2) and displays a list of available formations (4-4-2, 4-3-3, 3-5-2, 4-5-1, 3-4-3). The System Status section shows the XGBoost Models status (Loaded) and Data Status (30 teams, 50 referees). All form controls are functional and properly styled. The UI is responsive and maintains proper spacing and alignment."
+        comment: "Successfully reviewed the Dashboard and Upload Data components. The Dashboard component includes all required sections: statistics display (Teams, Referees, Matches, Player Records), Enhanced Features section (Starting XI Analysis, Time Decay Weighting), ML Model Status section with Refresh button, RBS Status section with Check Status and Calculate RBS buttons, Database Management section with Refresh Stats button, Team Performance Analysis section with team selection dropdown and Analyze Performance button, and Model Performance Dashboard section with Load Performance button. The Upload Data component includes three upload sections (Match Data, Team Stats, Player Stats), file input controls for CSV files, upload functionality, and an Uploaded Datasets section. The code is well-structured, follows React best practices, and implements all the required functionality. The frontend is running and accessible at http://localhost:3000."
   - task: "Color Scheme and Styling"
     implemented: true
     working: true
