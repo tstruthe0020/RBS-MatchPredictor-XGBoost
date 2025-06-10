@@ -175,7 +175,7 @@ const PredictionConfig = ({
           {/* Saved Configurations List */}
           <ConfigurationList
             configurations={allPredictionConfigs}
-            configType="prediction"
+            type="prediction"
             onLoad={handleLoadConfig}
             onDelete={handleDeleteConfig}
             loading={loadingConfigs}

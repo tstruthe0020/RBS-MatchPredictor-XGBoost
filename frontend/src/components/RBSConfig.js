@@ -180,7 +180,7 @@ const RBSConfig = ({
           {/* Saved RBS Configurations List */}
           <ConfigurationList
             configurations={allRbsConfigs}
-            configType="RBS"
+            type="RBS"
             onLoad={handleLoadRbsConfig}
             onDelete={handleDeleteRbsConfig}
             loading={loadingRbsConfigs}
