@@ -34,7 +34,7 @@ const Results = ({
     setLoadingRefereeAnalysis(true);
     try {
       const data = await fetchRefereeAnalysis();
-      setRefereeAnalysis(data);
+      setRefereeAnalysis(data.success ? data.referees : []);
     } catch (error) {
       console.error('Error fetching referee analysis:', error);
       alert(`❌ Error loading referee analysis: ${error.response?.data?.detail || error.message}`);
