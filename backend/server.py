@@ -1591,6 +1591,177 @@ class MLMatchPredictor:
         except Exception as e:
             print(f"Error saving XGBoost models: {e}")
     
+    def initialize_ensemble_models(self):
+        """Initialize ensemble models with optimal parameters for football prediction"""
+        print("🤖 Initializing Ensemble Models...")
+        
+        # Random Forest Models (robust to outliers, good for missing data)
+        self.ensemble_models['random_forest'] = {
+            'classifier': RandomForestClassifier(
+                n_estimators=100,
+                max_depth=10,
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=42,
+                n_jobs=-1
+            ),
+            'home_goals': RandomForestRegressor(
+                n_estimators=100,
+                max_depth=8,
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=42,
+                n_jobs=-1
+            ),
+            'away_goals': RandomForestRegressor(
+                n_estimators=100,
+                max_depth=8,
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=43,
+                n_jobs=-1
+            ),
+            'home_xg': RandomForestRegressor(
+                n_estimators=100,
+                max_depth=8,
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=44,
+                n_jobs=-1
+            ),
+            'away_xg': RandomForestRegressor(
+                n_estimators=100,
+                max_depth=8,
+                min_samples_split=5,
+                min_samples_leaf=2,
+                random_state=45,
+                n_jobs=-1
+            )
+        }
+        
+        # Gradient Boosting Models (sequential learning, good for complex patterns)
+        self.ensemble_models['gradient_boost'] = {
+            'classifier': GradientBoostingClassifier(
+                n_estimators=100,
+                max_depth=6,
+                learning_rate=0.1,
+                subsample=0.8,
+                random_state=42
+            ),
+            'home_goals': GradientBoostingRegressor(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                subsample=0.8,
+                random_state=42
+            ),
+            'away_goals': GradientBoostingRegressor(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                subsample=0.8,
+                random_state=43
+            ),
+            'home_xg': GradientBoostingRegressor(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                subsample=0.8,
+                random_state=44
+            ),
+            'away_xg': GradientBoostingRegressor(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                subsample=0.8,
+                random_state=45
+            )
+        }
+        
+        # Neural Network Models (complex non-linear patterns)
+        self.ensemble_models['neural_net'] = {
+            'classifier': MLPClassifier(
+                hidden_layer_sizes=(100, 50),
+                max_iter=500,
+                learning_rate_init=0.001,
+                alpha=0.01,
+                random_state=42
+            ),
+            'home_goals': MLPRegressor(
+                hidden_layer_sizes=(100, 50),
+                max_iter=500,
+                learning_rate_init=0.001,
+                alpha=0.01,
+                random_state=42
+            ),
+            'away_goals': MLPRegressor(
+                hidden_layer_sizes=(100, 50),
+                max_iter=500,
+                learning_rate_init=0.001,
+                alpha=0.01,
+                random_state=43
+            ),
+            'home_xg': MLPRegressor(
+                hidden_layer_sizes=(100, 50),
+                max_iter=500,
+                learning_rate_init=0.001,
+                alpha=0.01,
+                random_state=44
+            ),
+            'away_xg': MLPRegressor(
+                hidden_layer_sizes=(100, 50),
+                max_iter=500,
+                learning_rate_init=0.001,
+                alpha=0.01,
+                random_state=45
+            )
+        }
+        
+        # Logistic Regression Models (simple, interpretable baseline)
+        self.ensemble_models['logistic'] = {
+            'classifier': LogisticRegression(
+                max_iter=1000,
+                random_state=42,
+                multi_class='multinomial',
+                solver='lbfgs'
+            ),
+            'home_goals': LinearRegression(),
+            'away_goals': LinearRegression(),
+            'home_xg': LinearRegression(),
+            'away_xg': LinearRegression()
+        }
+        
+        print("✅ Ensemble models initialized successfully")
+    
+    def load_ensemble_models(self):
+        """Load pre-trained ensemble models"""
+        try:
+            for model_type in ['random_forest', 'gradient_boost', 'neural_net', 'logistic']:
+                model_dir = os.path.join(self.ensemble_dir, model_type)
+                if os.path.exists(model_dir):
+                    for prediction_type in ['classifier', 'home_goals', 'away_goals', 'home_xg', 'away_xg']:
+                        model_path = os.path.join(model_dir, f"{prediction_type}.pkl")
+                        if os.path.exists(model_path):
+                            self.ensemble_models[model_type][prediction_type] = joblib.load(model_path)
+                            print(f"✅ Loaded {model_type} {prediction_type} model")
+        except Exception as e:
+            print(f"⚠️ Error loading ensemble models: {e}")
+    
+    def save_ensemble_models(self):
+        """Save trained ensemble models"""
+        try:
+            for model_type, models in self.ensemble_models.items():
+                model_dir = os.path.join(self.ensemble_dir, model_type)
+                os.makedirs(model_dir, exist_ok=True)
+                
+                for prediction_type, model in models.items():
+                    model_path = os.path.join(model_dir, f"{prediction_type}.pkl")
+                    joblib.dump(model, model_path)
+                    
+            print("✅ Ensemble models saved successfully")
+        except Exception as e:
+            print(f"❌ Error saving ensemble models: {e}")
+    
     async def extract_features_for_match(self, home_team, away_team, referee, match_date=None):
         """Extract features for a single match prediction"""
         try:
