@@ -77,7 +77,7 @@ export const VARIABLE_CATEGORIES = {
 // Regression Analysis Functions
 export const runRegressionAnalysis = async (selectedVariables, target, apiEndpoint) => {
   try {
-    const response = await fetch(`${apiEndpoint}/api/regression-analysis`, {
+    const response = await fetch(`${apiEndpoint}/regression-analysis`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export const savePredictionConfig = async (config, apiEndpoint) => {
       min_confidence: parseFloat(config.min_confidence || 20)
     };
 
-    const response = await fetch(`${apiEndpoint}/api/prediction-config`, {
+    const response = await fetch(`${apiEndpoint}/prediction-config`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export const saveRBSConfig = async (config, apiEndpoint) => {
       confidence_threshold_high: parseInt(config.confidence_threshold_high || 10)
     };
 
-    const response = await fetch(`${apiEndpoint}/api/rbs-config`, {
+    const response = await fetch(`${apiEndpoint}/rbs-config`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -189,7 +189,7 @@ export const saveRBSConfig = async (config, apiEndpoint) => {
 // Formula Optimization Functions
 export const runFormulaOptimization = async (optimizationType, apiEndpoint) => {
   try {
-    const response = await fetch(`${apiEndpoint}/api/optimize-formula`, {
+    const response = await fetch(`${apiEndpoint}/optimize-formula`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -213,7 +213,7 @@ export const runFormulaOptimization = async (optimizationType, apiEndpoint) => {
 // Results Analysis Functions
 export const fetchRefereeAnalysis = async (apiEndpoint) => {
   try {
-    const response = await fetch(`${apiEndpoint}/api/referee-analysis`);
+    const response = await fetch(`${apiEndpoint}/referee-analysis`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -228,7 +228,7 @@ export const fetchRefereeAnalysis = async (apiEndpoint) => {
 
 export const fetchDetailedRefereeAnalysis = async (refereeName, apiEndpoint) => {
   try {
-    const response = await fetch(`${apiEndpoint}/api/referee-analysis/${encodeURIComponent(refereeName)}`);
+    const response = await fetch(`${apiEndpoint}/referee-analysis/${encodeURIComponent(refereeName)}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
