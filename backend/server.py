@@ -2738,6 +2738,14 @@ class MLMatchPredictor:
             if not match_aggregates:
                 return None
             
+            # DEBUG: Log Starting XI calculation details
+            print(f"📊 Starting XI calculation for {team_name}:")
+            print(f"  Selected players: {len(selected_players)} - {selected_players[:3]}...")
+            print(f"  Matches found: {len(match_aggregates)}")
+            print(f"  Time decay enabled: {decay_config is not None}")
+            if decay_config:
+                print(f"  Decay type: {decay_config.decay_type}, preset: {decay_config.preset_name}")
+            
             # Step 2: Apply time decay weights to match totals and calculate weighted averages
             total_weighted_goals = 0
             total_weighted_assists = 0
@@ -2762,6 +2770,8 @@ class MLMatchPredictor:
                         datetime.now().strftime("%Y-%m-%d"),
                         decay_config
                     )
+                elif decay_config:
+                    print(f"  Warning: No match_date for match {match_id}")
                 
                 # Apply weight to match totals
                 total_weighted_goals += match_stats['goals'] * weight
