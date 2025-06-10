@@ -8442,6 +8442,28 @@ async def predict_match(request: MatchPredictionRequest):
             referee=request.referee_name,
             match_date=request.match_date
         )
+        
+        # 🎯 OPTIMIZATION INTEGRATION: Auto-track standard predictions for optimization
+        if prediction.get('success'):
+            try:
+                prediction_id = await model_optimizer.store_prediction(
+                    prediction_result=prediction,
+                    prediction_method="XGBoost Standard",
+                    starting_xi_used=False,
+                    time_decay_used=getattr(request, 'use_time_decay', False),
+                    features_used=prediction.get('prediction_breakdown', {}).get('features_used')
+                )
+                
+                # Add prediction ID to result for tracking
+                if 'prediction_breakdown' not in prediction:
+                    prediction['prediction_breakdown'] = {}
+                prediction['prediction_breakdown']['prediction_id'] = prediction_id
+                prediction['prediction_breakdown']['optimization_tracking'] = '✅ Enabled'
+                print(f"📊 Standard prediction tracked for optimization: {prediction_id}")
+                
+            except Exception as e:
+                print(f"⚠️ Failed to store prediction for optimization: {e}")
+        
         return prediction
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
