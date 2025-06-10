@@ -8902,8 +8902,10 @@ async def get_detailed_referee_analysis(referee_name: str):
             if team_name:
                 team_rbs_data[team_name] = {
                     'rbs_score': round(result.get('rbs_score', 0), 3),
+                    'rbs_raw': round(result.get('rbs_raw', 0), 3),
                     'confidence_level': result.get('confidence_level', 0),
                     'matches_with_ref': result.get('matches_with_ref', 0),
+                    'matches_without_ref': result.get('matches_without_ref', 0),
                     'stats_breakdown': result.get('stats_breakdown', {}),
                     'config_used': result.get('config_used', 'default')
                 }
