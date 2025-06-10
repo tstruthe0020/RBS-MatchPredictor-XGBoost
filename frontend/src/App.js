@@ -1111,7 +1111,7 @@ function App() {
             setLoadingConfigs={setLoadingConfigs}
             savingConfig={savingConfig}
             setSavingConfig={setSavingConfig}
-            savePredictionConfig={savePredictionConfig}
+            savePredictionConfig={handleSavePredictionConfig}
             loadPredictionConfig={loadPredictionConfig}
             deletePredictionConfig={deletePredictionConfig}
             fetchAllPredictionConfigs={fetchAllPredictionConfigs}
