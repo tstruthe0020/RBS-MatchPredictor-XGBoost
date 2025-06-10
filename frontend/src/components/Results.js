@@ -313,6 +313,33 @@ const Results = ({
                   )}
                 </div>
 
+                {/* RBS Calculation Methodology */}
+                <div className="mb-6 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+                  <h4 className="font-semibold mb-3" style={{color: '#002629'}}>📊 RBS Calculation Methodology</h4>
+                  <div className="text-sm space-y-2" style={{color: '#002629', opacity: 0.8}}>
+                    <p><strong>Note:</strong> RBS calculations do NOT use time decay - all matches are weighted equally regardless of date.</p>
+                    <p><strong>Formula:</strong> RBS = tanh(sum of weighted factor differences)</p>
+                    <p><strong>Factor Calculation:</strong> (Average with this referee) - (Average with other referees)</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <h6 className="font-semibold">Negative Factors (worse for team):</h6>
+                        <ul className="list-disc list-inside text-xs space-y-1">
+                          <li><strong>Yellow Cards:</strong> More cards = worse treatment</li>
+                          <li><strong>Red Cards:</strong> More cards = worse treatment</li>
+                          <li><strong>Fouls Committed:</strong> More fouls called = worse treatment</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h6 className="font-semibold">Positive Factors (better for team):</h6>
+                        <ul className="list-disc list-inside text-xs space-y-1">
+                          <li><strong>Fouls Drawn:</strong> More fouls awarded = better treatment</li>
+                          <li><strong>Penalties Awarded:</strong> More penalties = better treatment</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Team-Specific RBS Analysis & Calculation Details */}
                 {detailedRefereeAnalysis.team_rbs_details && Object.keys(detailedRefereeAnalysis.team_rbs_details).length > 0 && (
                   <div>
