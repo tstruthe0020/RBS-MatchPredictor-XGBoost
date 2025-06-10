@@ -375,11 +375,17 @@ const Results = ({
 
                             {/* Additional RBS Stats */}
                             <div className="mt-3 pt-3 border-t border-gray-200">
-                              <div className="grid grid-cols-3 gap-4 text-center">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                                 <div>
-                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>RBS Score</div>
+                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Normalized RBS</div>
                                   <div className="font-bold" style={{color: getRBSScoreColor(data.rbs_score || 0)}}>
                                     {data.rbs_score ? data.rbs_score.toFixed(3) : 'N/A'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Raw RBS</div>
+                                  <div className="font-bold" style={{color: '#002629'}}>
+                                    {data.rbs_raw ? data.rbs_raw.toFixed(3) : 'N/A'}
                                   </div>
                                 </div>
                                 <div>
@@ -389,9 +395,10 @@ const Results = ({
                                   </div>
                                 </div>
                                 <div>
-                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Sample Size</div>
-                                  <div className="font-bold" style={{color: '#002629'}}>
-                                    {data.matches_with_ref || 0} matches
+                                  <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Sample Sizes</div>
+                                  <div className="font-bold text-xs" style={{color: '#002629'}}>
+                                    With: {data.matches_with_ref || 0}<br/>
+                                    Without: {data.matches_without_ref || 0}
                                   </div>
                                 </div>
                               </div>
