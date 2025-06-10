@@ -395,7 +395,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Ensemble Prediction System"
+    - "Dashboard and Upload Data Modular Components"
   stuck_tasks:
     - None
   test_all: false
