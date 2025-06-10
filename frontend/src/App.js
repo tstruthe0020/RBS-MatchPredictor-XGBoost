@@ -774,6 +774,50 @@ function App() {
     }
   };
 
+  // XGBoost Optimization Functions
+  const fetchOptimizationStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/xgboost-optimization-status`);
+      setOptimizationStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching optimization status:', error);
+    }
+  };
+
+  const evaluateModelPerformance = async (days = 30) => {
+    try {
+      const response = await axios.get(`${API}/model-performance/${days}`);
+      setModelPerformance(response.data);
+    } catch (error) {
+      console.error('Error evaluating model performance:', error);
+      alert(`❌ Error evaluating performance: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const runXGBoostOptimization = async (method = 'grid_search', retrain = true) => {
+    setRunningXGBoostOptimization(true);
+    try {
+      const response = await axios.post(`${API}/optimize-xgboost-models?method=${method}&retrain=${retrain}`);
+      setOptimizationResults(response.data);
+      alert('✅ XGBoost optimization completed!');
+    } catch (error) {
+      console.error('Error running XGBoost optimization:', error);
+      alert(`❌ Error optimizing models: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setRunningXGBoostOptimization(false);
+    }
+  };
+
+  const simulateOptimizationImpact = async (days = 30) => {
+    try {
+      const response = await axios.post(`${API}/simulate-optimization-impact?days_back=${days}`);
+      setSimulationResults(response.data);
+    } catch (error) {
+      console.error('Error simulating optimization impact:', error);
+      alert(`❌ Error running simulation: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
   return (
     <div className="min-h-screen" style={{backgroundColor: '#F2E9E4'}}>
       {/* Header */}
