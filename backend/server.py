@@ -7770,12 +7770,12 @@ async def get_data_summary():
         unique_referees = len(unique_referees)
         
         # Get date range of matches
-        oldest_match = await db.matches.find({}).sort("date", 1).limit(1).to_list(1)
-        newest_match = await db.matches.find({}).sort("date", -1).limit(1).to_list(1)
+        oldest_match = await db.matches.find({}).sort("match_date", 1).limit(1).to_list(1)
+        newest_match = await db.matches.find({}).sort("match_date", -1).limit(1).to_list(1)
         
         date_range = {
-            "oldest": oldest_match[0]["date"] if oldest_match else None,
-            "newest": newest_match[0]["date"] if newest_match else None
+            "oldest": oldest_match[0]["match_date"] if oldest_match else None,
+            "newest": newest_match[0]["match_date"] if newest_match else None
         }
         
         return {
