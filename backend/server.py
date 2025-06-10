@@ -7480,6 +7480,27 @@ async def predict_match_ensemble(request: MatchPredictionRequest):
         # Convert NumPy types to Python native types
         result = convert_numpy_types(result)
         
+        # 🎯 OPTIMIZATION INTEGRATION: Auto-track ensemble predictions for optimization
+        if result.get('success'):
+            try:
+                prediction_id = await model_optimizer.store_prediction(
+                    prediction_result=result,
+                    prediction_method="Ensemble Models",
+                    starting_xi_used=False,
+                    time_decay_used=request.use_time_decay or False,
+                    features_used=result.get('prediction_breakdown', {}).get('features_used')
+                )
+                
+                # Add prediction ID to result for tracking
+                if 'prediction_breakdown' not in result:
+                    result['prediction_breakdown'] = {}
+                result['prediction_breakdown']['prediction_id'] = prediction_id
+                result['prediction_breakdown']['optimization_tracking'] = '✅ Enabled'
+                print(f"📊 Ensemble prediction tracked for optimization: {prediction_id}")
+                
+            except Exception as e:
+                print(f"⚠️ Failed to store ensemble prediction for optimization: {e}")
+        
         return result
         
     except Exception as e:
