@@ -3346,6 +3346,128 @@ function App() {
                           </div>
                         </div>
                       )}
+
+                      {/* Enhanced Referee Analysis - Variance Analysis */}
+                      <div className="feature-card">
+                        <div className="flex items-center justify-between mb-4">
+                          <h5 className="font-semibold" style={{color: '#002629'}}>🔬 Advanced Referee Analysis</h5>
+                          <button
+                            onClick={async () => {
+                              if (!detailedRefereeData?.referee_name) return;
+                              
+                              setLoadingEnhancedAnalysis(true);
+                              try {
+                                // Get all teams for this referee to run variance analysis
+                                const teams = Object.keys(detailedRefereeData.team_rbs_details || {});
+                                const enhancedResults = {};
+                                
+                                for (const team of teams.slice(0, 5)) { // Limit to top 5 teams
+                                  const result = await fetchEnhancedRefereeAnalysis(team, detailedRefereeData.referee_name);
+                                  if (result) {
+                                    enhancedResults[team] = result;
+                                  }
+                                }
+                                
+                                setEnhancedAnalysisData(enhancedResults);
+                              } catch (error) {
+                                console.error('Error fetching enhanced analysis:', error);
+                                alert('Error loading enhanced analysis');
+                              } finally {
+                                setLoadingEnhancedAnalysis(false);
+                              }
+                            }}
+                            disabled={loadingEnhancedAnalysis || !detailedRefereeData?.referee_name}
+                            className="px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                            style={{backgroundColor: '#1C5D99'}}
+                          >
+                            {loadingEnhancedAnalysis ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Analyzing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>🔬</span>
+                                <span>Run Variance Analysis</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {enhancedAnalysisData && Object.keys(enhancedAnalysisData).length > 0 && (
+                          <div className="space-y-4">
+                            <div className="p-3 rounded" style={{backgroundColor: '#A3D9FF', color: '#002629'}}>
+                              <div className="text-sm font-semibold mb-1">📊 Referee Decision Consistency Analysis</div>
+                              <div className="text-xs">
+                                This analysis compares how consistently the referee makes decisions for specific teams versus their overall decision patterns.
+                                Higher variance = more inconsistent decisions, Lower variance = more consistent patterns.
+                              </div>
+                            </div>
+
+                            {Object.entries(enhancedAnalysisData).map(([teamName, data]) => (
+                              <div key={teamName} className="border-2 rounded-lg p-4" style={{borderColor: '#1C5D99', backgroundColor: 'white'}}>
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="font-semibold" style={{color: '#002629'}}>{teamName}</div>
+                                  <div className="text-sm px-2 py-1 rounded" 
+                                       style={{
+                                         backgroundColor: data.confidence === 'High' || data.confidence === 'Very High' ? '#A3D9FF' : 
+                                                        data.confidence === 'Medium' ? '#F2E9E4' : 'white',
+                                         color: '#002629',
+                                         border: '1px solid #1C5D99'
+                                       }}>
+                                    Confidence: {data.confidence}
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {Object.entries(data.variance_ratios || {}).map(([category, ratio]) => {
+                                    if (ratio === null) return null;
+                                    
+                                    const interpretation = data.interpretation?.[category] || 'Normal variance';
+                                    const isSignificant = ratio > 1.5 || ratio < 0.5;
+                                    const color = ratio > 1.5 ? '#002629' : ratio < 0.5 ? '#12664F' : '#1C5D99';
+                                    
+                                    return (
+                                      <div key={category} 
+                                           className="p-3 rounded border-2"
+                                           style={{
+                                             borderColor: color,
+                                             backgroundColor: isSignificant ? 
+                                               (ratio > 1.5 ? '#F2E9E4' : '#A3D9FF') : 'white'
+                                           }}>
+                                        <div className="text-sm font-medium" style={{color: '#002629'}}>
+                                          {category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </div>
+                                        <div className="text-lg font-bold" style={{color: color}}>
+                                          {ratio.toFixed(2)}x
+                                        </div>
+                                        <div className="text-xs" style={{color: '#002629', opacity: 0.8}}>
+                                          {interpretation}
+                                        </div>
+                                        {isSignificant && (
+                                          <div className="text-xs mt-1 font-medium" style={{color: color}}>
+                                            {ratio > 1.5 ? '⚠️ Inconsistent' : '✅ Very Consistent'}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="mt-3 text-xs" style={{color: '#002629', opacity: 0.7}}>
+                                  Based on {data.team_matches_with_referee} matches with this referee out of {data.referee_total_matches} total referee matches
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {!enhancedAnalysisData && !loadingEnhancedAnalysis && (
+                          <div className="text-center py-6" style={{color: '#002629', opacity: 0.6}}>
+                            Click "Run Variance Analysis" to see advanced referee decision consistency patterns
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
