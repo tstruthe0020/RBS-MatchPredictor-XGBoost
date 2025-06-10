@@ -102,6 +102,19 @@ function App() {
   // Export states
   const [exportingPDF, setExportingPDF] = useState(false);
 
+  // Ensemble Prediction states  
+  const [ensembleModelStatus, setEnsembleModelStatus] = useState(null);
+  const [ensemblePredictionData, setEnsemblePredictionData] = useState(null);
+  const [ensembleComparison, setEnsembleComparison] = useState(null);
+  const [selectedEnsembleTeams, setSelectedEnsembleTeams] = useState({
+    home: '',
+    away: '',
+    referee: ''
+  });
+  const [loadingEnsemblePrediction, setLoadingEnsemblePrediction] = useState(false);
+  const [loadingEnsembleTraining, setLoadingEnsembleTraining] = useState(false);
+  const [loadingComparison, setLoadingComparison] = useState(false);
+
   // Database management states
   const [wipingDatabase, setWipingDatabase] = useState(false);
   const [databaseStats, setDatabaseStats] = useState(null);
