@@ -7485,7 +7485,7 @@ async def compare_prediction_methods(request: MatchPredictionRequest):
         xgboost_result = await ml_predictor.predict_match(
             request.home_team,
             request.away_team, 
-            request.referee,
+            request.referee_name,
             request.match_date
         )
         
@@ -7493,7 +7493,7 @@ async def compare_prediction_methods(request: MatchPredictionRequest):
         ensemble_result = await ml_predictor.predict_match_ensemble(
             request.home_team,
             request.away_team,
-            request.referee,
+            request.referee_name,
             request.match_date
         )
         
