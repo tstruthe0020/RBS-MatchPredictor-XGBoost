@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import UploadData from './components/UploadData';
 import StandardPredict from './components/StandardPredict';
 import EnhancedXGBoost from './components/EnhancedXGBoost';
+import EnsemblePredictions from './components/EnsemblePredictions';
 import PlayerSearchInput from './PlayerSearchInput';
 import './App.css';
 import './custom-colors.css';
