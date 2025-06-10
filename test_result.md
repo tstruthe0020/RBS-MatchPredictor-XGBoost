@@ -466,19 +466,15 @@ agent_communication:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 13
+  test_sequence: 14
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Prediction Config Tab Functionality"
-    - "RBS Config Tab Functionality"
     - "Confidence Values Display Fix"
     - "Time Decay in Ensemble Predictions"
     - "Referee Bias Functionality"
   stuck_tasks:
-    - "Prediction Config Tab Functionality"
-    - "RBS Config Tab Functionality"
   test_all: false
   test_priority: "high_first"
 
