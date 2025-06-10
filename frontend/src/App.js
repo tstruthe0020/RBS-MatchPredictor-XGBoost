@@ -2567,53 +2567,98 @@ function App() {
 
               {/* Advanced Optimization Section */}
               <div className="mt-8 p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
-                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🚀 Advanced AI Optimization</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🚀 XGBoost Model Optimization</h3>
                 <p className="text-sm mb-6" style={{color: '#002629', opacity: 0.8}}>
-                  Run specialized optimization algorithms for different aspects of the system.
+                  Optimize your XGBoost models based on prediction accuracy against real match results. Track performance, tune hyperparameters, and retrain models automatically.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Optimization Type</label>
-                    <select
-                      value={selectedOptimizationType}
-                      onChange={(e) => setSelectedOptimizationType(e.target.value)}
-                      className="form-select w-full"
-                    >
-                      <option value="prediction-suggestion">AI Prediction Config Suggestion</option>
-                      <option value="rbs-optimization">RBS Optimization Analysis</option>
-                      <option value="predictor-optimization">Predictor Feature Optimization</option>
-                      <option value="comprehensive-regression">Comprehensive Regression Analysis</option>
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  {/* Optimization Status */}
+                  <div className="bg-white p-4 rounded border border-gray-200">
+                    <h4 className="font-semibold text-gray-800 mb-3">📊 Optimization Status</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Predictions Tracked:</span>
+                        <span className="text-sm font-medium text-gray-800">Loading...</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Actual Results:</span>
+                        <span className="text-sm font-medium text-gray-800">Loading...</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Model Version:</span>
+                        <span className="text-sm font-medium text-gray-800">Loading...</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="pt-6">
-                    <button
-                      onClick={() => runAdvancedOptimizationAnalysis(selectedOptimizationType)}
-                      disabled={runningAdvancedOptimization}
-                      className="px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                      style={{backgroundColor: '#002629'}}
-                    >
-                      {runningAdvancedOptimization ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Optimizing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>🤖</span>
-                          <span>Run Advanced Analysis</span>
-                        </>
-                      )}
-                    </button>
+
+                  {/* Performance Metrics */}
+                  <div className="bg-white p-4 rounded border border-gray-200">
+                    <h4 className="font-semibold text-gray-800 mb-3">📈 Recent Performance</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Accuracy:</span>
+                        <span className="text-sm font-medium text-gray-800">Loading...</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Goals MAE:</span>
+                        <span className="text-sm font-medium text-gray-800">Loading...</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Log Loss:</span>
+                        <span className="text-sm font-medium text-gray-800">Loading...</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="bg-white p-4 rounded border border-gray-200">
+                    <h4 className="font-semibold text-gray-800 mb-3">⚡ Quick Actions</h4>
+                    <div className="space-y-2">
+                      <button
+                        className="w-full px-3 py-2 text-sm text-white rounded hover:opacity-90"
+                        style={{backgroundColor: '#1C5D99'}}
+                        onClick={() => {/* Handle evaluate performance */}}
+                      >
+                        📊 Evaluate Performance
+                      </button>
+                      <button
+                        className="w-full px-3 py-2 text-sm text-white rounded hover:opacity-90"
+                        style={{backgroundColor: '#12664F'}}
+                        onClick={() => {/* Handle optimize models */}}
+                      >
+                        🔧 Optimize Models
+                      </button>
+                      <button
+                        className="w-full px-3 py-2 text-sm text-white rounded hover:opacity-90"
+                        style={{backgroundColor: '#002629'}}
+                        onClick={() => {/* Handle simulation */}}
+                      >
+                        🎯 Simulate Impact
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {advancedOptimizationResults && (
-                  <OptimizationResults 
-                    results={advancedOptimizationResults} 
-                    type={selectedOptimizationType} 
-                  />
-                )}
+                {/* Model Optimization Results */}
+                <div className="bg-white p-4 rounded border border-gray-200">
+                  <h4 className="font-semibold text-gray-800 mb-3">🎯 Optimization Results</h4>
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Run model optimization to see results here</p>
+                    <p className="text-sm mt-2">Performance metrics, hyperparameter improvements, and retraining results will be displayed</p>
+                  </div>
+                </div>
+
+                {/* Prediction Tracking Info */}
+                <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                  <div className="flex items-start space-x-2">
+                    <span className="text-blue-600">ℹ️</span>
+                    <div className="text-sm text-blue-800">
+                      <strong>Automatic Tracking:</strong> All Enhanced XGBoost predictions are automatically tracked for optimization. 
+                      When real match results become available, you can input them to improve model accuracy.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
