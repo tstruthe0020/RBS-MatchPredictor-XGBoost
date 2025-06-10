@@ -1404,6 +1404,290 @@ def test_advanced_features():
         print("\n❌ Some advanced feature endpoints failed the existence check")
         return False
 
+def test_ensemble_model_status():
+    """Test the /api/ensemble-model-status endpoint to check model availability"""
+    print("\n=== Testing Ensemble Model Status Endpoint ===")
+    response = requests.get(f"{BASE_URL}/ensemble-model-status")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        # Check ensemble readiness
+        ensemble_ready = data.get('ensemble_ready', False)
+        print(f"Ensemble Ready: {ensemble_ready}")
+        
+        # Check individual model types
+        model_types = data.get('model_types', {})
+        print(f"Model Types: {len(model_types)}")
+        
+        for model_type, info in model_types.items():
+            print(f"\n  - {model_type}:")
+            print(f"    Available: {info.get('available', False)}")
+            print(f"    Models: {', '.join(info.get('models', []))}")
+        
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_train_ensemble_models():
+    """Test the /api/train-ensemble-models endpoint to train all ensemble models"""
+    print("\n=== Testing Train Ensemble Models Endpoint ===")
+    response = requests.post(f"{BASE_URL}/train-ensemble-models")
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        # Check training results
+        models_trained = data.get('models_trained', [])
+        print(f"Models Trained: {', '.join(models_trained)}")
+        
+        # Check performance results
+        performance_results = data.get('performance_results', {})
+        for model_type, results in performance_results.items():
+            print(f"\n  - {model_type} Performance:")
+            
+            # Check classifier performance
+            if 'classifier' in results:
+                classifier = results['classifier']
+                print(f"    Classifier Accuracy: {classifier.get('accuracy', 0)}")
+                print(f"    Classifier Log Loss: {classifier.get('log_loss', 0)}")
+            
+            # Check regressor performance
+            for regressor_type in ['home_goals', 'away_goals', 'home_xg', 'away_xg']:
+                if regressor_type in results:
+                    regressor = results[regressor_type]
+                    print(f"    {regressor_type.replace('_', ' ').title()} R²: {regressor.get('r2_score', 0)}")
+                    print(f"    {regressor_type.replace('_', ' ').title()} RMSE: {regressor.get('rmse', 0)}")
+        
+        # Check training time
+        training_time = data.get('training_time_seconds', 0)
+        print(f"\nTraining Time: {training_time} seconds")
+        
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_predict_match_ensemble():
+    """Test the /api/predict-match-ensemble endpoint with test teams"""
+    print("\n=== Testing Ensemble Match Prediction Endpoint ===")
+    
+    # Use specific test teams as mentioned in the review request
+    home_team = "Arsenal"
+    away_team = "Chelsea"
+    referee = "Michael Oliver"
+    
+    print(f"Testing ensemble prediction for {home_team} vs {away_team} with referee {referee}")
+    
+    request_data = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee
+    }
+    
+    response = requests.post(f"{BASE_URL}/predict-match-ensemble", json=request_data)
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        if data.get('success'):
+            print(f"Home Team: {data.get('home_team')}")
+            print(f"Away Team: {data.get('away_team')}")
+            print(f"Referee: {data.get('referee')}")
+            print(f"Predicted Home Goals: {data.get('predicted_home_goals')}")
+            print(f"Predicted Away Goals: {data.get('predicted_away_goals')}")
+            print(f"Home xG: {data.get('home_xg')}")
+            print(f"Away xG: {data.get('away_xg')}")
+            
+            # Check for probability fields
+            print(f"Home Win Probability: {data.get('home_win_probability')}%")
+            print(f"Draw Probability: {data.get('draw_probability')}%")
+            print(f"Away Win Probability: {data.get('away_win_probability')}%")
+            
+            # Check ensemble confidence metrics
+            ensemble_confidence = data.get('ensemble_confidence', {})
+            if ensemble_confidence:
+                print("\nEnsemble Confidence Metrics:")
+                print(f"  Overall Confidence: {ensemble_confidence.get('overall_confidence')}")
+                print(f"  Model Agreement: {ensemble_confidence.get('model_agreement')}%")
+                print(f"  Confidence Score: {ensemble_confidence.get('confidence_score')}")
+                
+                # Check model breakdown
+                model_breakdown = ensemble_confidence.get('model_breakdown', {})
+                if model_breakdown:
+                    print("\nModel Breakdown:")
+                    for model, details in model_breakdown.items():
+                        print(f"  - {model}:")
+                        print(f"    Confidence: {details.get('confidence')}")
+                        print(f"    Weight: {details.get('weight')}")
+                        print(f"    Prediction: Home {details.get('home_goals')} - {details.get('away_goals')} Away")
+            
+            # Check prediction breakdown
+            prediction_breakdown = data.get('prediction_breakdown', {})
+            if prediction_breakdown:
+                print("\nPrediction Breakdown:")
+                for key, value in list(prediction_breakdown.items())[:5]:
+                    print(f"  - {key}: {value}")
+                if len(prediction_breakdown) > 5:
+                    print("  ...")
+            
+            return data
+        else:
+            print(f"Prediction failed: {data.get('error', 'Unknown error')}")
+            return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_compare_prediction_methods():
+    """Test the /api/compare-prediction-methods endpoint to compare XGBoost vs Ensemble"""
+    print("\n=== Testing Compare Prediction Methods Endpoint ===")
+    
+    # Use specific test teams as mentioned in the review request
+    home_team = "Arsenal"
+    away_team = "Chelsea"
+    referee = "Michael Oliver"
+    
+    print(f"Testing prediction comparison for {home_team} vs {away_team} with referee {referee}")
+    
+    request_data = {
+        "home_team": home_team,
+        "away_team": away_team,
+        "referee_name": referee
+    }
+    
+    response = requests.post(f"{BASE_URL}/compare-prediction-methods", json=request_data)
+    
+    if response.status_code == 200:
+        print(f"Status: {response.status_code} OK")
+        data = response.json()
+        print(f"Success: {data.get('success', False)}")
+        
+        if data.get('success'):
+            # Check XGBoost prediction
+            xgboost_prediction = data.get('xgboost_prediction', {})
+            print("\nXGBoost Prediction:")
+            print(f"  Home Team: {xgboost_prediction.get('home_team')}")
+            print(f"  Away Team: {xgboost_prediction.get('away_team')}")
+            print(f"  Predicted Score: {xgboost_prediction.get('predicted_home_goals')} - {xgboost_prediction.get('predicted_away_goals')}")
+            print(f"  Home Win: {xgboost_prediction.get('home_win_probability')}%")
+            print(f"  Draw: {xgboost_prediction.get('draw_probability')}%")
+            print(f"  Away Win: {xgboost_prediction.get('away_win_probability')}%")
+            
+            # Check Ensemble prediction
+            ensemble_prediction = data.get('ensemble_prediction', {})
+            print("\nEnsemble Prediction:")
+            print(f"  Home Team: {ensemble_prediction.get('home_team')}")
+            print(f"  Away Team: {ensemble_prediction.get('away_team')}")
+            print(f"  Predicted Score: {ensemble_prediction.get('predicted_home_goals')} - {ensemble_prediction.get('predicted_away_goals')}")
+            print(f"  Home Win: {ensemble_prediction.get('home_win_probability')}%")
+            print(f"  Draw: {ensemble_prediction.get('draw_probability')}%")
+            print(f"  Away Win: {ensemble_prediction.get('away_win_probability')}%")
+            
+            # Check comparison metrics
+            print("\nComparison Metrics:")
+            print(f"  Home Win Probability Difference: {data.get('home_win_prob_diff')}%")
+            print(f"  Draw Probability Difference: {data.get('draw_prob_diff')}%")
+            print(f"  Away Win Probability Difference: {data.get('away_win_prob_diff')}%")
+            print(f"  Home Goals Difference: {data.get('home_goals_diff')}")
+            print(f"  Away Goals Difference: {data.get('away_goals_diff')}")
+            
+            # Check confidence comparison
+            print("\nConfidence Comparison:")
+            print(f"  XGBoost Max Confidence: {data.get('xgboost_max_confidence')}%")
+            print(f"  Ensemble Max Confidence: {data.get('ensemble_max_confidence')}%")
+            print(f"  More Confident Method: {data.get('more_confident_method')}")
+            print(f"  Confidence Difference: {data.get('confidence_difference')}%")
+            
+            # Check recommendation
+            print(f"\nRecommended Method: {data.get('suggested_method')}")
+            print(f"Ensemble Agreement: {data.get('ensemble_agreement')}%")
+            
+            return data
+        else:
+            print(f"Comparison failed: {data.get('error', 'Unknown error')}")
+            return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+
+def test_ensemble_prediction_system():
+    """Test the Ensemble Prediction System"""
+    print("\n\n========== TESTING ENSEMBLE PREDICTION SYSTEM ==========\n")
+    
+    # Step 1: Check ensemble model status
+    print("\nStep 1: Checking ensemble model status")
+    status_data = test_ensemble_model_status()
+    
+    if not status_data or not status_data.get('success'):
+        print("❌ Ensemble model status check failed")
+    else:
+        print("✅ Ensemble model status check passed")
+    
+    # Step 2: Train ensemble models
+    print("\nStep 2: Training ensemble models")
+    training_data = test_train_ensemble_models()
+    
+    if not training_data or not training_data.get('success'):
+        print("❌ Ensemble model training failed")
+    else:
+        print("✅ Ensemble model training passed")
+    
+    # Step 3: Test ensemble prediction
+    print("\nStep 3: Testing ensemble prediction")
+    prediction_data = test_predict_match_ensemble()
+    
+    if not prediction_data or not prediction_data.get('success'):
+        print("❌ Ensemble prediction test failed")
+    else:
+        print("✅ Ensemble prediction test passed")
+    
+    # Step 4: Compare prediction methods
+    print("\nStep 4: Comparing prediction methods")
+    comparison_data = test_compare_prediction_methods()
+    
+    if not comparison_data or not comparison_data.get('success'):
+        print("❌ Prediction methods comparison test failed")
+    else:
+        print("✅ Prediction methods comparison test passed")
+    
+    # Final summary
+    print("\n========== ENSEMBLE PREDICTION SYSTEM TEST SUMMARY ==========")
+    
+    # Check if all endpoints exist
+    endpoint_check_results = {
+        "Ensemble Model Status": requests.get(f"{BASE_URL}/ensemble-model-status").status_code == 200,
+        "Train Ensemble Models": requests.post(f"{BASE_URL}/train-ensemble-models").status_code == 200,
+        "Predict Match Ensemble": requests.post(f"{BASE_URL}/predict-match-ensemble", 
+                                              json={"home_team": "Arsenal", "away_team": "Chelsea", "referee_name": "Michael Oliver"}).status_code == 200,
+        "Compare Prediction Methods": requests.post(f"{BASE_URL}/compare-prediction-methods", 
+                                                 json={"home_team": "Arsenal", "away_team": "Chelsea", "referee_name": "Michael Oliver"}).status_code == 200
+    }
+    
+    for endpoint, exists in endpoint_check_results.items():
+        if exists:
+            print(f"✅ {endpoint} endpoint exists and is accessible")
+        else:
+            print(f"❌ {endpoint} endpoint does not exist or is not accessible")
+    
+    if all(endpoint_check_results.values()):
+        print("\n✅ All ensemble prediction system endpoints exist and are accessible!")
+        return True
+    else:
+        print("\n❌ Some ensemble prediction system endpoints failed the existence check")
+        return False
+
 if __name__ == "__main__":
-    # Test the advanced features
-    test_advanced_features()
+    # Test the ensemble prediction system
+    test_ensemble_prediction_system()
