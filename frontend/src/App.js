@@ -345,58 +345,7 @@ function App() {
     }
   };
 
-  const trainEnsembleModels = async () => {
-    try {
-      const response = await axios.post(`${API}/train-ensemble-models`);
-      return response.data;
-    } catch (error) {
-      console.error('Error training ensemble models:', error);
-      return null;
-    }
-  };
 
-  const getEnsembleModelStatus = async () => {
-    try {
-      const response = await axios.get(`${API}/ensemble-model-status`);
-      return response.data;
-    } catch (error) {
-      console.error('Error getting ensemble model status:', error);
-      return null;
-    }
-  };
-
-  const comparePredictionMethods = async (homeTeam, awayTeam, referee) => {
-    try {
-      const response = await axios.post(`${API}/compare-prediction-methods`, {
-        home_team: homeTeam,
-        away_team: awayTeam,
-        referee_name: referee,
-        match_date: new Date().toISOString().split('T')[0]
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error comparing prediction methods:', error);
-      return null;
-    }
-  };
-
-  const fetchReferees = async () => {
-    try {
-      const response = await axios.get(`${API}/referees`);
-      setReferees(response.data.referees || []);
-    } catch (error) {
-      console.error('Error fetching referees:', error);
-    }
-  };
-
-  const fetchConfigs = async () => {
-    try {
-      const response = await axios.get(`${API}/prediction-configs`);
-      setConfigs(response.data.configs || []);
-    } catch (error) {
-      console.error('Error fetching configs:', error);
-    }
-  };
 
   const fetchDatasets = async () => {
     try {
