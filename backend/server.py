@@ -7397,7 +7397,7 @@ async def predict_match_ensemble(request: MatchPredictionRequest):
         result = await ml_predictor.predict_match_ensemble(
             request.home_team,
             request.away_team,
-            request.referee,
+            request.referee_name,
             request.match_date
         )
         
@@ -7410,7 +7410,7 @@ async def predict_match_ensemble(request: MatchPredictionRequest):
             "error": str(e),
             "home_team": request.home_team,
             "away_team": request.away_team,
-            "referee": request.referee
+            "referee": request.referee_name
         }
 
 @api_router.post("/train-ensemble-models")
