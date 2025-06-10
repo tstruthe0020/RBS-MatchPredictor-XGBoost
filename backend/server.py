@@ -2860,7 +2860,10 @@ class MLMatchPredictor:
             base_stats = await match_predictor.calculate_team_averages(team_name, is_home)
             
             if not decay_config:
+                print(f"📊 Team averages for {team_name}: Using base stats (no time decay)")
                 return base_stats
+            
+            print(f"📊 Team averages for {team_name}: Applying {decay_config.decay_type} time decay ({decay_config.preset_name})")
             
             # Get all team stats for this team with time weighting
             team_stats_cursor = db.team_stats.find({"team_name": team_name})
