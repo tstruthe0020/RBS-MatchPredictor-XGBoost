@@ -160,7 +160,7 @@ const Results = ({
             </button>
           </div>
 
-          {refereeAnalysis && (
+          {refereeAnalysis && Array.isArray(refereeAnalysis) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {refereeAnalysis.map((referee, index) => (
                 <div 
@@ -172,16 +172,16 @@ const Results = ({
                     backgroundColor: selectedRefereeForDetails === referee.name ? '#A3D9FF' : 'white'
                   }}
                 >
-                  <div className="font-medium mb-2" style={{color: '#002629'}}>{referee.name}</div>
+                  <div className="font-medium mb-2" style={{color: '#002629'}}>{referee.name || 'Unknown Referee'}</div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Matches</div>
-                      <div className="font-bold" style={{color: '#002629'}}>{referee.matches}</div>
+                      <div className="font-bold" style={{color: '#002629'}}>{referee.matches || 0}</div>
                     </div>
                     <div>
                       <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Avg RBS</div>
-                      <div className="font-bold" style={{color: getRBSScoreColor(referee.avg_bias_score)}}>
-                        {referee.avg_bias_score?.toFixed(3) || 'N/A'}
+                      <div className="font-bold" style={{color: getRBSScoreColor(referee.avg_bias_score || 0)}}>
+                        {referee.avg_bias_score ? referee.avg_bias_score.toFixed(3) : 'N/A'}
                       </div>
                     </div>
                     <div>
@@ -192,7 +192,7 @@ const Results = ({
                     </div>
                     <div>
                       <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>Teams</div>
-                      <div className="font-bold" style={{color: '#002629'}}>{referee.teams}</div>
+                      <div className="font-bold" style={{color: '#002629'}}>{referee.teams || 0}</div>
                     </div>
                   </div>
                 </div>
