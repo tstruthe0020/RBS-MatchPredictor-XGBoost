@@ -4,6 +4,8 @@ import Header from './components/Header';
 import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import UploadData from './components/UploadData';
+import StandardPredict from './components/StandardPredict';
+import EnhancedXGBoost from './components/EnhancedXGBoost';
 import PlayerSearchInput from './PlayerSearchInput';
 import './App.css';
 import './custom-colors.css';
