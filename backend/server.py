@@ -2153,6 +2153,69 @@ class MLMatchPredictor:
             print(f"Error training ML models: {e}")
             raise e
     
+    async def prepare_training_data(self, test_size=0.2, random_state=42):
+        """Prepare training data for ensemble models (same as XGBoost training)"""
+        try:
+            print("📊 Preparing training data for ensemble models...")
+            
+            # Build training dataset
+            features_list, targets = await self.build_training_dataset()
+            
+            if len(features_list) < 50:
+                raise ValueError(f"Insufficient data for training. Need at least 50 records, found {len(features_list)}")
+            
+            # Convert to DataFrame for easier handling
+            import pandas as pd
+            X = pd.DataFrame(features_list)
+            
+            # Store feature columns for later use
+            self.feature_columns = X.columns.tolist()
+            
+            # Prepare target variables
+            y_outcome = [t['outcome'] for t in targets]
+            y_home_goals = [t['home_goals'] for t in targets]
+            y_away_goals = [t['away_goals'] for t in targets]
+            y_home_xg = [t['home_xg'] for t in targets]
+            y_away_xg = [t['away_xg'] for t in targets]
+            
+            # Split data
+            X_train, X_test, y_outcome_train, y_outcome_test = train_test_split(
+                X, y_outcome, test_size=test_size, random_state=random_state, stratify=y_outcome
+            )
+            
+            # Scale features
+            X_train_scaled = self.scaler.fit_transform(X_train)
+            X_test_scaled = self.scaler.transform(X_test)
+            
+            # Split other targets with same indices
+            train_indices = X_train.index
+            test_indices = X_test.index
+            
+            y_home_goals_train = [y_home_goals[i] for i in train_indices]
+            y_home_goals_test = [y_home_goals[i] for i in test_indices]
+            y_away_goals_train = [y_away_goals[i] for i in train_indices]
+            y_away_goals_test = [y_away_goals[i] for i in test_indices]
+            y_home_xg_train = [y_home_xg[i] for i in train_indices]
+            y_home_xg_test = [y_home_xg[i] for i in test_indices]
+            y_away_xg_train = [y_away_xg[i] for i in train_indices]
+            y_away_xg_test = [y_away_xg[i] for i in test_indices]
+            
+            print(f"📊 Training data prepared: {len(X_train)} training samples, {len(X_test)} test samples")
+            
+            # Return the prepared data as a tuple (matching what train_ensemble_models expects)
+            return (
+                X_train_scaled, X_test_scaled,
+                y_outcome_train, y_outcome_test,
+                y_home_goals_train, y_home_goals_test,
+                y_away_goals_train, y_away_goals_test,
+                y_home_xg_train, y_home_xg_test,
+                y_away_xg_train, y_away_xg_test
+            )
+            
+        except Exception as e:
+            print(f"❌ Error preparing training data: {e}")
+            raise e
+    
     async def train_ensemble_models(self):
         """Train all ensemble models with the same data as XGBoost"""
         try:
