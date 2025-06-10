@@ -3075,6 +3075,221 @@ function App() {
 
                 {/* XGBoost Model Optimization */}
                 <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
+                
+                {/* Advanced AI Optimization Dashboard */}
+                <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+                  <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🧠 Advanced AI Optimization Dashboard</h3>
+                  <p className="text-sm mb-6" style={{color: '#002629', opacity: 0.8}}>
+                    Advanced optimization algorithms that analyze prediction patterns and suggest improvements
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    {/* Prediction Config Optimization */}
+                    <div className="bg-white p-4 rounded border-2" style={{borderColor: '#1C5D99'}}>
+                      <h4 className="font-semibold mb-3" style={{color: '#002629'}}>⚙️ Prediction Config Optimization</h4>
+                      <button
+                        onClick={async () => {
+                          setLoadingOptimizationAnalysis(true);
+                          try {
+                            const suggestions = await fetchOptimizationSuggestions('prediction');
+                            setOptimizationSuggestions(suggestions);
+                          } catch (error) {
+                            console.error('Error fetching optimization suggestions:', error);
+                            alert('Error getting optimization suggestions');
+                          } finally {
+                            setLoadingOptimizationAnalysis(false);
+                          }
+                        }}
+                        disabled={loadingOptimizationAnalysis}
+                        className="w-full px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        style={{backgroundColor: '#1C5D99'}}
+                      >
+                        {loadingOptimizationAnalysis ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Analyzing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🎯</span>
+                            <span>Get Suggestions</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* RBS Optimization */}
+                    <div className="bg-white p-4 rounded border-2" style={{borderColor: '#12664F'}}>
+                      <h4 className="font-semibold mb-3" style={{color: '#002629'}}>⚖️ RBS Formula Optimization</h4>
+                      <button
+                        onClick={async () => {
+                          setLoadingOptimizationAnalysis(true);
+                          try {
+                            const rbsData = await runRBSOptimizationAnalysis();
+                            setRbsOptimizationData(rbsData);
+                          } catch (error) {
+                            console.error('Error running RBS optimization:', error);
+                            alert('Error running RBS optimization');
+                          } finally {
+                            setLoadingOptimizationAnalysis(false);
+                          }
+                        }}
+                        disabled={loadingOptimizationAnalysis}
+                        className="w-full px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        style={{backgroundColor: '#12664F'}}
+                      >
+                        {loadingOptimizationAnalysis ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Optimizing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>⚖️</span>
+                            <span>Optimize RBS</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Predictor Analysis */}
+                    <div className="bg-white p-4 rounded border-2" style={{borderColor: '#002629'}}>
+                      <h4 className="font-semibold mb-3" style={{color: '#002629'}}>📊 Predictor Analysis</h4>
+                      <button
+                        onClick={async () => {
+                          setLoadingOptimizationAnalysis(true);
+                          try {
+                            const predictorData = await runPredictorOptimizationAnalysis();
+                            setPredictorOptimizationData(predictorData);
+                          } catch (error) {
+                            console.error('Error running predictor analysis:', error);
+                            alert('Error running predictor analysis');
+                          } finally {
+                            setLoadingOptimizationAnalysis(false);
+                          }
+                        }}
+                        disabled={loadingOptimizationAnalysis}
+                        className="w-full px-4 py-2 text-white font-medium rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        style={{backgroundColor: '#002629'}}
+                      >
+                        {loadingOptimizationAnalysis ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Analyzing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>📊</span>
+                            <span>Analyze Predictors</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Optimization Results Display */}
+                  {optimizationSuggestions && (
+                    <div className="mb-6 p-4 rounded border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                      <h4 className="font-semibold mb-3" style={{color: '#002629'}}>🎯 Prediction Configuration Suggestions</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {optimizationSuggestions.suggestions?.map((suggestion, index) => (
+                          <div key={index} className="bg-white p-3 rounded border">
+                            <div className="font-medium" style={{color: '#002629'}}>{suggestion.parameter}</div>
+                            <div className="text-sm" style={{color: '#1C5D99'}}>
+                              Current: {suggestion.current_value} → Suggested: {suggestion.suggested_value}
+                            </div>
+                            <div className="text-xs mt-1" style={{color: '#002629', opacity: 0.8}}>
+                              {suggestion.reasoning}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {optimizationSuggestions.confidence && (
+                        <div className="mt-3 text-sm" style={{color: '#002629'}}>
+                          <strong>Confidence:</strong> {optimizationSuggestions.confidence}% 
+                          <span className="ml-2">({optimizationSuggestions.samples} samples analyzed)</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {rbsOptimizationData && (
+                    <div className="mb-6 p-4 rounded border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#12664F'}}>
+                      <h4 className="font-semibold mb-3" style={{color: '#002629'}}>⚖️ RBS Optimization Results</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white p-3 rounded">
+                          <div className="text-sm font-medium" style={{color: '#002629'}}>Current RBS Accuracy</div>
+                          <div className="text-2xl font-bold" style={{color: '#12664F'}}>
+                            {rbsOptimizationData.current_accuracy ? `${rbsOptimizationData.current_accuracy}%` : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <div className="text-sm font-medium" style={{color: '#002629'}}>Potential Improvement</div>
+                          <div className="text-2xl font-bold" style={{color: '#12664F'}}>
+                            {rbsOptimizationData.potential_improvement ? `+${rbsOptimizationData.potential_improvement}%` : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                      {rbsOptimizationData.optimized_weights && (
+                        <div className="mt-4">
+                          <div className="text-sm font-medium mb-2" style={{color: '#002629'}}>Optimized Weight Suggestions:</div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {Object.entries(rbsOptimizationData.optimized_weights).map(([weight, value]) => (
+                              <div key={weight} className="bg-white p-2 rounded text-center">
+                                <div className="text-xs" style={{color: '#002629', opacity: 0.8}}>
+                                  {weight.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </div>
+                                <div className="font-bold" style={{color: '#12664F'}}>{value}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {predictorOptimizationData && (
+                    <div className="mb-6 p-4 rounded border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
+                      <h4 className="font-semibold mb-3" style={{color: '#002629'}}>📊 Predictor Analysis Results</h4>
+                      <div className="space-y-3">
+                        {predictorOptimizationData.feature_importance && (
+                          <div className="bg-white p-3 rounded">
+                            <div className="text-sm font-medium mb-2" style={{color: '#002629'}}>Top Predictive Features:</div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {Object.entries(predictorOptimizationData.feature_importance)
+                                .slice(0, 10)
+                                .map(([feature, importance]) => (
+                                <div key={feature} className="flex justify-between items-center p-2 border rounded">
+                                  <span className="text-xs" style={{color: '#002629'}}>
+                                    {feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </span>
+                                  <span className="text-xs font-bold" style={{color: '#002629'}}>
+                                    {(importance * 100).toFixed(1)}%
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {predictorOptimizationData.recommendations && (
+                          <div className="bg-white p-3 rounded">
+                            <div className="text-sm font-medium mb-2" style={{color: '#002629'}}>Recommendations:</div>
+                            <div className="space-y-2">
+                              {predictorOptimizationData.recommendations.map((rec, index) => (
+                                <div key={index} className="text-sm p-2 border rounded" style={{color: '#002629'}}>
+                                  {rec}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* XGBoost Model Optimization */}
+                <div className="p-6 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#002629'}}>
                 <h3 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>🚀 XGBoost Model Optimization</h3>
                 <p className="text-sm mb-6" style={{color: '#002629', opacity: 0.8}}>
                   Optimize your XGBoost models based on prediction accuracy against real match results. Track performance, tune hyperparameters, and retrain models automatically.
