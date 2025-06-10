@@ -183,6 +183,25 @@ function App() {
   const [defaultDecayPreset, setDefaultDecayPreset] = useState('moderate');
   const [defaultFormation, setDefaultFormation] = useState('4-4-2');
 
+  // Config wrapper functions to provide API endpoint
+  const handleSavePredictionConfig = async (configName, configData) => {
+    // Create the correct config object with config_name
+    const config = {
+      config_name: configName,
+      ...configData
+    };
+    return await savePredictionConfig(config, API);
+  };
+
+  const handleSaveRBSConfig = async (configName, configData) => {
+    // Create the correct config object with config_name
+    const config = {
+      config_name: configName,
+      ...configData
+    };
+    return await saveRBSConfig(config, API);
+  };
+
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
