@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatPercentage, formatScore } from '../analysis-components';
+import { formatPercentage, formatScore, getConfidenceColor } from '../analysis-components';
 
 const StandardPredict = ({ 
   teams, 
