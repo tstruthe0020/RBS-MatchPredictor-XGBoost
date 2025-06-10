@@ -2235,6 +2235,249 @@ class MLMatchPredictor:
                 'referee': referee
             }
     
+    async def predict_match_ensemble(self, home_team, away_team, referee, match_date=None, ensemble_config=None):
+        """Make ensemble match prediction using multiple ML models with confidence scoring"""
+        try:
+            print(f"🤖 Making Ensemble Prediction: {home_team} vs {away_team}")
+            
+            # Check if models are available
+            if not self.models or len(self.models) != 5:
+                raise ValueError("XGBoost models not trained. Please train models first.")
+            
+            # Extract features
+            features = await self.extract_features_for_match(home_team, away_team, referee, match_date)
+            if features is None:
+                raise ValueError("Could not extract features for prediction")
+            
+            # Convert to DataFrame and ensure correct column order
+            import pandas as pd
+            X = pd.DataFrame([features])
+            X = X.reindex(columns=self.feature_columns, fill_value=0)
+            
+            # Scale features
+            X_scaled = self.scaler.transform(X)
+            
+            # Get predictions from all models
+            model_predictions = {}
+            model_confidence_scores = {}
+            
+            # XGBoost predictions (primary model)
+            print("🎯 Getting XGBoost predictions...")
+            xgb_outcome_probs = self.models['classifier'].predict_proba(X_scaled)[0]
+            model_predictions['xgboost'] = {
+                'outcome_probs': xgb_outcome_probs,
+                'home_goals': max(0, self.models['home_goals'].predict(X_scaled)[0]),
+                'away_goals': max(0, self.models['away_goals'].predict(X_scaled)[0]),
+                'home_xg': max(0, self.models['home_xg'].predict(X_scaled)[0]),
+                'away_xg': max(0, self.models['away_xg'].predict(X_scaled)[0])
+            }
+            model_confidence_scores['xgboost'] = max(xgb_outcome_probs)
+            
+            # Ensemble model predictions
+            for model_type in ['random_forest', 'gradient_boost', 'neural_net', 'logistic']:
+                if model_type in self.ensemble_models:
+                    print(f"🤖 Getting {model_type} predictions...")
+                    try:
+                        models = self.ensemble_models[model_type]
+                        
+                        # Get outcome probabilities
+                        outcome_probs = models['classifier'].predict_proba(X_scaled)[0]
+                        
+                        model_predictions[model_type] = {
+                            'outcome_probs': outcome_probs,
+                            'home_goals': max(0, models['home_goals'].predict(X_scaled)[0]),
+                            'away_goals': max(0, models['away_goals'].predict(X_scaled)[0]),
+                            'home_xg': max(0, models['home_xg'].predict(X_scaled)[0]),
+                            'away_xg': max(0, models['away_xg'].predict(X_scaled)[0])
+                        }
+                        model_confidence_scores[model_type] = max(outcome_probs)
+                        
+                    except Exception as e:
+                        print(f"⚠️ Error with {model_type}: {e}")
+                        # If model fails, skip it for this prediction
+                        continue
+            
+            # Calculate ensemble predictions using weighted voting
+            ensemble_result = self.calculate_ensemble_prediction(model_predictions, model_confidence_scores)
+            
+            # Calculate model agreement and confidence metrics
+            confidence_metrics = self.calculate_ensemble_confidence(model_predictions, ensemble_result)
+            
+            return {
+                'success': True,
+                'home_team': home_team,
+                'away_team': away_team,
+                'referee': referee,
+                'prediction_type': 'ensemble',
+                
+                # Ensemble predictions
+                'predicted_home_goals': round(ensemble_result['home_goals'], 2),
+                'predicted_away_goals': round(ensemble_result['away_goals'], 2),
+                'home_xg': round(ensemble_result['home_xg'], 2),
+                'away_xg': round(ensemble_result['away_xg'], 2),
+                'home_win_probability': round(ensemble_result['home_win_prob'], 2),
+                'draw_probability': round(ensemble_result['draw_prob'], 2),
+                'away_win_probability': round(ensemble_result['away_win_prob'], 2),
+                
+                # Confidence and ensemble metrics
+                'ensemble_confidence': confidence_metrics,
+                'model_predictions': {k: {
+                    'home_win_prob': round(v['outcome_probs'][0] * 100, 1),
+                    'draw_prob': round(v['outcome_probs'][1] * 100, 1),
+                    'away_win_prob': round(v['outcome_probs'][2] * 100, 1),
+                    'home_goals': round(v['home_goals'], 2),
+                    'away_goals': round(v['away_goals'], 2),
+                    'home_xg': round(v['home_xg'], 2),
+                    'away_xg': round(v['away_xg'], 2)
+                } for k, v in model_predictions.items()},
+                'model_weights': self.model_weights,
+                
+                'prediction_breakdown': {
+                    'ensemble_method': 'Weighted Voting with Confidence Scoring',
+                    'models_used': list(model_predictions.keys()),
+                    'total_models': len(model_predictions),
+                    'features_used': len(self.feature_columns),
+                    'confidence_level': confidence_metrics['overall_confidence']
+                }
+            }
+            
+        except Exception as e:
+            print(f"❌ Error making ensemble prediction: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'home_team': home_team,
+                'away_team': away_team,
+                'referee': referee,
+                'prediction_type': 'ensemble'
+            }
+    
+    def calculate_ensemble_prediction(self, model_predictions, model_confidence_scores):
+        """Calculate weighted ensemble prediction from multiple models"""
+        import numpy as np
+        
+        print("📊 Calculating ensemble prediction...")
+        
+        # Initialize weighted sums
+        weighted_outcome_probs = np.zeros(3)  # [home_win, draw, away_win]
+        weighted_home_goals = 0
+        weighted_away_goals = 0
+        weighted_home_xg = 0
+        weighted_away_xg = 0
+        total_weight = 0
+        
+        for model_type, predictions in model_predictions.items():
+            # Get base weight for this model type
+            base_weight = self.model_weights.get(model_type, 0.2)
+            
+            # Adjust weight based on model confidence
+            confidence = model_confidence_scores.get(model_type, 0.5)
+            confidence_multiplier = 0.5 + confidence  # Range: 0.5 to 1.5
+            
+            final_weight = base_weight * confidence_multiplier
+            
+            print(f"  {model_type}: base_weight={base_weight:.2f}, confidence={confidence:.2f}, final_weight={final_weight:.2f}")
+            
+            # Add weighted predictions
+            weighted_outcome_probs += predictions['outcome_probs'] * final_weight
+            weighted_home_goals += predictions['home_goals'] * final_weight
+            weighted_away_goals += predictions['away_goals'] * final_weight
+            weighted_home_xg += predictions['home_xg'] * final_weight
+            weighted_away_xg += predictions['away_xg'] * final_weight
+            
+            total_weight += final_weight
+        
+        # Normalize by total weight
+        if total_weight > 0:
+            weighted_outcome_probs /= total_weight
+            weighted_home_goals /= total_weight
+            weighted_away_goals /= total_weight
+            weighted_home_xg /= total_weight
+            weighted_away_xg /= total_weight
+        
+        # Ensure probabilities sum to 100%
+        prob_sum = sum(weighted_outcome_probs)
+        if prob_sum > 0:
+            weighted_outcome_probs = (weighted_outcome_probs / prob_sum) * 100
+        
+        result = {
+            'home_win_prob': weighted_outcome_probs[0],
+            'draw_prob': weighted_outcome_probs[1],
+            'away_win_prob': weighted_outcome_probs[2],
+            'home_goals': weighted_home_goals,
+            'away_goals': weighted_away_goals,
+            'home_xg': weighted_home_xg,
+            'away_xg': weighted_away_xg
+        }
+        
+        print(f"📈 Ensemble Result: {result['home_win_prob']:.1f}% | {result['draw_prob']:.1f}% | {result['away_win_prob']:.1f}%")
+        return result
+    
+    def calculate_ensemble_confidence(self, model_predictions, ensemble_result):
+        """Calculate confidence metrics for ensemble prediction"""
+        import numpy as np
+        
+        if len(model_predictions) < 2:
+            return {
+                'overall_confidence': 'Low',
+                'model_agreement': 0.0,
+                'prediction_stability': 0.0,
+                'confidence_score': 0.0
+            }
+        
+        # Calculate model agreement (how similar are the predictions)
+        outcome_predictions = []
+        goal_predictions = []
+        
+        for model_type, predictions in model_predictions.items():
+            outcome_predictions.append(predictions['outcome_probs'])
+            goal_predictions.append([predictions['home_goals'], predictions['away_goals']])
+        
+        outcome_predictions = np.array(outcome_predictions)
+        goal_predictions = np.array(goal_predictions)
+        
+        # Calculate standard deviation across models (lower = more agreement)
+        outcome_std = np.mean(np.std(outcome_predictions, axis=0))
+        goal_std = np.mean(np.std(goal_predictions, axis=0))
+        
+        # Convert to agreement score (0-1, higher = more agreement)
+        outcome_agreement = max(0, 1 - (outcome_std / 0.5))  # Normalize by reasonable std threshold
+        goal_agreement = max(0, 1 - (goal_std / 2.0))  # Normalize by reasonable goal std
+        
+        overall_agreement = (outcome_agreement + goal_agreement) / 2
+        
+        # Calculate prediction stability (confidence in most likely outcome)
+        max_prob = max(ensemble_result['home_win_prob'], ensemble_result['draw_prob'], ensemble_result['away_win_prob'])
+        stability = (max_prob - 33.33) / 66.67  # Normalize from equal probability (33.33%) to certainty (100%)
+        stability = max(0, min(1, stability))
+        
+        # Calculate overall confidence score
+        confidence_score = (overall_agreement * 0.6) + (stability * 0.4)
+        
+        # Determine confidence level
+        if confidence_score >= 0.8:
+            confidence_level = 'Very High'
+        elif confidence_score >= 0.65:
+            confidence_level = 'High'
+        elif confidence_score >= 0.5:
+            confidence_level = 'Medium'
+        elif confidence_score >= 0.35:
+            confidence_level = 'Low'
+        else:
+            confidence_level = 'Very Low'
+        
+        return {
+            'overall_confidence': confidence_level,
+            'model_agreement': round(overall_agreement * 100, 1),
+            'prediction_stability': round(stability * 100, 1),
+            'confidence_score': round(confidence_score * 100, 1),
+            'models_count': len(model_predictions),
+            'agreement_details': {
+                'outcome_agreement': round(outcome_agreement * 100, 1),
+                'goal_agreement': round(goal_agreement * 100, 1)
+            }
+        }
+    
     def calculate_poisson_scoreline_probabilities(self, home_lambda, away_lambda, max_goals=6):
         """
         Calculate detailed scoreline probabilities using Poisson distribution
