@@ -151,18 +151,21 @@ def test_referee_analysis_detail_endpoint(referee_name="Michael Oliver"):
         
         # Check RBS calculations
         rbs_calculations = data.get('rbs_calculations', [])
-        print(f"\nRBS Calculations: {len(rbs_calculations)}")
-        
-        if rbs_calculations:
-            print("\nSample Team RBS Scores:")
-            for calc in rbs_calculations[:3]:  # Show first 3 calculations
-                print(f"  - Team: {calc.get('team_name')}")
-                print(f"    RBS Score: {calc.get('rbs_score')}")
-                print(f"    Confidence: {calc.get('confidence_level')}")
-                print(f"    Matches with Referee: {calc.get('matches_with_ref')}")
+        if isinstance(rbs_calculations, list):
+            print(f"\nRBS Calculations: {len(rbs_calculations)}")
             
-            if len(rbs_calculations) > 3:
-                print("  ...")
+            if rbs_calculations:
+                print("\nSample Team RBS Scores:")
+                for calc in rbs_calculations[:3]:  # Show first 3 calculations
+                    print(f"  - Team: {calc.get('team_name')}")
+                    print(f"    RBS Score: {calc.get('rbs_score')}")
+                    print(f"    Confidence: {calc.get('confidence_level')}")
+                    print(f"    Matches with Referee: {calc.get('matches_with_ref')}")
+                
+                if len(rbs_calculations) > 3:
+                    print("  ...")
+        else:
+            print(f"\nRBS Calculations: {rbs_calculations}")
         
         # Check match outcomes
         match_outcomes = data.get('match_outcomes', {})
