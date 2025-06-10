@@ -736,9 +736,12 @@ function App() {
       const requestData = {
         home_team: homeTeam,
         away_team: awayTeam,
-        referee_name: referee
+        referee_name: referee,
+        use_time_decay: useTimeDecay,
+        decay_preset: decayPreset
       };
       const response = await axios.post(`${API}/compare-prediction-methods`, requestData);
+      return response.data;
       return response.data;
     } catch (error) {
       console.error('Error comparing prediction methods:', error);
