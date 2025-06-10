@@ -3751,20 +3751,46 @@ class ModelOptimizer:
             
             prediction_id = str(uuid.uuid4())
             
+            # Handle both object attributes and dictionary keys
+            if hasattr(prediction_result, 'home_team'):
+                # Object with attributes
+                home_team = prediction_result.home_team
+                away_team = prediction_result.away_team
+                referee = prediction_result.referee
+                predicted_home_goals = getattr(prediction_result, 'predicted_home_goals', None)
+                predicted_away_goals = getattr(prediction_result, 'predicted_away_goals', None)
+                home_xg = getattr(prediction_result, 'home_xg', None)
+                away_xg = getattr(prediction_result, 'away_xg', None)
+                home_win_probability = getattr(prediction_result, 'home_win_probability', None)
+                draw_probability = getattr(prediction_result, 'draw_probability', None)
+                away_win_probability = getattr(prediction_result, 'away_win_probability', None)
+            else:
+                # Dictionary with keys
+                home_team = prediction_result.get('home_team')
+                away_team = prediction_result.get('away_team')
+                referee = prediction_result.get('referee')
+                predicted_home_goals = prediction_result.get('predicted_home_goals')
+                predicted_away_goals = prediction_result.get('predicted_away_goals')
+                home_xg = prediction_result.get('home_xg')
+                away_xg = prediction_result.get('away_xg')
+                home_win_probability = prediction_result.get('home_win_probability')
+                draw_probability = prediction_result.get('draw_probability')
+                away_win_probability = prediction_result.get('away_win_probability')
+            
             prediction_record = {
                 "prediction_id": prediction_id,
                 "timestamp": datetime.now().isoformat(),
-                "home_team": prediction_result.home_team,
-                "away_team": prediction_result.away_team,
-                "referee": prediction_result.referee,
+                "home_team": home_team,
+                "away_team": away_team,
+                "referee": referee,
                 "prediction_method": prediction_method,
-                "predicted_home_goals": prediction_result.predicted_home_goals,
-                "predicted_away_goals": prediction_result.predicted_away_goals,
-                "home_xg": prediction_result.home_xg,
-                "away_xg": prediction_result.away_xg,
-                "home_win_probability": prediction_result.home_win_probability,
-                "draw_probability": prediction_result.draw_probability,
-                "away_win_probability": prediction_result.away_win_probability,
+                "predicted_home_goals": predicted_home_goals,
+                "predicted_away_goals": predicted_away_goals,
+                "home_xg": home_xg,
+                "away_xg": away_xg,
+                "home_win_probability": home_win_probability,
+                "draw_probability": draw_probability,
+                "away_win_probability": away_win_probability,
                 "features_used": features_used,
                 "model_version": self.current_model_version,
                 "starting_xi_used": starting_xi_used,
