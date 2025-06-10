@@ -2276,6 +2276,483 @@ function App() {
           </div>
         )}
 
+        {/* Ensemble Predictions Tab */}
+        {activeTab === 'ensemble' && (
+          <div className="space-y-6">
+            <div className="card">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="card-header">🤖 Ensemble Prediction System</h2>
+                  <p className="card-text mt-2">
+                    Advanced prediction system combining multiple machine learning models for improved accuracy and reliability.
+                    Uses XGBoost, Random Forest, Gradient Boosting, Neural Networks, and Logistic Regression.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    setLoadingEnsembleTraining(true);
+                    try {
+                      const status = await getEnsembleModelStatus();
+                      setEnsembleModelStatus(status);
+                    } catch (error) {
+                      console.error('Error checking ensemble status:', error);
+                    } finally {
+                      setLoadingEnsembleTraining(false);
+                    }
+                  }}
+                  className="px-4 py-2 text-white font-medium rounded hover:opacity-90 flex items-center space-x-2"
+                  style={{backgroundColor: '#1C5D99'}}
+                >
+                  <span>📊</span>
+                  <span>Check Status</span>
+                </button>
+              </div>
+
+              {/* Model Status Display */}
+              {ensembleModelStatus && (
+                <div className="mb-6 p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                  <h3 className="font-semibold mb-3" style={{color: '#002629'}}>🔍 Ensemble Model Status</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {Object.entries(ensembleModelStatus.models_available || {}).map(([modelType, status]) => (
+                      <div key={modelType} 
+                           className="p-3 rounded border-2"
+                           style={{
+                             borderColor: status.available ? '#12664F' : '#002629',
+                             backgroundColor: status.available ? '#A3D9FF' : 'white'
+                           }}>
+                        <div className="text-center">
+                          <div className="text-lg">
+                            {status.available ? '✅' : '❌'}
+                          </div>
+                          <div className="text-sm font-medium" style={{color: '#002629'}}>
+                            {modelType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </div>
+                          <div className="text-xs" style={{color: '#002629', opacity: 0.7}}>
+                            {status.available ? `${status.models.length} models` : 'Not trained'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-4 p-3 rounded" style={{backgroundColor: 'white'}}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium" style={{color: '#002629'}}>Ensemble Ready:</span>
+                      <span className={`font-bold ${ensembleModelStatus.ensemble_ready ? 'text-green-600' : 'text-red-600'}`}>
+                        {ensembleModelStatus.ensemble_ready ? '✅ Ready' : '❌ Not Ready'}
+                      </span>
+                    </div>
+                    {ensembleModelStatus.model_weights && (
+                      <div className="mt-2">
+                        <div className="text-sm font-medium mb-2" style={{color: '#002629'}}>Model Weights:</div>
+                        <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                          {Object.entries(ensembleModelStatus.model_weights).map(([model, weight]) => (
+                            <div key={model} className="text-xs text-center">
+                              <div style={{color: '#002629'}}>{model}</div>
+                              <div className="font-bold" style={{color: '#1C5D99'}}>{(weight * 100).toFixed(1)}%</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Train Ensemble Models Section */}
+              <div className="mb-6 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+                <h3 className="font-semibold mb-3" style={{color: '#002629'}}>🚀 Train Ensemble Models</h3>
+                <p className="text-sm mb-4" style={{color: '#002629', opacity: 0.8}}>
+                  Train Random Forest, Gradient Boosting, Neural Network, and Logistic Regression models on your football data.
+                  This may take 5-10 minutes depending on data size.
+                </p>
+                <button
+                  onClick={async () => {
+                    if (!window.confirm('Train ensemble models? This will take several minutes.')) return;
+                    
+                    setLoadingEnsembleTraining(true);
+                    try {
+                      const result = await trainEnsembleModels();
+                      if (result?.success) {
+                        alert(`✅ Ensemble training completed!\nModels trained: ${result.models_trained.join(', ')}`);
+                        // Refresh status
+                        const status = await getEnsembleModelStatus();
+                        setEnsembleModelStatus(status);
+                      } else {
+                        alert(`❌ Training failed: ${result?.error || 'Unknown error'}`);
+                      }
+                    } catch (error) {
+                      console.error('Error training ensemble:', error);
+                      alert(`❌ Training error: ${error.message}`);
+                    } finally {
+                      setLoadingEnsembleTraining(false);
+                    }
+                  }}
+                  disabled={loadingEnsembleTraining}
+                  className="px-6 py-3 text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  style={{backgroundColor: '#12664F'}}
+                >
+                  {loadingEnsembleTraining ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Training Models...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🚀</span>
+                      <span>Train Ensemble Models</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Ensemble Prediction Section */}
+              <div className="p-4 rounded-lg border-2" style={{backgroundColor: 'white', borderColor: '#1C5D99'}}>
+                <h3 className="font-semibold mb-4" style={{color: '#002629'}}>🎯 Make Ensemble Prediction</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Home Team</label>
+                    <select
+                      value={selectedEnsembleTeams.home}
+                      onChange={(e) => setSelectedEnsembleTeams({...selectedEnsembleTeams, home: e.target.value})}
+                      className="form-select w-full"
+                    >
+                      <option value="">Select Home Team</option>
+                      {teams.map(team => (
+                        <option key={team} value={team}>{team}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Away Team</label>
+                    <select
+                      value={selectedEnsembleTeams.away}
+                      onChange={(e) => setSelectedEnsembleTeams({...selectedEnsembleTeams, away: e.target.value})}
+                      className="form-select w-full"
+                    >
+                      <option value="">Select Away Team</option>
+                      {teams.map(team => (
+                        <option key={team} value={team}>{team}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Referee</label>
+                    <select
+                      value={selectedEnsembleTeams.referee}
+                      onChange={(e) => setSelectedEnsembleTeams({...selectedEnsembleTeams, referee: e.target.value})}
+                      className="form-select w-full"
+                    >
+                      <option value="">Select Referee</option>
+                      {referees.map(ref => (
+                        <option key={ref} value={ref}>{ref}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex space-x-4 mb-6">
+                  <button
+                    onClick={async () => {
+                      if (!selectedEnsembleTeams.home || !selectedEnsembleTeams.away || !selectedEnsembleTeams.referee) {
+                        alert('Please select home team, away team, and referee');
+                        return;
+                      }
+                      
+                      setLoadingEnsemblePrediction(true);
+                      try {
+                        const result = await makeEnsemblePrediction(
+                          selectedEnsembleTeams.home,
+                          selectedEnsembleTeams.away,
+                          selectedEnsembleTeams.referee
+                        );
+                        setEnsemblePredictionData(result);
+                      } catch (error) {
+                        console.error('Error making ensemble prediction:', error);
+                        alert(`❌ Prediction error: ${error.message}`);
+                      } finally {
+                        setLoadingEnsemblePrediction(false);
+                      }
+                    }}
+                    disabled={loadingEnsemblePrediction}
+                    className="px-6 py-3 text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    style={{backgroundColor: '#1C5D99'}}
+                  >
+                    {loadingEnsemblePrediction ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Predicting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🤖</span>
+                        <span>Make Ensemble Prediction</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      if (!selectedEnsembleTeams.home || !selectedEnsembleTeams.away || !selectedEnsembleTeams.referee) {
+                        alert('Please select home team, away team, and referee');
+                        return;
+                      }
+                      
+                      setLoadingComparison(true);
+                      try {
+                        const result = await comparePredictionMethods(
+                          selectedEnsembleTeams.home,
+                          selectedEnsembleTeams.away,
+                          selectedEnsembleTeams.referee
+                        );
+                        setEnsembleComparison(result);
+                      } catch (error) {
+                        console.error('Error comparing predictions:', error);
+                        alert(`❌ Comparison error: ${error.message}`);
+                      } finally {
+                        setLoadingComparison(false);
+                      }
+                    }}
+                    disabled={loadingComparison}
+                    className="px-6 py-3 text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    style={{backgroundColor: '#002629'}}
+                  >
+                    {loadingComparison ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Comparing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>⚖️</span>
+                        <span>Compare vs XGBoost</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Ensemble Prediction Results */}
+                {ensemblePredictionData?.success && (
+                  <div className="mt-6 space-y-6">
+                    <h4 className="text-lg font-semibold" style={{color: '#002629'}}>🤖 Ensemble Prediction Results</h4>
+                    
+                    {/* Main Prediction Results */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number" style={{color: '#12664F'}}>
+                          {ensemblePredictionData.home_win_probability}%
+                        </div>
+                        <div className="stat-card-label">{ensemblePredictionData.home_team} Win</div>
+                      </div>
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number" style={{color: '#1C5D99'}}>
+                          {ensemblePredictionData.draw_probability}%
+                        </div>
+                        <div className="stat-card-label">Draw</div>
+                      </div>
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number" style={{color: '#002629'}}>
+                          {ensemblePredictionData.away_win_probability}%
+                        </div>
+                        <div className="stat-card-label">{ensemblePredictionData.away_team} Win</div>
+                      </div>
+                    </div>
+
+                    {/* Goals and xG Predictions */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number">{ensemblePredictionData.predicted_home_goals}</div>
+                        <div className="stat-card-label">Home Goals</div>
+                      </div>
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number">{ensemblePredictionData.predicted_away_goals}</div>
+                        <div className="stat-card-label">Away Goals</div>
+                      </div>
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number">{ensemblePredictionData.home_xg}</div>
+                        <div className="stat-card-label">Home xG</div>
+                      </div>
+                      <div className="stat-card text-center">
+                        <div className="stat-card-number">{ensemblePredictionData.away_xg}</div>
+                        <div className="stat-card-label">Away xG</div>
+                      </div>
+                    </div>
+
+                    {/* Confidence Metrics */}
+                    {ensemblePredictionData.ensemble_confidence && (
+                      <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#A3D9FF', borderColor: '#1C5D99'}}>
+                        <h5 className="font-semibold mb-3" style={{color: '#002629'}}>📊 Ensemble Confidence Metrics</h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center">
+                            <div className="text-lg font-bold" style={{color: '#1C5D99'}}>
+                              {ensemblePredictionData.ensemble_confidence.overall_confidence}
+                            </div>
+                            <div className="text-sm" style={{color: '#002629'}}>Overall Confidence</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold" style={{color: '#1C5D99'}}>
+                              {ensemblePredictionData.ensemble_confidence.model_agreement}%
+                            </div>
+                            <div className="text-sm" style={{color: '#002629'}}>Model Agreement</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold" style={{color: '#1C5D99'}}>
+                              {ensemblePredictionData.ensemble_confidence.prediction_stability}%
+                            </div>
+                            <div className="text-sm" style={{color: '#002629'}}>Prediction Stability</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold" style={{color: '#1C5D99'}}>
+                              {ensemblePredictionData.ensemble_confidence.models_count}
+                            </div>
+                            <div className="text-sm" style={{color: '#002629'}}>Models Used</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Individual Model Predictions */}
+                    {ensemblePredictionData.model_predictions && (
+                      <div className="p-4 rounded-lg border-2" style={{backgroundColor: 'white', borderColor: '#12664F'}}>
+                        <h5 className="font-semibold mb-3" style={{color: '#002629'}}>🔍 Individual Model Predictions</h5>
+                        <div className="space-y-3">
+                          {Object.entries(ensemblePredictionData.model_predictions).map(([modelType, predictions]) => (
+                            <div key={modelType} className="p-3 rounded border">
+                              <div className="font-medium mb-2" style={{color: '#002629'}}>
+                                {modelType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                <span className="ml-2 text-sm" style={{color: '#1C5D99'}}>
+                                  (Weight: {((ensemblePredictionData.model_weights?.[modelType] || 0) * 100).toFixed(1)}%)
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-3 md:grid-cols-7 gap-2 text-sm">
+                                <div className="text-center">
+                                  <div style={{color: '#12664F'}}>{predictions.home_win_prob}%</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>Home</div>
+                                </div>
+                                <div className="text-center">
+                                  <div style={{color: '#1C5D99'}}>{predictions.draw_prob}%</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>Draw</div>
+                                </div>
+                                <div className="text-center">
+                                  <div style={{color: '#002629'}}>{predictions.away_win_prob}%</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>Away</div>
+                                </div>
+                                <div className="text-center">
+                                  <div style={{color: '#002629'}}>{predictions.home_goals}</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>H Goals</div>
+                                </div>
+                                <div className="text-center">
+                                  <div style={{color: '#002629'}}>{predictions.away_goals}</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>A Goals</div>
+                                </div>
+                                <div className="text-center">
+                                  <div style={{color: '#002629'}}>{predictions.home_xg}</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>H xG</div>
+                                </div>
+                                <div className="text-center">
+                                  <div style={{color: '#002629'}}>{predictions.away_xg}</div>
+                                  <div style={{color: '#002629', opacity: 0.7}}>A xG</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Method Comparison Results */}
+                {ensembleComparison?.success && (
+                  <div className="mt-6 p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#002629'}}>
+                    <h4 className="text-lg font-semibold mb-4" style={{color: '#002629'}}>⚖️ XGBoost vs Ensemble Comparison</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* XGBoost Results */}
+                      <div className="p-3 rounded border-2" style={{borderColor: '#1C5D99', backgroundColor: 'white'}}>
+                        <h5 className="font-medium mb-3" style={{color: '#002629'}}>🎯 XGBoost Only</h5>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Home Win:</span>
+                            <span className="font-bold">{ensembleComparison.xgboost_prediction.home_win_probability}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Draw:</span>
+                            <span className="font-bold">{ensembleComparison.xgboost_prediction.draw_probability}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Away Win:</span>
+                            <span className="font-bold">{ensembleComparison.xgboost_prediction.away_win_probability}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Goals:</span>
+                            <span className="font-bold">
+                              {ensembleComparison.xgboost_prediction.predicted_home_goals} - {ensembleComparison.xgboost_prediction.predicted_away_goals}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ensemble Results */}
+                      <div className="p-3 rounded border-2" style={{borderColor: '#12664F', backgroundColor: 'white'}}>
+                        <h5 className="font-medium mb-3" style={{color: '#002629'}}>🤖 Ensemble</h5>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Home Win:</span>
+                            <span className="font-bold">{ensembleComparison.ensemble_prediction.home_win_probability}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Draw:</span>
+                            <span className="font-bold">{ensembleComparison.ensemble_prediction.draw_probability}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Away Win:</span>
+                            <span className="font-bold">{ensembleComparison.ensemble_prediction.away_win_probability}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Goals:</span>
+                            <span className="font-bold">
+                              {ensembleComparison.ensemble_prediction.predicted_home_goals} - {ensembleComparison.ensemble_prediction.predicted_away_goals}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Comparison Metrics */}
+                    <div className="mt-4 p-3 rounded" style={{backgroundColor: '#A3D9FF'}}>
+                      <h6 className="font-medium mb-2" style={{color: '#002629'}}>📊 Comparison Metrics</h6>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        <div className="text-center">
+                          <div className="font-bold" style={{color: '#002629'}}>
+                            {ensembleComparison.confidence_comparison?.more_confident_method}
+                          </div>
+                          <div style={{color: '#002629', opacity: 0.7}}>More Confident</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold" style={{color: '#002629'}}>
+                            {ensembleComparison.recommendation?.ensemble_agreement}%
+                          </div>
+                          <div style={{color: '#002629', opacity: 0.7}}>Model Agreement</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold" style={{color: '#002629'}}>
+                            {ensembleComparison.recommendation?.suggested_method}
+                          </div>
+                          <div style={{color: '#002629', opacity: 0.7}}>Recommended</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Regression Analysis Tab */}
         {activeTab === 'regression' && (
           <div className="space-y-6">
