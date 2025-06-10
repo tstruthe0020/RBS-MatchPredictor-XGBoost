@@ -6742,6 +6742,90 @@ async def retrain_models_with_optimization():
     except Exception as e:
         return {"error": str(e)}
 
+@api_router.post("/test-time-decay-impact")
+async def test_time_decay_impact(team_name: str = "Arsenal", referee: str = "Michael Oliver"):
+    """Test endpoint to verify time decay is actually working with different presets"""
+    try:
+        print(f"\n🧪 TESTING TIME DECAY IMPACT FOR {team_name}")
+        print("=" * 60)
+        
+        # Test all time decay presets
+        presets = ["none", "conservative", "moderate", "aggressive", "linear"]
+        results = {}
+        
+        for preset_name in presets:
+            print(f"\n📋 Testing preset: {preset_name}")
+            
+            # Get decay configuration
+            if preset_name == "none":
+                decay_config = None
+            else:
+                decay_config = time_decay_manager.get_preset(preset_name)
+            
+            # Make prediction with this decay setting
+            prediction = await ml_predictor.predict_match_with_defaults(
+                home_team=team_name,
+                away_team="Chelsea", 
+                referee=referee,
+                decay_config=decay_config
+            )
+            
+            if prediction.success:
+                results[preset_name] = {
+                    "predicted_home_goals": prediction.predicted_home_goals,
+                    "predicted_away_goals": prediction.predicted_away_goals,
+                    "home_xg": prediction.home_xg,
+                    "away_xg": prediction.away_xg,
+                    "home_win_probability": prediction.home_win_probability
+                }
+                print(f"  ✅ {preset_name}: Goals {prediction.predicted_home_goals:.2f}-{prediction.predicted_away_goals:.2f}, Win% {prediction.home_win_probability:.1f}%")
+            else:
+                results[preset_name] = {"error": prediction.error}
+                print(f"  ❌ {preset_name}: Error - {prediction.error}")
+        
+        # Analyze differences
+        print(f"\n📊 TIME DECAY IMPACT ANALYSIS:")
+        if len([r for r in results.values() if "error" not in r]) >= 2:
+            # Compare results
+            none_result = results.get("none", {})
+            aggressive_result = results.get("aggressive", {})
+            
+            if "error" not in none_result and "error" not in aggressive_result:
+                goals_diff = abs(none_result["predicted_home_goals"] - aggressive_result["predicted_home_goals"])
+                prob_diff = abs(none_result["home_win_probability"] - aggressive_result["home_win_probability"])
+                
+                print(f"  📈 Goals difference (none vs aggressive): {goals_diff:.3f}")
+                print(f"  📈 Win probability difference: {prob_diff:.1f}%")
+                
+                if goals_diff > 0.05 or prob_diff > 2.0:
+                    print(f"  ✅ TIME DECAY IS WORKING! Significant differences detected.")
+                else:
+                    print(f"  ⚠️  TIME DECAY IMPACT IS MINIMAL. Differences may be too small.")
+            else:
+                print(f"  ❌ Cannot compare - prediction errors occurred")
+        else:
+            print(f"  ❌ Cannot analyze - insufficient successful predictions")
+        
+        print("=" * 60)
+        
+        return {
+            "success": True,
+            "message": "Time decay test completed",
+            "results": results,
+            "test_parameters": {
+                "team": team_name,
+                "opponent": "Chelsea",
+                "referee": referee,
+                "presets_tested": presets
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Time decay test error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+
 @api_router.get("/model-comparison")
 async def compare_model_versions(version1: str = "1.0", version2: str = "2.0", days: int = 30):
     """Compare performance between two model versions"""
