@@ -1479,11 +1479,16 @@ pdf_exporter = PDFExporter()
 class MLMatchPredictor:
     def __init__(self):
         self.models = {}
+        self.ensemble_models = {}  # Store ensemble models
+        self.model_weights = {}    # Store model performance weights
+        self.model_confidence = {} # Store model confidence scores
         self.scaler = StandardScaler()
         self.feature_columns = []
         self.models_dir = os.path.join(os.path.dirname(__file__), "models")
+        self.ensemble_dir = os.path.join(self.models_dir, "ensemble")
         self.ensure_models_dir()
         self.load_models()
+        self.initialize_ensemble_models()
         
         # XGBoost optimal hyperparameters for football prediction
         self.xgb_params_classifier = {
@@ -1509,6 +1514,15 @@ class MLMatchPredictor:
             'reg_lambda': 1.0,
             'random_state': 42,
             'objective': 'reg:squarederror'
+        }
+        
+        # Initialize default model weights (will be updated based on performance)
+        self.model_weights = {
+            'xgboost': 0.30,      # Highest weight - proven performer
+            'random_forest': 0.25, # Second highest - robust
+            'gradient_boost': 0.20, # Third - good sequential learning
+            'neural_net': 0.15,    # Fourth - complex patterns
+            'logistic': 0.10       # Lowest - simple baseline
         }
     
     def ensure_models_dir(self):
