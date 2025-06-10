@@ -835,6 +835,31 @@ function App() {
             handleFormationChange={handleFormationChange}
           />
         );
+      case 'ensemble':
+        return (
+          <EnsemblePredictions
+            teams={teams}
+            referees={referees}
+            ensembleModelStatus={ensembleModelStatus}
+            setEnsembleModelStatus={setEnsembleModelStatus}
+            ensemblePredictionData={ensemblePredictionData}
+            setEnsemblePredictionData={setEnsemblePredictionData}
+            ensembleComparison={ensembleComparison}
+            setEnsembleComparison={setEnsembleComparison}
+            selectedEnsembleTeams={selectedEnsembleTeams}
+            setSelectedEnsembleTeams={setSelectedEnsembleTeams}
+            loadingEnsemblePrediction={loadingEnsemblePrediction}
+            setLoadingEnsemblePrediction={setLoadingEnsemblePrediction}
+            loadingEnsembleTraining={loadingEnsembleTraining}
+            setLoadingEnsembleTraining={setLoadingEnsembleTraining}
+            loadingComparison={loadingComparison}
+            setLoadingComparison={setLoadingComparison}
+            getEnsembleModelStatus={getEnsembleModelStatus}
+            trainEnsembleModels={trainEnsembleModels}
+            makeEnsemblePrediction={makeEnsemblePrediction}
+            comparePredictionMethods={comparePredictionMethods}
+          />
+        );
       default:
         return (
           <div className="space-y-6">
