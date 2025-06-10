@@ -360,6 +360,276 @@ function App() {
     }
   };
 
+  // Prediction Functions
+  const handlePredictionFormChange = (field, value) => {
+    setPredictionForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const predictMatch = async () => {
+    if (!predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setPredicting(true);
+    try {
+      const requestData = {
+        ...predictionForm,
+        config_name: configName
+      };
+      const response = await axios.post(`${API}/predict-match`, requestData);
+      setPredictionResult(response.data);
+    } catch (error) {
+      alert(`❌ Prediction Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setPredicting(false);
+  };
+
+  const predictMatchEnhanced = async () => {
+    if (!predictionForm.home_team || !predictionForm.away_team || !predictionForm.referee_name) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Check Starting XI validation only if XI mode is enabled and teams are selected
+    if (showStartingXI && predictionForm.home_team && predictionForm.away_team) {
+      if (!validateStartingXI(homeStartingXI) || !validateStartingXI(awayStartingXI)) {
+        alert('Please complete Starting XI selection for both teams (11 players each) or disable Starting XI mode');
+        return;
+      }
+    }
+
+    setPredicting(true);
+    try {
+      const requestData = {
+        home_team: predictionForm.home_team,
+        away_team: predictionForm.away_team,
+        referee_name: predictionForm.referee_name,
+        match_date: predictionForm.match_date,
+        config_name: configName,
+        home_starting_xi: (showStartingXI && homeStartingXI) ? homeStartingXI : null,
+        away_starting_xi: (showStartingXI && awayStartingXI) ? awayStartingXI : null,
+        use_time_decay: useTimeDecay,
+        decay_preset: decayPreset
+      };
+      
+      console.log('Enhanced prediction request:', requestData);
+      const response = await axios.post(`${API}/predict-match-enhanced`, requestData);
+      console.log('Enhanced prediction response:', response.data);
+      setPredictionResult(response.data);
+    } catch (error) {
+      console.error('Enhanced prediction error:', error);
+      alert(`❌ Enhanced Prediction Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setPredicting(false);
+  };
+
+  const resetPrediction = () => {
+    setPredictionForm({
+      home_team: '',
+      away_team: '',
+      referee_name: '',
+      match_date: ''
+    });
+    setPredictionResult(null);
+    setHomeStartingXI(null);
+    setAwayStartingXI(null);
+  };
+
+  // ML Functions
+  const trainMLModels = async () => {
+    setTrainingModels(true);
+    try {
+      const response = await axios.post(`${API}/train-ml-models`);
+      setTrainingResults(response.data);
+      await checkMLStatus(); // Refresh status after training
+    } catch (error) {
+      alert(`❌ Training Error: ${error.response?.data?.detail || error.message}`);
+    }
+    setTrainingModels(false);
+  };
+
+  const reloadMLModels = async () => {
+    try {
+      await axios.post(`${API}/ml-models/reload`);
+      await checkMLStatus();
+      alert('✅ Models reloaded successfully!');
+    } catch (error) {
+      alert(`❌ Reload Error: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  // Export Functions
+  const exportPDF = async () => {
+    if (!predictionResult) return;
+    
+    setExportingPDF(true);
+    try {
+      const response = await axios.post(`${API}/export-prediction-pdf`, {
+        home_team: predictionResult.home_team,
+        away_team: predictionResult.away_team,
+        referee_name: predictionResult.referee,
+        match_date: predictionResult.match_date
+      }, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `match_prediction_${predictionResult.home_team}_vs_${predictionResult.away_team}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      alert('✅ PDF exported successfully!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert(`❌ Error exporting PDF: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
+  // Starting XI Functions
+  const fetchTeamPlayers = async (teamName, isHomeTeam = true) => {
+    try {
+      setLoadingPlayers(true);
+      const response = await axios.get(`${API}/teams/${encodeURIComponent(teamName)}/players?formation=${selectedFormation}`);
+      
+      if (response.data.success) {
+        const players = response.data.players || [];
+        const defaultXI = response.data.default_starting_xi;
+        
+        if (isHomeTeam) {
+          setHomeTeamPlayers(players);
+          setHomeStartingXI(defaultXI);
+        } else {
+          setAwayTeamPlayers(players);
+          setAwayStartingXI(defaultXI);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching team players:', error);
+      alert(`Error loading players for ${teamName}: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingPlayers(false);
+    }
+  };
+
+  const handleFormationChange = async (newFormation) => {
+    setSelectedFormation(newFormation);
+    
+    // Regenerate starting XIs for both teams with new formation
+    if (predictionForm.home_team) {
+      await fetchTeamPlayers(predictionForm.home_team, true);
+    }
+    if (predictionForm.away_team) {
+      await fetchTeamPlayers(predictionForm.away_team, false);
+    }
+  };
+
+  const updateStartingXIPlayer = (isHomeTeam, positionId, selectedPlayer) => {
+    const setStartingXI = isHomeTeam ? setHomeStartingXI : setAwayStartingXI;
+    const currentXI = isHomeTeam ? homeStartingXI : awayStartingXI;
+    
+    if (!currentXI) return;
+    
+    const updatedPositions = currentXI.positions.map(pos => {
+      if (pos.position_id === positionId) {
+        return { ...pos, player: selectedPlayer };
+      }
+      return pos;
+    });
+    
+    setStartingXI({
+      ...currentXI,
+      positions: updatedPositions
+    });
+
+    // Clear search term after selection
+    const searchKey = `${isHomeTeam ? 'home' : 'away'}_${positionId}`;
+    setPlayerSearchTerms(prev => ({
+      ...prev,
+      [searchKey]: selectedPlayer ? selectedPlayer.player_name : ''
+    }));
+    setSearchResults(prev => ({
+      ...prev,
+      [searchKey]: []
+    }));
+  };
+
+  // Player search functionality
+  const searchPlayers = (searchTerm, isHomeTeam, positionType, positionId) => {
+    const teamPlayers = isHomeTeam ? homeTeamPlayers : awayTeamPlayers;
+    const currentXI = isHomeTeam ? homeStartingXI : awayStartingXI;
+    const searchKey = `${isHomeTeam ? 'home' : 'away'}_${positionId}`;
+    
+    if (!searchTerm.trim()) {
+      setSearchResults(prev => ({
+        ...prev,
+        [searchKey]: []
+      }));
+      return;
+    }
+
+    const filtered = teamPlayers
+      .filter(player => {
+        // Filter by search term
+        const nameMatch = player.player_name.toLowerCase().includes(searchTerm.toLowerCase());
+        // Prefer players of same position, but allow others
+        const positionMatch = player.position === positionType;
+        // Exclude already selected players
+        const notSelected = !currentXI?.positions.some(pos => pos.player?.player_name === player.player_name);
+        
+        return nameMatch && notSelected;
+      })
+      .sort((a, b) => {
+        // Sort by position match first, then by matches played
+        if (a.position === positionType && b.position !== positionType) return -1;
+        if (b.position === positionType && a.position !== positionType) return 1;
+        return (b.matches_played || 0) - (a.matches_played || 0);
+      })
+      .slice(0, 8); // Limit to 8 results
+
+    setSearchResults(prev => ({
+      ...prev,
+      [searchKey]: filtered
+    }));
+  };
+
+  const handlePlayerSearch = (searchTerm, isHomeTeam, positionType, positionId) => {
+    const searchKey = `${isHomeTeam ? 'home' : 'away'}_${positionId}`;
+    setPlayerSearchTerms(prev => ({
+      ...prev,
+      [searchKey]: searchTerm
+    }));
+    searchPlayers(searchTerm, isHomeTeam, positionType, positionId);
+  };
+
+  const selectPlayerFromSearch = (player, isHomeTeam, positionId) => {
+    updateStartingXIPlayer(isHomeTeam, positionId, player);
+  };
+
+  const validateStartingXI = (startingXI) => {
+    if (!startingXI || !startingXI.positions) return false;
+    return startingXI.positions.filter(pos => pos.player).length === 11;
+  };
+
+  const getButtonTooltip = () => {
+    if (!predictionForm.home_team) return "Select home team";
+    if (!predictionForm.away_team) return "Select away team"; 
+    if (!predictionForm.referee_name) return "Select referee";
+    if (showStartingXI && predictionForm.home_team && predictionForm.away_team) {
+      if (!validateStartingXI(homeStartingXI)) return "Complete home team Starting XI (11 players)";
+      if (!validateStartingXI(awayStartingXI)) return "Complete away team Starting XI (11 players)";
+    }
+    return "";
+  };
+
   // Model Performance API Functions
   const fetchModelPerformance = async (days = 30) => {
     try {
