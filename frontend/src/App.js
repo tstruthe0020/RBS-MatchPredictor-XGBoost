@@ -1130,7 +1130,7 @@ function App() {
             setLoadingRbsConfigs={setLoadingRbsConfigs}
             savingRbsConfig={savingRbsConfig}
             setSavingRbsConfig={setSavingRbsConfig}
-            saveRBSConfig={saveRBSConfig}
+            saveRBSConfig={handleSaveRBSConfig}
             loadRBSConfig={loadRBSConfig}
             deleteRBSConfig={deleteRBSConfig}
             fetchAllRBSConfigs={fetchAllRBSConfigs}
