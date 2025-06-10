@@ -7698,6 +7698,119 @@ async def compare_prediction_methods(request: MatchPredictionRequest):
         print(f"❌ Prediction comparison error: {e}")
         return {"success": False, "error": str(e)}
 
+@api_router.get("/stored-predictions")
+async def get_stored_predictions(limit: int = 100, method: str = None):
+    """Get stored predictions for optimization analysis"""
+    try:
+        query = {}
+        if method:
+            query["prediction_method"] = method
+            
+        predictions = await db.prediction_tracking.find(query).sort("timestamp", -1).limit(limit).to_list(limit)
+        
+        # Convert ObjectId to string for JSON serialization
+        for prediction in predictions:
+            if '_id' in prediction:
+                prediction['_id'] = str(prediction['_id'])
+        
+        return {
+            "success": True,
+            "predictions": predictions,
+            "count": len(predictions),
+            "available_methods": await db.prediction_tracking.distinct("prediction_method")
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/stored-predictions/stats")
+async def get_prediction_storage_stats():
+    """Get statistics about stored predictions"""
+    try:
+        total_predictions = await db.prediction_tracking.count_documents({})
+        
+        # Get counts by method
+        method_pipeline = [
+            {"$group": {"_id": "$prediction_method", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]
+        method_counts = await db.prediction_tracking.aggregate(method_pipeline).to_list(100)
+        
+        # Get recent predictions count (last 7 days)
+        from datetime import datetime, timedelta
+        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        recent_count = await db.prediction_tracking.count_documents({"timestamp": {"$gte": week_ago}})
+        
+        return {
+            "success": True,
+            "total_predictions": total_predictions,
+            "recent_predictions_7_days": recent_count,
+            "method_breakdown": {item["_id"]: item["count"] for item in method_counts},
+            "storage_enabled": True
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/data-summary")
+async def get_data_summary():
+    """Get summary of all stored data for optimization"""
+    try:
+        # Get counts for all collections
+        matches_count = await db.matches.count_documents({})
+        team_stats_count = await db.team_stats.count_documents({})
+        player_stats_count = await db.player_stats.count_documents({})
+        predictions_count = await db.prediction_tracking.count_documents({})
+        rbs_results_count = await db.rbs_results.count_documents({})
+        
+        # Get unique teams and referees
+        unique_teams = await db.matches.distinct("home_team")
+        unique_teams += await db.matches.distinct("away_team")
+        unique_teams = len(set(unique_teams))
+        
+        unique_referees = await db.matches.distinct("referee")
+        unique_referees = len(unique_referees)
+        
+        # Get date range of matches
+        oldest_match = await db.matches.find({}).sort("date", 1).limit(1).to_list(1)
+        newest_match = await db.matches.find({}).sort("date", -1).limit(1).to_list(1)
+        
+        date_range = {
+            "oldest": oldest_match[0]["date"] if oldest_match else None,
+            "newest": newest_match[0]["date"] if newest_match else None
+        }
+        
+        return {
+            "success": True,
+            "data_counts": {
+                "matches": matches_count,
+                "team_stats": team_stats_count, 
+                "player_stats": player_stats_count,
+                "predictions": predictions_count,
+                "rbs_results": rbs_results_count
+            },
+            "unique_entities": {
+                "teams": unique_teams,
+                "referees": unique_referees
+            },
+            "data_range": date_range,
+            "total_documents": matches_count + team_stats_count + player_stats_count + predictions_count + rbs_results_count,
+            "optimization_ready": True
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.delete("/prediction-storage")
+async def clear_prediction_storage():
+    """Clear all stored predictions (for testing/reset purposes)"""
+    try:
+        result = await db.prediction_tracking.delete_many({})
+        return {
+            "success": True,
+            "message": f"Cleared {result.deleted_count} stored predictions",
+            "deleted_count": result.deleted_count
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @api_router.delete("/database/wipe")
 async def wipe_database():
     """Wipe all data from the database"""
