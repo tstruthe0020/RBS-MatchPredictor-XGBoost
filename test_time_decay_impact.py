@@ -124,8 +124,11 @@ def main():
         print("❌ Failed to get time decay presets")
         return
     
-    # Step 2: Test time decay impact
+    # Step 2: Test time decay impact for Arsenal
     test_time_decay_impact("Arsenal")
+    
+    # Step 3: Test time decay impact for Chelsea
+    test_time_decay_impact("Chelsea")
     
     # Uncomment to test multiple teams
     # test_multiple_teams()
