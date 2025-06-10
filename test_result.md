@@ -282,11 +282,11 @@ frontend:
         comment: "Found a critical issue with the configuration creation and persistence functionality. The UI components for creating and editing configurations work correctly, but the API calls to save configurations are failing with 404 errors. The console shows errors like 'Cannot POST /[object%20Object]/api/prediction-config'. This is because the savePredictionConfig function in analysis-components.js expects an apiEndpoint parameter, but when it's called in the PredictionConfig.js component, it's only being passed the config name and config object, not the API endpoint. As a result, configurations cannot be saved or loaded, and they don't persist between sessions. The same issue affects the RBS Config tab as well."
   - task: "RBS Config Tab Functionality"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "testing"
@@ -297,6 +297,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified that the 422 errors in the RBS Config tab have been resolved. Successfully navigated to the RBS Config tab, clicked the Edit button to enable editing mode, modified the Yellow Cards Weight field from 0.3 to 0.35 and the Red Cards Weight field from 0.5 to 0.55, and clicked the Save RBS Configuration button. The API request to /api/rbs-config was successful with a 200 status code. No 422 errors were detected in the console or network requests. The form validation is working correctly, ensuring that at least one weight is positive as required by the backend validation."
+      - working: false
+        agent: "testing"
+        comment: "Found a critical issue with the RBS configuration creation and persistence functionality. The UI components for creating and editing RBS configurations work correctly, but the API calls to save configurations are failing with 404 errors. The console shows errors like 'Cannot POST /[object%20Object]/api/rbs-config'. This is because the saveRBSConfig function in analysis-components.js expects an apiEndpoint parameter, but when it's called in the RBSConfig.js component, it's only being passed the config name and config object, not the API endpoint. As a result, RBS configurations cannot be saved or loaded, and they don't persist between sessions. This is the same issue that affects the Prediction Config tab."
   - task: "Formula Optimization Tab Functionality"
     implemented: true
     working: true
