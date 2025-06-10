@@ -2877,10 +2877,17 @@ class MLMatchPredictor:
             total_weights = 0
             current_date = datetime.now().strftime("%Y-%m-%d")
             
+            # Get all matches to lookup dates by match_id
+            all_matches = await db.matches.find({}).to_list(10000)
+            match_date_lookup = {m['match_id']: m.get('match_date') for m in all_matches}
+            
             for stat in team_stats:
                 # Get match date for time decay calculation
-                match_date = stat.get('match_date') or stat.get('date')
+                match_id = stat.get('match_id')
+                match_date = match_date_lookup.get(match_id) if match_id else None
+                
                 if not match_date:
+                    print(f"  ⚠️ Skipping stat for match {match_id} - no match date found")
                     continue
                 
                 # Calculate time weight
