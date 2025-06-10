@@ -200,7 +200,9 @@ function App() {
         fetchDecayPresets(),
         checkMLStatus(),
         fetchDatabaseStats(),
-        checkRBSStatus()
+        checkRBSStatus(),
+        fetchAllPredictionConfigs(),
+        fetchAllRBSConfigs()
       ]);
     } catch (error) {
       console.error('Error fetching initial data:', error);
