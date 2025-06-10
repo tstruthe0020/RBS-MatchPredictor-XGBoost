@@ -719,7 +719,9 @@ function App() {
       const requestData = {
         home_team: homeTeam,
         away_team: awayTeam,
-        referee_name: referee
+        referee_name: referee,
+        use_time_decay: useTimeDecay,
+        decay_preset: decayPreset
       };
       const response = await axios.post(`${API}/predict-match-ensemble`, requestData);
       return response.data;
