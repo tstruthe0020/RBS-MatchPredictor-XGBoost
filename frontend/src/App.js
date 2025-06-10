@@ -120,7 +120,6 @@ function App() {
   const [editingRbsConfig, setEditingRbsConfig] = useState(false);
 
   // Formula Optimization states
-  const [optimizationResults, setOptimizationResults] = useState(null);
   const [runningOptimization, setRunningOptimization] = useState(false);
   const [optimizationType, setOptimizationType] = useState('rbs');
 
