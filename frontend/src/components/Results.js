@@ -235,8 +235,8 @@ const Results = ({
                     <div className="stat-card-label">Teams Officiated</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-card-number" style={{color: getRBSScoreColor(detailedRefereeAnalysis.average_rbs_score)}}>
-                      {detailedRefereeAnalysis.average_rbs_score?.toFixed(2) || 'N/A'}
+                    <div className="stat-card-number" style={{color: getRBSScoreColor(detailedRefereeAnalysis.avg_bias_score)}}>
+                      {detailedRefereeAnalysis.avg_bias_score?.toFixed(3) || 'N/A'}
                     </div>
                     <div className="stat-card-label">Avg Bias Score</div>
                   </div>
