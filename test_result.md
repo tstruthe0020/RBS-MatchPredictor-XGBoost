@@ -262,11 +262,11 @@ frontend:
         comment: "Successfully tested the Regression Analysis tab functionality. The tab displays correctly with a clear header 'Regression Analysis' and a description explaining statistical correlations between team performance metrics and match outcomes. The variable selection interface is well-organized into 5 categories: RBS Variables (7), Match Predictor Variables (13), Basic Stats (10), Advanced Stats (9), and Outcome Stats (1). Each category contains the appropriate number of checkboxes for selecting variables. The target variable dropdown is present and contains options including 'points_per_game' and 'match_result'. The Run Analysis button is present and properly disabled when no variables are selected. The UI is responsive and maintains proper spacing and alignment. All elements are correctly styled according to the application's color scheme."
   - task: "Prediction Config Tab Functionality"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "testing"
@@ -277,6 +277,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified that the 422 errors in the Prediction Config tab have been resolved. Successfully navigated to the Prediction Config tab, clicked the Edit button to enable editing mode, modified the Shot-based Weight field from 0.4 to 0.45 and the Historical Weight field from 0.4 to 0.35, and clicked the Save Configuration button. The API request to /api/prediction-config was successful with a 200 status code. No 422 errors were detected in the console or network requests. The form validation is working correctly, ensuring that the xG weights sum to 1.0 as required by the backend validation."
+      - working: false
+        agent: "testing"
+        comment: "Found a critical issue with the configuration creation and persistence functionality. The UI components for creating and editing configurations work correctly, but the API calls to save configurations are failing with 404 errors. The console shows errors like 'Cannot POST /[object%20Object]/api/prediction-config'. This is because the savePredictionConfig function in analysis-components.js expects an apiEndpoint parameter, but when it's called in the PredictionConfig.js component, it's only being passed the config name and config object, not the API endpoint. As a result, configurations cannot be saved or loaded, and they don't persist between sessions. The same issue affects the RBS Config tab as well."
   - task: "RBS Config Tab Functionality"
     implemented: true
     working: true
