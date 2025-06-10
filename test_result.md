@@ -362,15 +362,31 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Conducted comprehensive testing of form validation across all tabs. The Standard Predict button is properly disabled when the form is incomplete. The Enhanced XGBoost button correctly changes text based on Starting XI mode and is disabled when required fields are missing. The Run Analysis button in the Regression Analysis tab is disabled when no variables are selected. The Run AI Optimization button in the Formula Optimization tab is properly enabled only when an optimization type is selected. All forms provide appropriate visual feedback for required fields. Loading states are consistently displayed during API calls with spinner animations. Error messages are clear and user-friendly. The application handles all edge cases gracefully with proper user feedback."
+  - task: "Ensemble Predictions Tab Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Testing the Ensemble Predictions tab functionality."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the Ensemble Predictions tab functionality. The tab displays correctly with a clear header 'Ensemble Prediction System' and a description explaining the advanced prediction system combining multiple machine learning models. The Model Status section is properly implemented and shows the status of all 5 model types (XGBoost, Random Forest, Gradient Boost, Neural Net, Logistic) with checkmarks/X marks for availability. The 'Check Status' button works correctly and displays model weights when available. The Train Ensemble Models section works as expected - clicking the button shows a confirmation dialog, and accepting it displays a loading state with spinner and 'Training Models...' text. The prediction form includes dropdowns for home team, away team, and referee selection. The 'Make Ensemble Prediction' button works correctly, showing loading state and then displaying comprehensive prediction results including win/draw/lose probabilities, goals and xG predictions, confidence metrics, and individual model predictions breakdown. The 'Compare vs XGBoost' button also works correctly, showing a side-by-side comparison of XGBoost and Ensemble predictions with comparison metrics. The UI is responsive and maintains proper styling across different screen sizes. Note that while the ensemble models other than XGBoost are not fully trained in the test environment, the system gracefully handles this by using the available XGBoost model with appropriate weighting."
 
 agent_communication:
   - agent: "testing"
     message: "I've successfully tested the Ensemble Prediction System. The GET /api/ensemble-model-status endpoint correctly returns the status of all ensemble models with a 'success' field. The POST /api/predict-match-ensemble endpoint works correctly and returns ensemble predictions with confidence metrics and model breakdown. The POST /api/compare-prediction-methods endpoint works correctly and compares XGBoost vs Ensemble predictions. The POST /api/train-ensemble-models endpoint is accessible but cannot fully train the models due to insufficient data in the test environment, which is expected behavior. All endpoints are now accessible and return proper responses. I had to fix a field name mismatch ('referee' vs 'referee_name') in the endpoints and add proper NumPy type conversion to ensure all responses are serializable."
+  - agent: "testing"
+    message: "I've successfully tested the Ensemble Predictions tab functionality. The tab displays correctly with all required sections: model status display, training controls, prediction form, and results display. The 'Check Status' button correctly shows the status of all 5 model types with appropriate indicators. The 'Train Ensemble Models' button works as expected, showing confirmation dialog and loading state. The prediction form allows selecting teams and referee, and the 'Make Ensemble Prediction' button correctly triggers predictions and displays comprehensive results. The 'Compare vs XGBoost' button successfully shows side-by-side comparison of methods. The UI is responsive and maintains proper styling across different screen sizes. Note that in the test environment, only the XGBoost model is fully trained, but the system handles this gracefully by using appropriate weighting."
 
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 9
+  test_sequence: 10
   run_ui: false
 
 test_plan:
