@@ -7500,6 +7500,10 @@ async def compare_prediction_methods(request: MatchPredictionRequest):
             request.match_date
         )
         
+        # Convert NumPy types to Python native types
+        xgboost_result = convert_numpy_types(xgboost_result)
+        ensemble_result = convert_numpy_types(ensemble_result)
+        
         # Calculate differences
         if xgboost_result.get('success') and ensemble_result.get('success'):
             differences = {
