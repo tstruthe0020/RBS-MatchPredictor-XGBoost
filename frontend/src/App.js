@@ -142,6 +142,47 @@ function App() {
   const [loadingModelPerformance, setLoadingModelPerformance] = useState(false);
   const [performanceDays, setPerformanceDays] = useState(30);
 
+  // Regression Analysis states
+  const [regressionData, setRegressionData] = useState(null);
+  const [selectedVariables, setSelectedVariables] = useState([]);
+  const [selectedTarget, setSelectedTarget] = useState('');
+  const [loadingRegression, setLoadingRegression] = useState(false);
+
+  // Configuration states
+  const [predictionConfig, setPredictionConfig] = useState({...DEFAULT_PREDICTION_CONFIG});
+  const [allPredictionConfigs, setAllPredictionConfigs] = useState([]);
+  const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  // RBS Configuration states
+  const [rbsConfig, setRbsConfig] = useState({...DEFAULT_RBS_CONFIG});
+  const [rbsConfigName, setRbsConfigName] = useState('');
+  const [allRbsConfigs, setAllRbsConfigs] = useState([]);
+  const [loadingRbsConfigs, setLoadingRbsConfigs] = useState(false);
+  const [savingRbsConfig, setSavingRbsConfig] = useState(false);
+
+  // Formula Optimization states
+  const [optimizationResults, setOptimizationResults] = useState(null);
+  const [loadingOptimization, setLoadingOptimization] = useState(false);
+  const [selectedOptimizationType, setSelectedOptimizationType] = useState('');
+
+  // Results states
+  const [refereeAnalysis, setRefereeAnalysis] = useState(null);
+  const [selectedRefereeForDetails, setSelectedRefereeForDetails] = useState(null);
+  const [detailedRefereeAnalysis, setDetailedRefereeAnalysis] = useState(null);
+  const [enhancedRefereeAnalysis, setEnhancedRefereeAnalysis] = useState(null);
+  const [selectedTeamForRefereeAnalysis, setSelectedTeamForRefereeAnalysis] = useState('');
+  const [loadingRefereeAnalysis, setLoadingRefereeAnalysis] = useState(false);
+  const [loadingDetailedAnalysis, setLoadingDetailedAnalysis] = useState(false);
+  const [loadingEnhancedAnalysis, setLoadingEnhancedAnalysis] = useState(false);
+
+  // System Config states
+  const [reloadingModels, setReloadingModels] = useState(false);
+  const [systemStatus, setSystemStatus] = useState(null);
+  const [loadingSystemStatus, setLoadingSystemStatus] = useState(false);
+  const [defaultDecayPreset, setDefaultDecayPreset] = useState('moderate');
+  const [defaultFormation, setDefaultFormation] = useState('4-4-2');
+
   // Initialize data on component mount
   useEffect(() => {
     fetchInitialData();
