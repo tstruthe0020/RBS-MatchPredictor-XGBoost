@@ -687,6 +687,9 @@ class StartingXIManager:
                 # No decay
                 weight = 1.0
             
+            # DEBUG: Log time decay calculation
+            print(f"⏰ Time Decay: {match_date_str} ({months_diff:.1f}mo ago) → weight: {weight:.3f} (type: {decay_config.decay_type})")
+            
             return max(0.1, min(1.0, weight))  # Clamp between 0.1 and 1.0
             
         except Exception as e:
