@@ -7458,12 +7458,18 @@ async def predict_match_ensemble(request: MatchPredictionRequest):
     try:
         print(f"🤖 Ensemble prediction request: {request.home_team} vs {request.away_team}")
         
+        # Get time decay configuration if enabled
+        decay_config = None
+        if request.use_time_decay:
+            decay_config = time_decay_manager.get_preset(request.decay_preset or "moderate")
+        
         # Make ensemble prediction
         result = await ml_predictor.predict_match_ensemble(
             request.home_team,
             request.away_team,
             request.referee_name,
-            request.match_date
+            request.match_date,
+            decay_config=decay_config
         )
         
         # Convert NumPy types to Python native types
