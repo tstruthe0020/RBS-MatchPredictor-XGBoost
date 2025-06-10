@@ -157,1537 +157,397 @@ def test_database_management_functionality():
         print("❌ Some database management functionality endpoints failed the existence check")
         return False
 
-def test_formations_endpoint():
-    """Test the /api/formations endpoint to ensure it returns available formations"""
-    print("\n=== Testing Formations Endpoint ===")
-    response = requests.get(f"{BASE_URL}/formations")
+def test_rbs_status_endpoint():
+    """Test the /api/rbs-status endpoint to check RBS calculation status"""
+    print("\n=== Testing RBS Status Endpoint ===")
+    response = requests.get(f"{BASE_URL}/rbs-status")
     
     if response.status_code == 200:
         print(f"Status: {response.status_code} OK")
         data = response.json()
         print(f"Success: {data.get('success', False)}")
         
-        formations = data.get('formations', [])
-        print(f"Formations found: {len(formations)}")
+        # Check if RBS is calculated
+        calculated = data.get('calculated', False)
+        print(f"RBS Calculated: {calculated}")
         
-        for formation in formations:
-            print(f"  - {formation.get('name')}: {formation.get('positions_count')} positions")
-            
-        # Verify expected formations are present
-        expected_formations = ["4-4-2", "4-3-3", "3-5-2", "4-5-1", "3-4-3"]
-        found_formations = [f.get('name') for f in formations]
+        # Check other status information
+        if 'referees_analyzed' in data:
+            print(f"Referees Analyzed: {data['referees_analyzed']}")
+        if 'teams_covered' in data:
+            print(f"Teams Covered: {data['teams_covered']}")
+        if 'total_calculations' in data:
+            print(f"Total Calculations: {data['total_calculations']}")
+        if 'last_calculated' in data:
+            print(f"Last Calculated: {data['last_calculated']}")
         
-        missing_formations = [f for f in expected_formations if f not in found_formations]
-        if missing_formations:
-            print(f"❌ Missing expected formations: {', '.join(missing_formations)}")
-        else:
-            print("✅ All expected formations are present")
-            
         return data
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
         return None
 
-def test_time_decay_presets_endpoint():
-    """Test the /api/time-decay/presets endpoint to ensure it returns decay presets"""
-    print("\n=== Testing Time Decay Presets Endpoint ===")
-    response = requests.get(f"{BASE_URL}/time-decay/presets")
+def test_calculate_rbs_endpoint():
+    """Test the /api/calculate-rbs endpoint to trigger RBS calculations"""
+    print("\n=== Testing Calculate RBS Endpoint ===")
+    
+    # This is a POST request with no body required
+    response = requests.post(f"{BASE_URL}/calculate-rbs")
     
     if response.status_code == 200:
         print(f"Status: {response.status_code} OK")
         data = response.json()
         print(f"Success: {data.get('success', False)}")
         
-        presets = data.get('presets', [])
-        print(f"Presets found: {len(presets)}")
+        # Check calculation results
+        if 'calculations_performed' in data:
+            print(f"Calculations Performed: {data['calculations_performed']}")
+        if 'teams_analyzed' in data:
+            print(f"Teams Analyzed: {data['teams_analyzed']}")
+        if 'referees_analyzed' in data:
+            print(f"Referees Analyzed: {data['referees_analyzed']}")
+        if 'calculation_time' in data:
+            print(f"Calculation Time: {data['calculation_time']} seconds")
         
-        for preset in presets:
-            print(f"  - {preset.get('preset_name')}: {preset.get('decay_type')} decay")
-            print(f"    Description: {preset.get('description')}")
-            
-        # Verify expected presets are present
-        expected_presets = ["aggressive", "moderate", "conservative", "linear", "none"]
-        found_presets = [p.get('preset_name') for p in presets]
-        
-        missing_presets = [p for p in expected_presets if p not in found_presets]
-        if missing_presets:
-            print(f"❌ Missing expected presets: {', '.join(missing_presets)}")
-        else:
-            print("✅ All expected presets are present")
-            
         return data
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
         return None
 
-def test_team_players_endpoint(team_name="Arsenal"):
-    """Test the /api/teams/{team_name}/players endpoint to get players for a team"""
-    print(f"\n=== Testing Team Players Endpoint for {team_name} ===")
-    response = requests.get(f"{BASE_URL}/teams/{team_name}/players")
+def test_referee_analysis_list_endpoint():
+    """Test the /api/referee-analysis endpoint to get list of referees with RBS scores"""
+    print("\n=== Testing Referee Analysis List Endpoint ===")
+    response = requests.get(f"{BASE_URL}/referee-analysis")
     
     if response.status_code == 200:
         print(f"Status: {response.status_code} OK")
         data = response.json()
         print(f"Success: {data.get('success', False)}")
-        print(f"Team: {data.get('team_name')}")
         
-        players = data.get('players', [])
-        print(f"Players found: {len(players)}")
+        # Check referees list
+        referees = data.get('referees', [])
+        print(f"Referees Found: {len(referees)}")
         
-        if players:
-            print("Sample players:")
-            for player in players[:5]:
-                print(f"  - {player.get('player_name')} ({player.get('position')}): {player.get('matches_played')} matches")
-            if len(players) > 5:
+        if referees:
+            print("\nSample Referees:")
+            for referee in referees[:5]:  # Show first 5 referees
+                print(f"\n  - Name: {referee.get('name')}")
+                print(f"    Matches: {referee.get('matches')}")
+                print(f"    Teams: {referee.get('teams')}")
+                print(f"    Avg Bias Score: {referee.get('avg_bias_score')}")
+                print(f"    Confidence: {referee.get('confidence')}")
+            
+            if len(referees) > 5:
                 print("  ...")
-                
-            # Check for position distribution
-            positions = {}
-            for player in players:
-                pos = player.get('position')
-                positions[pos] = positions.get(pos, 0) + 1
-                
-            print("\nPosition distribution:")
-            for pos, count in positions.items():
-                print(f"  - {pos}: {count} players")
-                
-            # Check for default starting XI
-            default_xi = data.get('default_starting_xi')
-            if default_xi:
-                print(f"\nDefault Starting XI (Formation: {default_xi.get('formation')})")
-                positions = default_xi.get('positions', [])
-                for position in positions:
-                    player = position.get('player')
-                    if player:
-                        print(f"  - {position.get('position_id')} ({position.get('position_type')}): {player.get('player_name')}")
-                    else:
-                        print(f"  - {position.get('position_id')} ({position.get('position_type')}): None")
+            
+            # Check for null/undefined RBS scores
+            null_rbs_scores = [ref for ref in referees if ref.get('avg_bias_score') is None]
+            if null_rbs_scores:
+                print(f"\n❌ Found {len(null_rbs_scores)} referees with null RBS scores")
+                for ref in null_rbs_scores[:3]:  # Show first 3 with null scores
+                    print(f"  - {ref.get('name')}")
+                if len(null_rbs_scores) > 3:
+                    print("  ...")
             else:
-                print("\n❌ No default starting XI provided")
-                
-            # Check for available formations
-            formations = data.get('available_formations', [])
-            print(f"\nAvailable formations: {', '.join(formations)}")
+                print("\n✅ All referees have numerical RBS scores")
             
-            return data
-        else:
-            print("❌ No players found for this team")
-            return data
+            # Verify required fields
+            required_fields = ['name', 'matches', 'teams', 'avg_bias_score', 'confidence']
+            missing_fields = []
+            
+            for field in required_fields:
+                if any(field not in ref or ref[field] is None for ref in referees):
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"\n❌ Missing required fields in some referee records: {', '.join(missing_fields)}")
+            else:
+                print("\n✅ All required fields are present in referee records")
+        
+        return data
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
         return None
 
-def test_predict_match_enhanced_endpoint():
-    """Test the /api/predict-match-enhanced endpoint with basic parameters"""
-    print("\n=== Testing Enhanced Match Prediction Endpoint ===")
+def test_referee_analysis_detail_endpoint(referee_name="Michael Oliver"):
+    """Test the /api/referee-analysis/{referee_name} endpoint to get detailed analysis for a specific referee"""
+    print(f"\n=== Testing Referee Analysis Detail Endpoint for {referee_name} ===")
     
-    # First, get teams and referees
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200:
-        print(f"❌ Failed to get teams: {teams_response.status_code}")
-        return False
+    # URL encode the referee name
+    import urllib.parse
+    encoded_name = urllib.parse.quote(referee_name)
     
-    teams = teams_response.json().get('teams', [])
-    if len(teams) < 2:
-        print("❌ Not enough teams for match prediction")
-        return False
-    
-    referees_response = requests.get(f"{BASE_URL}/referees")
-    if referees_response.status_code != 200:
-        print(f"❌ Failed to get referees: {referees_response.status_code}")
-        return False
-    
-    referees = referees_response.json().get('referees', [])
-    if not referees:
-        print("❌ No referees found for match prediction")
-        return False
-    
-    # Select teams and referee for testing
-    home_team = teams[0]
-    away_team = teams[1]
-    referee = referees[0]
-    
-    print(f"Testing enhanced prediction for {home_team} vs {away_team} with referee {referee}")
-    
-    # Basic request without starting XI or time decay customization
-    basic_request = {
-        "home_team": home_team,
-        "away_team": away_team,
-        "referee_name": referee
-    }
-    
-    response = requests.post(f"{BASE_URL}/predict-match-enhanced", json=basic_request)
+    response = requests.get(f"{BASE_URL}/referee-analysis/{encoded_name}")
     
     if response.status_code == 200:
         print(f"Status: {response.status_code} OK")
         data = response.json()
         print(f"Success: {data.get('success', False)}")
         
-        if data.get('success'):
-            print(f"Home Team: {data.get('home_team')}")
-            print(f"Away Team: {data.get('away_team')}")
-            print(f"Referee: {data.get('referee')}")
-            print(f"Predicted Home Goals: {data.get('predicted_home_goals')}")
-            print(f"Predicted Away Goals: {data.get('predicted_away_goals')}")
-            print(f"Home xG: {data.get('home_xg')}")
-            print(f"Away xG: {data.get('away_xg')}")
+        # Check basic referee info
+        print(f"Referee Name: {data.get('referee_name')}")
+        print(f"Total Matches: {data.get('total_matches')}")
+        print(f"Teams Officiated: {data.get('teams_officiated')}")
+        print(f"Average Bias Score: {data.get('avg_bias_score')}")
+        
+        # Check RBS calculations
+        rbs_calculations = data.get('rbs_calculations', [])
+        if isinstance(rbs_calculations, list):
+            print(f"\nRBS Calculations: {len(rbs_calculations)}")
             
-            # Check for probability fields
-            print(f"Home Win Probability: {data.get('home_win_probability')}%")
-            print(f"Draw Probability: {data.get('draw_probability')}%")
-            print(f"Away Win Probability: {data.get('away_win_probability')}%")
+            if rbs_calculations:
+                print("\nSample Team RBS Scores:")
+                for calc in rbs_calculations[:3]:  # Show first 3 calculations
+                    print(f"  - Team: {calc.get('team_name')}")
+                    print(f"    RBS Score: {calc.get('rbs_score')}")
+                    print(f"    Confidence: {calc.get('confidence_level')}")
+                    print(f"    Matches with Referee: {calc.get('matches_with_ref')}")
+                
+                if len(rbs_calculations) > 3:
+                    print("  ...")
+        else:
+            print(f"\nRBS Calculations: {rbs_calculations}")
+        
+        # Check match outcomes
+        match_outcomes = data.get('match_outcomes', {})
+        if match_outcomes:
+            print("\nMatch Outcomes:")
+            print(f"  Home Wins: {match_outcomes.get('home_wins')}")
+            print(f"  Draws: {match_outcomes.get('draws')}")
+            print(f"  Away Wins: {match_outcomes.get('away_wins')}")
+            print(f"  Home Win %: {match_outcomes.get('home_win_percentage')}%")
+        
+        # Check cards and fouls
+        cards_and_fouls = data.get('cards_and_fouls', {})
+        if cards_and_fouls:
+            print("\nCards and Fouls:")
+            print(f"  Avg Yellow Cards: {cards_and_fouls.get('avg_yellow_cards')}")
+            print(f"  Avg Red Cards: {cards_and_fouls.get('avg_red_cards')}")
+            print(f"  Avg Fouls: {cards_and_fouls.get('avg_fouls')}")
+        
+        # Check bias analysis
+        bias_analysis = data.get('bias_analysis', {})
+        if bias_analysis:
+            print("\nBias Analysis:")
             
-            # Check prediction breakdown
-            breakdown = data.get('prediction_breakdown', {})
-            print("\nPrediction Breakdown:")
-            for key, value in list(breakdown.items())[:5]:
-                print(f"  - {key}: {value}")
-            if len(breakdown) > 5:
+            most_biased = bias_analysis.get('most_biased_teams', [])
+            if most_biased:
+                print("  Most Biased Teams:")
+                for team in most_biased[:3]:
+                    print(f"    - {team.get('team')}: {team.get('rbs_score')}")
+            
+            least_biased = bias_analysis.get('least_biased_teams', [])
+            if least_biased:
+                print("  Least Biased Teams:")
+                for team in least_biased[:3]:
+                    print(f"    - {team.get('team')}: {team.get('rbs_score')}")
+        
+        # Check team RBS details
+        team_rbs_details = data.get('team_rbs_details', [])
+        if isinstance(team_rbs_details, list):
+            print(f"\nTeam RBS Details: {len(team_rbs_details)} teams")
+            
+            for team_detail in team_rbs_details[:2]:  # Show first 2 team details
+                print(f"\n  Team: {team_detail.get('team_name')}")
+                print(f"  RBS Score: {team_detail.get('rbs_score')}")
+                
+                # Check stat differentials
+                stat_diffs = team_detail.get('stat_differentials', {})
+                if stat_diffs:
+                    print("  Stat Differentials:")
+                    for stat, diff in stat_diffs.items():
+                        print(f"    - {stat}: {diff}")
+            
+            if len(team_rbs_details) > 2:
                 print("  ...")
+        elif isinstance(team_rbs_details, dict):
+            print(f"\nTeam RBS Details: {len(team_rbs_details.keys())} teams")
+            
+            for i, (team_name, team_detail) in enumerate(team_rbs_details.items()):
+                if i >= 2:  # Only show first 2 team details
+                    break
+                    
+                print(f"\n  Team: {team_name}")
+                print(f"  RBS Score: {team_detail.get('rbs_score')}")
                 
-            # Check for starting XI and time decay info in breakdown
-            if 'starting_xi_impact' in breakdown:
-                print("\nStarting XI Impact:")
-                xi_impact = breakdown.get('starting_xi_impact', {})
-                for key, value in xi_impact.items():
-                    print(f"  - {key}: {value}")
-                    
-            if 'time_decay_info' in breakdown:
-                print("\nTime Decay Info:")
-                decay_info = breakdown.get('time_decay_info', {})
-                for key, value in decay_info.items():
-                    print(f"  - {key}: {value}")
-                    
-            return data
+                # Check stat differentials
+                stat_diffs = team_detail.get('stat_differentials', {})
+                if stat_diffs:
+                    print("  Stat Differentials:")
+                    for stat, diff in stat_diffs.items():
+                        print(f"    - {stat}: {diff}")
+            
+            if len(team_rbs_details) > 2:
+                print("  ...")
         else:
-            print(f"Prediction failed: {data.get('error', 'Unknown error')}")
-            return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_predict_match_enhanced_with_starting_xi():
-    """Test the /api/predict-match-enhanced endpoint with custom starting XI"""
-    print("\n=== Testing Enhanced Match Prediction with Starting XI ===")
-    
-    # First, get teams and referees
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200:
-        print(f"❌ Failed to get teams: {teams_response.status_code}")
-        return False
-    
-    teams = teams_response.json().get('teams', [])
-    if len(teams) < 2:
-        print("❌ Not enough teams for match prediction")
-        return False
-    
-    referees_response = requests.get(f"{BASE_URL}/referees")
-    if referees_response.status_code != 200:
-        print(f"❌ Failed to get referees: {referees_response.status_code}")
-        return False
-    
-    referees = referees_response.json().get('referees', [])
-    if not referees:
-        print("❌ No referees found for match prediction")
-        return False
-    
-    # Select teams and referee for testing
-    home_team = teams[0]
-    away_team = teams[1]
-    referee = referees[0]
-    
-    # Get players for home team to create custom starting XI
-    home_players_response = requests.get(f"{BASE_URL}/teams/{home_team}/players")
-    if home_players_response.status_code != 200 or not home_players_response.json().get('success'):
-        print(f"❌ Failed to get players for {home_team}")
-        return False
-    
-    home_players_data = home_players_response.json()
-    home_players = home_players_data.get('players', [])
-    home_default_xi = home_players_data.get('default_starting_xi')
-    
-    if not home_players or not home_default_xi:
-        print(f"❌ No players or default XI found for {home_team}")
-        return False
-    
-    # Get players for away team to create custom starting XI
-    away_players_response = requests.get(f"{BASE_URL}/teams/{away_team}/players")
-    if away_players_response.status_code != 200 or not away_players_response.json().get('success'):
-        print(f"❌ Failed to get players for {away_team}")
-        return False
-    
-    away_players_data = away_players_response.json()
-    away_players = away_players_data.get('players', [])
-    away_default_xi = away_players_data.get('default_starting_xi')
-    
-    if not away_players or not away_default_xi:
-        print(f"❌ No players or default XI found for {away_team}")
-        return False
-    
-    print(f"Testing enhanced prediction with starting XI for {home_team} vs {away_team} with referee {referee}")
-    
-    # Create request with custom starting XI (using default XI from API)
-    request_with_xi = {
-        "home_team": home_team,
-        "away_team": away_team,
-        "referee_name": referee,
-        "home_starting_xi": home_default_xi,
-        "away_starting_xi": away_default_xi,
-        "use_time_decay": True,
-        "decay_preset": "aggressive"
-    }
-    
-    response = requests.post(f"{BASE_URL}/predict-match-enhanced", json=request_with_xi)
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
+            print(f"\nTeam RBS Details: {team_rbs_details}")
         
-        if data.get('success'):
-            print(f"Home Team: {data.get('home_team')}")
-            print(f"Away Team: {data.get('away_team')}")
-            print(f"Referee: {data.get('referee')}")
-            print(f"Predicted Home Goals: {data.get('predicted_home_goals')}")
-            print(f"Predicted Away Goals: {data.get('predicted_away_goals')}")
-            print(f"Home xG: {data.get('home_xg')}")
-            print(f"Away xG: {data.get('away_xg')}")
-            
-            # Check for probability fields
-            print(f"Home Win Probability: {data.get('home_win_probability')}%")
-            print(f"Draw Probability: {data.get('draw_probability')}%")
-            print(f"Away Win Probability: {data.get('away_win_probability')}%")
-            
-            # Check prediction breakdown
-            breakdown = data.get('prediction_breakdown', {})
-            
-            # Check for starting XI and time decay info in breakdown
-            if 'starting_xi_impact' in breakdown:
-                print("\nStarting XI Impact:")
-                xi_impact = breakdown.get('starting_xi_impact', {})
-                for key, value in xi_impact.items():
-                    print(f"  - {key}: {value}")
-                    
-            if 'time_decay_info' in breakdown:
-                print("\nTime Decay Info:")
-                decay_info = breakdown.get('time_decay_info', {})
-                for key, value in decay_info.items():
-                    print(f"  - {key}: {value}")
-                    
-            return data
+        # Verify required sections
+        required_sections = [
+            'referee_name', 'total_matches', 'teams_officiated', 
+            'avg_bias_score', 'rbs_calculations', 'match_outcomes', 
+            'cards_and_fouls', 'bias_analysis', 'team_rbs_details'
+        ]
+        
+        missing_sections = [section for section in required_sections if section not in data or data[section] is None]
+        
+        if missing_sections:
+            print(f"\n❌ Missing required sections: {', '.join(missing_sections)}")
         else:
-            print(f"Prediction failed: {data.get('error', 'Unknown error')}")
-            return data
+            print("\n✅ All required sections are present")
+        
+        return data
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
         return None
 
-def test_starting_xi_and_time_decay_functionality():
-    """Test all Starting XI and time decay functionality"""
-    print("\n\n========== TESTING STARTING XI AND TIME DECAY FUNCTIONALITY ==========\n")
+def test_referee_analysis_error_handling():
+    """Test error handling for non-existent referee name"""
+    print("\n=== Testing Referee Analysis Error Handling ===")
     
-    # Test formations endpoint
-    print("\nStep 1: Testing formations endpoint")
-    formations_data = test_formations_endpoint()
+    non_existent_referee = "NonExistentReferee"
+    response = requests.get(f"{BASE_URL}/referee-analysis/{non_existent_referee}")
     
-    if not formations_data or not formations_data.get('success'):
-        print("❌ Formations endpoint test failed")
-    else:
-        print("✅ Formations endpoint test passed")
+    print(f"Status: {response.status_code}")
     
-    # Test time decay presets endpoint
-    print("\nStep 2: Testing time decay presets endpoint")
-    presets_data = test_time_decay_presets_endpoint()
-    
-    if not presets_data or not presets_data.get('success'):
-        print("❌ Time decay presets endpoint test failed")
-    else:
-        print("✅ Time decay presets endpoint test passed")
-    
-    # Test team players endpoint
-    print("\nStep 3: Testing team players endpoint")
-    # Get a team name first
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200:
-        print("❌ Failed to get teams for testing")
-        print("Note: This is expected if no teams/players in database")
-        team_name = "Arsenal"  # Fallback
-    else:
-        teams = teams_response.json().get('teams', [])
-        if not teams:
-            print("❌ No teams found in the database")
-            print("Note: This is expected if no teams/players in database")
-            team_name = "Arsenal"  # Fallback
+    if response.status_code == 404:
+        print("✅ Proper 404 error returned for non-existent referee")
+    elif response.status_code == 400:
+        print("✅ Proper 400 error returned for non-existent referee")
+    elif response.status_code == 200:
+        data = response.json()
+        if not data.get('success', False):
+            print("✅ Success: false returned for non-existent referee")
+            print(f"Error message: {data.get('error', 'No error message')}")
         else:
-            team_name = teams[0]
-    
-    players_data = test_team_players_endpoint(team_name)
-    
-    if not players_data:
-        print("❌ Team players endpoint test failed")
-        print("Note: This is expected if no teams/players in database")
+            print("❌ Unexpected success response for non-existent referee")
     else:
-        print("✅ Team players endpoint test passed")
+        print(f"❌ Unexpected status code: {response.status_code}")
+        print(response.text)
     
-    # Test enhanced match prediction endpoint
-    print("\nStep 4: Testing enhanced match prediction endpoint")
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200 or not teams_response.json().get('teams'):
-        print("❌ No teams available for match prediction testing")
-        print("Note: This is expected if no teams/players in database")
-        print("✓ Enhanced match prediction endpoint exists but cannot be fully tested without data")
-    else:
-        prediction_data = test_predict_match_enhanced_endpoint()
-        if not prediction_data or not prediction_data.get('success'):
-            print("❌ Enhanced match prediction endpoint test failed")
-        else:
-            print("✅ Enhanced match prediction endpoint test passed")
+    return response
+
+def test_referee_bias_functionality():
+    """Test all Referee Bias Score (RBS) functionality"""
+    print("\n\n========== TESTING REFEREE BIAS SCORE (RBS) FUNCTIONALITY ==========\n")
     
-    # Test enhanced match prediction with starting XI
-    print("\nStep 5: Testing enhanced match prediction with starting XI")
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200 or not teams_response.json().get('teams'):
-        print("❌ No teams available for match prediction with starting XI testing")
-        print("Note: This is expected if no teams/players in database")
-        print("✓ Enhanced match prediction with starting XI endpoint exists but cannot be fully tested without data")
+    # Step 1: Check RBS Status
+    print("\nStep 1: Testing RBS Status")
+    status_data = test_rbs_status_endpoint()
+    
+    if not status_data:
+        print("❌ RBS Status endpoint test failed")
+    elif not status_data.get('success', False):
+        print("❌ RBS Status endpoint returned success: false")
     else:
-        prediction_with_xi_data = test_predict_match_enhanced_with_starting_xi()
-        if not prediction_with_xi_data or not prediction_with_xi_data.get('success'):
-            print("❌ Enhanced match prediction with starting XI test failed")
-        else:
-            print("✅ Enhanced match prediction with starting XI test passed")
+        print("✅ RBS Status endpoint test passed")
+    
+    # Step 2: Calculate RBS
+    print("\nStep 2: Testing Calculate RBS")
+    calc_data = test_calculate_rbs_endpoint()
+    
+    if not calc_data:
+        print("❌ Calculate RBS endpoint test failed")
+    elif not calc_data.get('success', False):
+        print("❌ Calculate RBS endpoint returned success: false")
+    else:
+        print("✅ Calculate RBS endpoint test passed")
+    
+    # Step 3: Get Referee Analysis List
+    print("\nStep 3: Testing Referee Analysis List")
+    list_data = test_referee_analysis_list_endpoint()
+    
+    if not list_data:
+        print("❌ Referee Analysis List endpoint test failed")
+    elif not list_data.get('success', False):
+        print("❌ Referee Analysis List endpoint returned success: false")
+    else:
+        print("✅ Referee Analysis List endpoint test passed")
+    
+    # Step 4: Get Detailed Referee Analysis for Michael Oliver
+    print("\nStep 4: Testing Detailed Referee Analysis for Michael Oliver")
+    detail_data_oliver = test_referee_analysis_detail_endpoint("Michael Oliver")
+    
+    if not detail_data_oliver:
+        print("❌ Detailed Referee Analysis endpoint test failed for Michael Oliver")
+    elif not detail_data_oliver.get('success', False):
+        print("❌ Detailed Referee Analysis endpoint returned success: false for Michael Oliver")
+    else:
+        print("✅ Detailed Referee Analysis endpoint test passed for Michael Oliver")
+    
+    # Step 5: Get Detailed Referee Analysis for Andrew Kitchen
+    print("\nStep 5: Testing Detailed Referee Analysis for Andrew Kitchen")
+    detail_data_kitchen = test_referee_analysis_detail_endpoint("Andrew Kitchen")
+    
+    if not detail_data_kitchen:
+        print("❌ Detailed Referee Analysis endpoint test failed for Andrew Kitchen")
+    elif not detail_data_kitchen.get('success', False):
+        print("❌ Detailed Referee Analysis endpoint returned success: false for Andrew Kitchen")
+    else:
+        print("✅ Detailed Referee Analysis endpoint test passed for Andrew Kitchen")
+    
+    # Step 6: Test Error Handling
+    print("\nStep 6: Testing Error Handling for Non-existent Referee")
+    error_response = test_referee_analysis_error_handling()
     
     # Final summary
-    print("\n========== STARTING XI AND TIME DECAY FUNCTIONALITY TEST SUMMARY ==========")
+    print("\n========== REFEREE BIAS SCORE (RBS) FUNCTIONALITY TEST SUMMARY ==========")
     
-    # Check if the endpoints exist even if they can't be fully tested
+    # Check if all endpoints exist and work properly
     endpoint_check_results = []
     
-    # Check formations endpoint
-    formations_response = requests.get(f"{BASE_URL}/formations")
-    endpoint_check_results.append(formations_response.status_code == 200)
+    # Check RBS Status endpoint
+    status_response = requests.get(f"{BASE_URL}/rbs-status")
+    endpoint_check_results.append(status_response.status_code == 200)
     
-    # Check time decay presets endpoint
-    presets_response = requests.get(f"{BASE_URL}/time-decay/presets")
-    endpoint_check_results.append(presets_response.status_code == 200)
+    # Check Calculate RBS endpoint
+    calc_response = requests.post(f"{BASE_URL}/calculate-rbs")
+    endpoint_check_results.append(calc_response.status_code == 200)
     
-    # Check team players endpoint
-    players_response = requests.get(f"{BASE_URL}/teams/{team_name}/players")
-    endpoint_check_results.append(players_response.status_code == 200)
+    # Check Referee Analysis List endpoint
+    list_response = requests.get(f"{BASE_URL}/referee-analysis")
+    endpoint_check_results.append(list_response.status_code == 200)
     
-    # Check enhanced match prediction endpoint
-    # Just check if the endpoint exists by sending a minimal request
-    minimal_request = {"home_team": "Team A", "away_team": "Team B", "referee_name": "Referee"}
-    prediction_response = requests.post(f"{BASE_URL}/predict-match-enhanced", json=minimal_request)
-    # We expect either 200 (success) or 404/400 (team not found) but not 500 (server error)
-    endpoint_check_results.append(prediction_response.status_code != 500 and prediction_response.status_code != 404)
+    # Check Detailed Referee Analysis endpoint
+    detail_response = requests.get(f"{BASE_URL}/referee-analysis/Michael%20Oliver")
+    endpoint_check_results.append(detail_response.status_code == 200)
     
     if all(endpoint_check_results):
-        print("✅ All Starting XI and time decay functionality endpoints exist and are accessible!")
-        print("Note: Some endpoints could not be fully tested due to missing data, but they exist and respond.")
-        return True
-    else:
-        print("❌ Some Starting XI and time decay functionality endpoints failed the existence check")
-        return False
-
-def test_pdf_export_endpoint():
-    """Test the PDF export endpoint for match predictions"""
-    print("\n\n========== TESTING PDF EXPORT ENDPOINT ==========\n")
-    
-    # Step 1: Get teams and referees from the system
-    print("Step 1: Getting teams and referees from the system")
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200:
-        print(f"❌ Failed to get teams: {teams_response.status_code}")
-        return False
-    
-    teams = teams_response.json().get('teams', [])
-    if len(teams) < 2:
-        print("❌ Not enough teams for match prediction")
-        return False
-    
-    print(f"Found {len(teams)} teams: {', '.join(teams[:5])}{'...' if len(teams) > 5 else ''}")
-    
-    referees_response = requests.get(f"{BASE_URL}/referees")
-    if referees_response.status_code != 200:
-        print(f"❌ Failed to get referees: {referees_response.status_code}")
-        return False
-    
-    referees = referees_response.json().get('referees', [])
-    if not referees:
-        print("❌ No referees found for match prediction")
-        return False
-    
-    print(f"Found {len(referees)} referees: {', '.join(referees[:5])}{'...' if len(referees) > 5 else ''}")
-    
-    # Step 2: Test PDF export with actual team names and referee
-    print("\nStep 2: Testing PDF export with actual team names and referee")
-    home_team = teams[0]
-    away_team = teams[1]
-    referee = referees[0]
-    
-    print(f"Testing PDF export for {home_team} vs {away_team} with referee {referee}")
-    
-    request_data = {
-        "home_team": home_team,
-        "away_team": away_team,
-        "referee_name": referee
-    }
-    
-    response = requests.post(f"{BASE_URL}/export-prediction-pdf", json=request_data)
-    
-    if response.status_code != 200:
-        print(f"❌ PDF export request failed with status code {response.status_code}")
-        print(response.text)
-        return False
-    
-    # Check if the response is a PDF file
-    content_type = response.headers.get('Content-Type')
-    if content_type != 'application/pdf':
-        print(f"❌ Response is not a PDF file. Content-Type: {content_type}")
-        return False
-    
-    print("✅ PDF export request successful!")
-    print(f"Content-Type: {content_type}")
-    print(f"Content-Disposition: {response.headers.get('Content-Disposition')}")
-    print(f"PDF size: {len(response.content)} bytes")
-    
-    # Step 3: Verify PDF content
-    print("\nStep 3: Verifying PDF content")
-    
-    # Save PDF to a temporary file
-    pdf_content = response.content
-    pdf_file = io.BytesIO(pdf_content)
-    
-    try:
-        # Parse PDF content
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        num_pages = len(pdf_reader.pages)
-        print(f"PDF has {num_pages} pages")
+        print("✅ All RBS functionality endpoints exist and are accessible!")
         
-        # Extract text from the first page to verify content
-        first_page_text = pdf_reader.pages[0].extract_text()
-        
-        # Check for required sections in the PDF
-        required_sections = [
-            "Football Match Prediction Report",
-            "Match Information",
-            "Prediction Summary",
-            "Detailed Model Analysis",
-            "Poisson Distribution Analysis"
-        ]
-        
-        missing_sections = []
-        for section in required_sections:
-            if section not in first_page_text:
-                missing_sections.append(section)
-        
-        if missing_sections:
-            print(f"❌ Missing sections in PDF: {', '.join(missing_sections)}")
-        else:
-            print("✅ All required sections are present in the PDF")
-        
-        # Check for team names in the PDF
-        if home_team not in first_page_text or away_team not in first_page_text:
-            print("❌ Team names not found in the PDF")
-        else:
-            print(f"✅ Team names ({home_team}, {away_team}) found in the PDF")
-        
-        # Check for referee name in the PDF
-        if referee not in first_page_text:
-            print(f"❌ Referee name ({referee}) not found in the PDF")
-        else:
-            print(f"✅ Referee name ({referee}) found in the PDF")
-        
-        # Check for additional pages with more analysis
-        if num_pages > 1:
-            print(f"✅ PDF contains multiple pages with detailed analysis")
+        # Check for null/undefined RBS scores in referee list
+        if list_data and list_data.get('success', False):
+            referees = list_data.get('referees', [])
+            null_rbs_scores = [ref for ref in referees if ref.get('avg_bias_score') is None]
             
-            # Check content of additional pages
-            additional_sections = []
-            for i in range(1, min(num_pages, 3)):  # Check up to 3 pages
-                page_text = pdf_reader.pages[i].extract_text()
-                if "Head-to-Head Statistics" in page_text:
-                    additional_sections.append("Head-to-Head Statistics")
-                if "Referee Bias Analysis" in page_text:
-                    additional_sections.append("Referee Bias Analysis")
-                if "Model Information" in page_text:
-                    additional_sections.append("Model Information")
-            
-            if additional_sections:
-                print(f"✅ Additional sections found: {', '.join(additional_sections)}")
+            if null_rbs_scores:
+                print(f"❌ Found {len(null_rbs_scores)} referees with null RBS scores")
             else:
-                print("⚠️ No additional analysis sections found in extra pages")
+                print("✅ All referees have numerical RBS scores")
         
-        # Final assessment
-        if not missing_sections and home_team in first_page_text and away_team in first_page_text and referee in first_page_text:
-            print("\n✅ PDF export functionality is working correctly!")
-            return True
-        else:
-            print("\n❌ PDF export functionality has issues")
-            return False
-        
-    except Exception as e:
-        print(f"❌ Error parsing PDF content: {e}")
-        return False
-
-def test_team_performance_stats(team_name="Arsenal"):
-    """Test the team performance endpoint to verify statistics"""
-    print(f"\n=== Testing Team Performance Stats for {team_name} ===")
-    response = requests.get(f"{BASE_URL}/team-performance/{team_name}")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data['success']}")
-        print(f"Team: {data['team_name']}")
-        print(f"Total Matches: {data['total_matches']}")
-        print(f"PPG: {data['ppg']}")
-        
-        # Check home stats
-        home_stats = data.get('home_stats', {})
-        away_stats = data.get('away_stats', {})
-        
-        print("\nHome Stats:")
-        print(f"  Matches: {home_stats.get('matches_count', 0)}")
-        
-        # Check for required statistics
-        required_stats = [
-            'xg_per_shot', 'shots_total', 'shots_on_target', 'goals_per_xg', 
-            'shot_accuracy', 'conversion_rate', 'penalty_conversion_rate',
-            'points', 'goals', 'goals_conceded'
-        ]
-        
-        missing_home_stats = [stat for stat in required_stats if stat not in home_stats or home_stats[stat] == 0]
-        if missing_home_stats:
-            print(f"❌ Missing or zero home stats: {', '.join(missing_home_stats)}")
-        else:
-            print("✅ All required home stats are present and non-zero")
-        
-        # Print key home stats
-        print(f"  xG per shot: {home_stats.get('xg_per_shot', 0)}")
-        print(f"  Shots per game: {home_stats.get('shots_total', 0)}")
-        print(f"  Shot accuracy: {home_stats.get('shot_accuracy', 0)}")
-        print(f"  Conversion rate: {home_stats.get('conversion_rate', 0)}")
-        print(f"  Goals per xG: {home_stats.get('goals_per_xg', 0)}")
-        
-        print("\nAway Stats:")
-        print(f"  Matches: {away_stats.get('matches_count', 0)}")
-        
-        # Check for required statistics in away stats
-        missing_away_stats = [stat for stat in required_stats if stat not in away_stats or away_stats[stat] == 0]
-        if missing_away_stats:
-            print(f"❌ Missing or zero away stats: {', '.join(missing_away_stats)}")
-        else:
-            print("✅ All required away stats are present and non-zero")
-        
-        # Print key away stats
-        print(f"  xG per shot: {away_stats.get('xg_per_shot', 0)}")
-        print(f"  Shots per game: {away_stats.get('shots_total', 0)}")
-        print(f"  Shot accuracy: {away_stats.get('shot_accuracy', 0)}")
-        print(f"  Conversion rate: {away_stats.get('conversion_rate', 0)}")
-        print(f"  Goals per xG: {away_stats.get('goals_per_xg', 0)}")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_enhanced_rbs_analysis(team_name="Arsenal", referee_name="Michael Oliver"):
-    """Test the enhanced RBS analysis endpoint for a specific team and referee"""
-    print(f"\n=== Testing Enhanced RBS Analysis for {team_name} with referee {referee_name} ===")
-    
-    response = requests.get(f"{BASE_URL}/enhanced-rbs-analysis/{team_name}/{referee_name}")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        # Check basic info
-        print(f"Team: {data.get('team_name')}")
-        print(f"Referee: {data.get('referee_name')}")
-        
-        # Check RBS score
-        rbs_score = data.get('rbs_score')
-        print(f"RBS Score: {rbs_score}")
-        
-        # Check confidence level
-        confidence = data.get('confidence_level')
-        print(f"Confidence Level: {confidence}")
-        
-        # Check matches data
-        matches_with_ref = data.get('matches_with_ref', 0)
-        matches_without_ref = data.get('matches_without_ref', 0)
-        print(f"Matches with referee: {matches_with_ref}")
-        print(f"Matches without referee: {matches_without_ref}")
-        
-        # Check variance analysis
-        variance_analysis = data.get('variance_analysis', {})
-        if variance_analysis:
-            print("\nVariance Analysis:")
-            variance_ratios = variance_analysis.get('variance_ratios', {})
-            for category, ratio in variance_ratios.items():
-                print(f"  - {category}: {ratio}")
-            
-            print(f"\nVariance Confidence: {variance_analysis.get('confidence')}")
-            print(f"Referee Total Matches: {variance_analysis.get('referee_total_matches')}")
-            print(f"Team Matches with Referee: {variance_analysis.get('team_matches_with_referee')}")
-            
-            # Check interpretations
-            interpretations = variance_analysis.get('interpretation', {})
-            if interpretations:
-                print("\nInterpretations:")
-                for category, interpretation in interpretations.items():
-                    print(f"  - {category}: {interpretation}")
-        
-        # Check stats breakdown
-        stats_breakdown = data.get('stats_breakdown', {})
-        if stats_breakdown:
-            print("\nStats Breakdown:")
-            for stat, value in stats_breakdown.items():
-                print(f"  - {stat}: {value}")
-        
-        # Check for required fields
-        required_fields = ['rbs_score', 'confidence_level', 'matches_with_ref', 'matches_without_ref', 'variance_analysis', 'stats_breakdown']
-        missing_fields = [field for field in required_fields if field not in data or data[field] is None]
-        
-        if missing_fields:
-            print(f"\n❌ Missing required fields: {', '.join(missing_fields)}")
-        else:
-            print("\n✅ All required fields are present")
-        
-        # Check for required stats in breakdown
-        if 'stats_breakdown' in data and data['stats_breakdown']:
-            required_stats = ['yellow_cards', 'red_cards', 'fouls_committed', 'fouls_drawn', 'penalties_awarded']
-            missing_stats = [stat for stat in required_stats if stat not in data['stats_breakdown']]
-            
-            if missing_stats:
-                print(f"❌ Missing required stats in breakdown: {', '.join(missing_stats)}")
-            else:
-                print("✅ All required stats are present in breakdown")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_prediction_configs_endpoint():
-    """Test the prediction configs endpoint to list available configurations"""
-    print("\n=== Testing Prediction Configs Endpoint ===")
-    
-    response = requests.get(f"{BASE_URL}/prediction-configs")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        configs = data.get('configs', [])
-        print(f"Configs found: {len(configs)}")
-        
-        if configs:
-            print("\nAvailable configs:")
-            for config in configs:
-                print(f"  - {config.get('config_name')}")
-                print(f"    Created: {config.get('created_at')}")
-                print(f"    Updated: {config.get('updated_at')}")
-                
-                # Check for required fields in each config
-                required_fields = [
-                    'xg_shot_based_weight', 'xg_historical_weight', 'xg_opponent_defense_weight',
-                    'ppg_adjustment_factor', 'rbs_scaling_factor'
-                ]
-                
-                missing_fields = [field for field in required_fields if field not in config]
-                if missing_fields:
-                    print(f"    ❌ Missing fields: {', '.join(missing_fields)}")
-                else:
-                    print("    ✅ All required fields present")
-                
-                # Print some key weights
-                print(f"    xG Shot-based Weight: {config.get('xg_shot_based_weight')}")
-                print(f"    xG Historical Weight: {config.get('xg_historical_weight')}")
-                print(f"    xG Opponent Defense Weight: {config.get('xg_opponent_defense_weight')}")
-                print(f"    RBS Scaling Factor: {config.get('rbs_scaling_factor')}")
-        else:
-            print("❌ No prediction configs found")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_rbs_configs_endpoint():
-    """Test the RBS configs endpoint to list available configurations"""
-    print("\n=== Testing RBS Configs Endpoint ===")
-    
-    response = requests.get(f"{BASE_URL}/rbs-configs")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        configs = data.get('configs', [])
-        print(f"Configs found: {len(configs)}")
-        
-        if configs:
-            print("\nAvailable configs:")
-            for config in configs:
-                print(f"  - {config.get('config_name')}")
-                print(f"    Created: {config.get('created_at')}")
-                print(f"    Updated: {config.get('updated_at')}")
-                
-                # Check for required fields in each config
-                required_fields = [
-                    'yellow_cards_weight', 'red_cards_weight', 'fouls_committed_weight',
-                    'fouls_drawn_weight', 'penalties_awarded_weight'
-                ]
-                
-                missing_fields = [field for field in required_fields if field not in config]
-                if missing_fields:
-                    print(f"    ❌ Missing fields: {', '.join(missing_fields)}")
-                else:
-                    print("    ✅ All required fields present")
-                
-                # Print some key weights
-                print(f"    Yellow Cards Weight: {config.get('yellow_cards_weight')}")
-                print(f"    Red Cards Weight: {config.get('red_cards_weight')}")
-                print(f"    Fouls Committed Weight: {config.get('fouls_committed_weight')}")
-                print(f"    Fouls Drawn Weight: {config.get('fouls_drawn_weight')}")
-                print(f"    Penalties Awarded Weight: {config.get('penalties_awarded_weight')}")
-        else:
-            print("❌ No RBS configs found")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_suggest_prediction_config():
-    """Test the suggest prediction config endpoint"""
-    print("\n=== Testing Suggest Prediction Config Endpoint ===")
-    
-    response = requests.post(f"{BASE_URL}/suggest-prediction-config")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        # Check suggested config
-        suggested_config = data.get('suggested_config', {})
-        if suggested_config:
-            print("\nSuggested Config:")
-            
-            # Check for required fields
-            required_fields = [
-                'xg_shot_based_weight', 'xg_historical_weight', 'xg_opponent_defense_weight',
-                'ppg_adjustment_factor', 'rbs_scaling_factor'
+        # Check for required sections in detailed analysis
+        if detail_data_oliver and detail_data_oliver.get('success', False):
+            required_sections = [
+                'referee_name', 'total_matches', 'teams_officiated', 
+                'avg_bias_score', 'rbs_calculations', 'match_outcomes', 
+                'cards_and_fouls', 'bias_analysis', 'team_rbs_details'
             ]
             
-            missing_fields = [field for field in required_fields if field not in suggested_config]
-            if missing_fields:
-                print(f"❌ Missing fields: {', '.join(missing_fields)}")
+            missing_sections = [section for section in required_sections if section not in detail_data_oliver or detail_data_oliver[section] is None]
+            
+            if missing_sections:
+                print(f"❌ Missing required sections in detailed analysis: {', '.join(missing_sections)}")
             else:
-                print("✅ All required fields present")
-            
-            # Print key weights
-            print(f"  xG Shot-based Weight: {suggested_config.get('xg_shot_based_weight')}")
-            print(f"  xG Historical Weight: {suggested_config.get('xg_historical_weight')}")
-            print(f"  xG Opponent Defense Weight: {suggested_config.get('xg_opponent_defense_weight')}")
-            print(f"  PPG Adjustment Factor: {suggested_config.get('ppg_adjustment_factor')}")
-            print(f"  RBS Scaling Factor: {suggested_config.get('rbs_scaling_factor')}")
-            
-            # Check optimization metrics
-            optimization_metrics = data.get('optimization_metrics', {})
-            if optimization_metrics:
-                print("\nOptimization Metrics:")
-                for metric, value in optimization_metrics.items():
-                    print(f"  {metric}: {value}")
-            
-            # Check explanation
-            explanation = data.get('explanation', [])
-            if explanation:
-                print("\nExplanation:")
-                for item in explanation:
-                    print(f"  - {item}")
-        else:
-            print("❌ No suggested config returned")
+                print("✅ All required sections are present in detailed analysis")
         
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_analyze_rbs_optimization():
-    """Test the RBS optimization analysis endpoint"""
-    print("\n=== Testing RBS Optimization Analysis Endpoint ===")
-    response = requests.post(f"{BASE_URL}/analyze-rbs-optimization")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data['success']}")
-        print(f"Analysis Type: {data.get('analysis_type')}")
-        print(f"Sample Size: {data.get('sample_size')}")
-        
-        # Check RBS variables analyzed
-        rbs_vars = data.get('rbs_variables_analyzed', [])
-        print(f"\nRBS Variables Analyzed: {len(rbs_vars)}")
-        print(f"  {', '.join(rbs_vars)}")
-        
-        # Check results structure
-        results = data.get('results', {})
-        print(f"\nResults sections: {len(results)}")
-        for section_name in results.keys():
-            print(f"  - {section_name}")
-        
-        # Check for suggested weights
-        if 'suggested_rbs_weights' in results:
-            print("\nSuggested RBS Weights:")
-            for var, weight in results['suggested_rbs_weights'].items():
-                print(f"  - {var}: {weight}")
-        
-        # Check for individual variable importance
-        if 'individual_variable_importance' in results:
-            print("\nIndividual Variable Importance:")
-            for var, stats in list(results['individual_variable_importance'].items())[:3]:
-                print(f"  - {var}: R² = {stats.get('r2_score')}, Coefficient = {stats.get('coefficient')}")
-            if len(results['individual_variable_importance']) > 3:
-                print("  ...")
-        
-        # Check for correlations
-        if 'correlations_with_points' in results:
-            print("\nCorrelations with Points:")
-            correlations = results['correlations_with_points']
-            # Sort by absolute correlation value
-            sorted_correlations = sorted(correlations.items(), key=lambda x: abs(x[1]), reverse=True)
-            for var, corr in sorted_correlations[:3]:
-                print(f"  - {var}: {corr}")
-            if len(sorted_correlations) > 3:
-                print("  ...")
-        
-        # Check recommendations
-        recommendations = data.get('recommendations', [])
-        print(f"\nRecommendations: {len(recommendations)}")
-        for i, rec in enumerate(recommendations[:3]):
-            print(f"  {i+1}. {rec.get('recommendation')} (Priority: {rec.get('priority')})")
-        if len(recommendations) > 3:
-            print("  ...")
-        
-        # Verify all required sections exist
-        required_sections = ['rbs_vs_points', 'individual_variable_importance', 
-                            'correlations_with_points', 'suggested_rbs_weights']
-        missing_sections = [sec for sec in required_sections if sec not in results]
-        
-        if missing_sections:
-            print(f"\n❌ Missing result sections: {', '.join(missing_sections)}")
-        else:
-            print("\n✅ All required result sections present")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_analyze_predictor_optimization():
-    """Test the Match Predictor optimization analysis endpoint"""
-    print("\n=== Testing Match Predictor Optimization Analysis Endpoint ===")
-    response = requests.post(f"{BASE_URL}/analyze-predictor-optimization")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data['success']}")
-        print(f"Analysis Type: {data.get('analysis_type')}")
-        print(f"Sample Size: {data.get('sample_size')}")
-        
-        # Check predictor variables analyzed
-        predictor_vars = data.get('predictor_variables_analyzed', [])
-        print(f"\nPredictor Variables Analyzed: {len(predictor_vars)}")
-        print(f"  {', '.join(predictor_vars[:5])}{'...' if len(predictor_vars) > 5 else ''}")
-        
-        # Check results structure
-        results = data.get('results', {})
-        print(f"\nResults sections: {len(results)}")
-        for section_name in results.keys():
-            print(f"  - {section_name}")
-        
-        # Check predictor vs points analysis
-        if 'predictor_vs_points' in results:
-            predictor_analysis = results['predictor_vs_points']
-            print(f"\nPredictor vs Points Analysis:")
-            print(f"  - Success: {predictor_analysis.get('success')}")
-            print(f"  - Model Type: {predictor_analysis.get('model_type')}")
-            print(f"  - Sample Size: {predictor_analysis.get('sample_size')}")
-            
-            if 'results' in predictor_analysis and 'r2_score' in predictor_analysis['results']:
-                print(f"  - R² Score: {predictor_analysis['results']['r2_score']}")
-            
-            if 'results' in predictor_analysis and 'coefficients' in predictor_analysis['results']:
-                coeffs = predictor_analysis['results']['coefficients']
-                print(f"  - Top 3 coefficients by magnitude:")
-                sorted_coeffs = sorted(coeffs.items(), key=lambda x: abs(x[1]), reverse=True)
-                for var, coef in sorted_coeffs[:3]:
-                    print(f"    - {var}: {coef}")
-        
-        # Check xG analysis
-        if 'xg_analysis' in results:
-            xg_analysis = results['xg_analysis']
-            print(f"\nxG Analysis:")
-            print(f"  - Success: {xg_analysis.get('success')}")
-            if 'results' in xg_analysis and 'r2_score' in xg_analysis['results']:
-                print(f"  - R² Score: {xg_analysis['results']['r2_score']}")
-        
-        # Check variable importance ranking
-        if 'variable_importance_ranking' in results:
-            print("\nVariable Importance Ranking:")
-            for var, importance in results['variable_importance_ranking'][:5]:
-                print(f"  - {var}: {importance}")
-            if len(results['variable_importance_ranking']) > 5:
-                print("  ...")
-        
-        # Check recommendations
-        recommendations = data.get('recommendations', [])
-        print(f"\nRecommendations: {len(recommendations)}")
-        for i, rec in enumerate(recommendations[:3]):
-            print(f"  {i+1}. {rec.get('recommendation')} (Priority: {rec.get('priority')})")
-        if len(recommendations) > 3:
-            print("  ...")
-        
-        # Verify all required sections exist
-        required_sections = ['predictor_vs_points', 'predictor_vs_results', 'xg_analysis']
-        missing_sections = [sec for sec in required_sections if sec not in results]
-        
-        if missing_sections:
-            print(f"\n❌ Missing result sections: {', '.join(missing_sections)}")
-        else:
-            print("\n✅ All required result sections present")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_analyze_comprehensive_regression():
-    """Test the comprehensive regression analysis endpoint"""
-    print("\n=== Testing Comprehensive Regression Analysis Endpoint ===")
-    
-    response = requests.post(f"{BASE_URL}/analyze-comprehensive-regression")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        # Check analysis type and sample size
-        print(f"Analysis Type: {data.get('analysis_type')}")
-        print(f"Sample Size: {data.get('sample_size')}")
-        
-        # Check variables analyzed
-        variables = data.get('variables_analyzed', [])
-        print(f"\nVariables Analyzed: {len(variables)}")
-        print(f"  {', '.join(variables[:5])}{'...' if len(variables) > 5 else ''}")
-        
-        # Check results
-        results = data.get('results', {})
-        print(f"\nResults sections: {len(results)}")
-        for section_name in results.keys():
-            print(f"  - {section_name}")
-        
-        # Check regression models
-        if 'regression_models' in results:
-            regression_models = results['regression_models']
-            print("\nRegression Models:")
-            for model_name, model_data in regression_models.items():
-                print(f"  - {model_name}:")
-                print(f"    R² Score: {model_data.get('r2_score')}")
-                print(f"    MSE: {model_data.get('mse')}")
-                
-                # Check top coefficients
-                if 'coefficients' in model_data:
-                    coeffs = model_data['coefficients']
-                    print(f"    Top 3 coefficients by magnitude:")
-                    sorted_coeffs = sorted(coeffs.items(), key=lambda x: abs(x[1]), reverse=True)
-                    for var, coef in sorted_coeffs[:3]:
-                        print(f"      - {var}: {coef}")
-        
-        # Check feature importance
-        if 'feature_importance' in results:
-            feature_importance = results['feature_importance']
-            print("\nFeature Importance:")
-            for var, importance in list(feature_importance.items())[:5]:
-                print(f"  - {var}: {importance}")
-            if len(feature_importance) > 5:
-                print("  ...")
-        
-        # Check correlations
-        if 'correlation_matrix' in results:
-            correlation_matrix = results['correlation_matrix']
-            print("\nTop Correlations:")
-            # Flatten the correlation matrix
-            correlations = []
-            for var1, corrs in correlation_matrix.items():
-                for var2, corr in corrs.items():
-                    if var1 != var2:  # Skip self-correlations
-                        correlations.append((var1, var2, corr))
-            
-            # Sort by absolute correlation value
-            sorted_correlations = sorted(correlations, key=lambda x: abs(x[2]), reverse=True)
-            for var1, var2, corr in sorted_correlations[:5]:
-                print(f"  - {var1} vs {var2}: {corr}")
-            if len(sorted_correlations) > 5:
-                print("  ...")
-        
-        # Check recommendations
-        recommendations = data.get('recommendations', [])
-        print(f"\nRecommendations: {len(recommendations)}")
-        for i, rec in enumerate(recommendations[:3]):
-            print(f"  {i+1}. {rec.get('recommendation')} (Priority: {rec.get('priority')})")
-        if len(recommendations) > 3:
-            print("  ...")
-        
-        # Verify all required sections exist
-        required_sections = ['regression_models', 'feature_importance', 'correlation_matrix']
-        missing_sections = [sec for sec in required_sections if sec not in results]
-        
-        if missing_sections:
-            print(f"\n❌ Missing result sections: {', '.join(missing_sections)}")
-        else:
-            print("\n✅ All required result sections present")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_advanced_features():
-    """Test all advanced features"""
-    print("\n\n========== TESTING ADVANCED FEATURES ==========\n")
-    
-    # Get teams and referees for testing
-    teams_response = requests.get(f"{BASE_URL}/teams")
-    if teams_response.status_code != 200:
-        print("❌ Failed to get teams for testing")
-        teams = ["Arsenal", "Chelsea", "Manchester United"]  # Fallback
-    else:
-        teams = teams_response.json().get('teams', [])
-        if len(teams) < 3:
-            teams = ["Arsenal", "Chelsea", "Manchester United"]  # Fallback
-    
-    referees_response = requests.get(f"{BASE_URL}/referees")
-    if referees_response.status_code != 200:
-        print("❌ Failed to get referees for testing")
-        referee = "Michael Oliver"  # Fallback
-    else:
-        referees = referees_response.json().get('referees', [])
-        if not referees:
-            referee = "Michael Oliver"  # Fallback
-        else:
-            referee = referees[0]
-    
-    # Test PDF Export
-    print("\nStep 1: Testing PDF Export")
-    pdf_result = test_pdf_export_endpoint()
-    if pdf_result:
-        print("✅ PDF Export test passed")
-    else:
-        print("❌ PDF Export test failed")
-    
-    # Test Enhanced RBS Analysis
-    print("\nStep 2: Testing Enhanced RBS Analysis")
-    team_name = teams[0]
-    rbs_result = test_enhanced_rbs_analysis(team_name, referee)
-    if rbs_result and rbs_result.get('success'):
-        print(f"✅ Enhanced RBS Analysis test passed for {team_name} with referee {referee}")
-    else:
-        print(f"❌ Enhanced RBS Analysis test failed for {team_name} with referee {referee}")
-    
-    # Test Team Performance Analysis
-    print("\nStep 3: Testing Team Performance Analysis")
-    for team in teams[:2]:  # Test first two teams
-        performance_result = test_team_performance_stats(team)
-        if performance_result and performance_result.get('success'):
-            print(f"✅ Team Performance Analysis test passed for {team}")
-        else:
-            print(f"❌ Team Performance Analysis test failed for {team}")
-    
-    # Test Configuration Management
-    print("\nStep 4: Testing Configuration Management")
-    
-    # Test Prediction Configs
-    prediction_configs_result = test_prediction_configs_endpoint()
-    if prediction_configs_result and prediction_configs_result.get('success'):
-        print("✅ Prediction Configs test passed")
-    else:
-        print("❌ Prediction Configs test failed")
-    
-    # Test RBS Configs
-    rbs_configs_result = test_rbs_configs_endpoint()
-    if rbs_configs_result and rbs_configs_result.get('success'):
-        print("✅ RBS Configs test passed")
-    else:
-        print("❌ RBS Configs test failed")
-    
-    # Test Advanced AI Optimization
-    print("\nStep 5: Testing Advanced AI Optimization")
-    
-    # Test Suggest Prediction Config
-    suggest_config_result = test_suggest_prediction_config()
-    if suggest_config_result and suggest_config_result.get('success'):
-        print("✅ Suggest Prediction Config test passed")
-    else:
-        print("❌ Suggest Prediction Config test failed")
-    
-    # Test Analyze RBS Optimization
-    rbs_optimization_result = test_analyze_rbs_optimization()
-    if rbs_optimization_result and rbs_optimization_result.get('success'):
-        print("✅ Analyze RBS Optimization test passed")
-    else:
-        print("❌ Analyze RBS Optimization test failed")
-    
-    # Test Analyze Predictor Optimization
-    predictor_optimization_result = test_analyze_predictor_optimization()
-    if predictor_optimization_result and predictor_optimization_result.get('success'):
-        print("✅ Analyze Predictor Optimization test passed")
-    else:
-        print("❌ Analyze Predictor Optimization test failed")
-    
-    # Test Analyze Comprehensive Regression
-    comprehensive_regression_result = test_analyze_comprehensive_regression()
-    if comprehensive_regression_result and comprehensive_regression_result.get('success'):
-        print("✅ Analyze Comprehensive Regression test passed")
-    else:
-        print("❌ Analyze Comprehensive Regression test failed")
-    
-    # Final summary
-    print("\n========== ADVANCED FEATURES TEST SUMMARY ==========")
-    
-    # Check if all endpoints exist
-    endpoint_check_results = {
-        "PDF Export": requests.post(f"{BASE_URL}/export-prediction-pdf", json={"home_team": "Team A", "away_team": "Team B", "referee_name": "Referee"}).status_code != 404,
-        "Enhanced RBS Analysis": requests.get(f"{BASE_URL}/enhanced-rbs-analysis/{teams[0]}/{referee}").status_code != 404,
-        "Team Performance": requests.get(f"{BASE_URL}/team-performance/{teams[0]}").status_code != 404,
-        "Prediction Configs": requests.get(f"{BASE_URL}/prediction-configs").status_code != 404,
-        "RBS Configs": requests.get(f"{BASE_URL}/rbs-configs").status_code != 404,
-        "Suggest Prediction Config": requests.post(f"{BASE_URL}/suggest-prediction-config").status_code != 404,
-        "Analyze RBS Optimization": requests.post(f"{BASE_URL}/analyze-rbs-optimization").status_code != 404,
-        "Analyze Predictor Optimization": requests.post(f"{BASE_URL}/analyze-predictor-optimization").status_code != 404,
-        "Analyze Comprehensive Regression": requests.post(f"{BASE_URL}/analyze-comprehensive-regression").status_code != 404
-    }
-    
-    for endpoint, exists in endpoint_check_results.items():
-        if exists:
-            print(f"✅ {endpoint} endpoint exists")
-        else:
-            print(f"❌ {endpoint} endpoint does not exist")
-    
-    if all(endpoint_check_results.values()):
-        print("\n✅ All advanced feature endpoints exist and are accessible!")
         return True
     else:
-        print("\n❌ Some advanced feature endpoints failed the existence check")
-        return False
-
-def test_ensemble_model_status():
-    """Test the /api/ensemble-model-status endpoint to check model availability"""
-    print("\n=== Testing Ensemble Model Status Endpoint ===")
-    response = requests.get(f"{BASE_URL}/ensemble-model-status")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        # Check ensemble readiness
-        ensemble_ready = data.get('ensemble_ready', False)
-        print(f"Ensemble Ready: {ensemble_ready}")
-        
-        # Check individual model types
-        model_types = data.get('model_types', {})
-        print(f"Model Types: {len(model_types)}")
-        
-        for model_type, info in model_types.items():
-            print(f"\n  - {model_type}:")
-            print(f"    Available: {info.get('available', False)}")
-            print(f"    Models: {', '.join(info.get('models', []))}")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_train_ensemble_models():
-    """Test the /api/train-ensemble-models endpoint to train all ensemble models"""
-    print("\n=== Testing Train Ensemble Models Endpoint ===")
-    response = requests.post(f"{BASE_URL}/train-ensemble-models")
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        # Check training results
-        models_trained = data.get('models_trained', [])
-        print(f"Models Trained: {', '.join(models_trained)}")
-        
-        # Check performance results
-        performance_results = data.get('performance_results', {})
-        for model_type, results in performance_results.items():
-            print(f"\n  - {model_type} Performance:")
-            
-            # Check classifier performance
-            if 'classifier' in results:
-                classifier = results['classifier']
-                print(f"    Classifier Accuracy: {classifier.get('accuracy', 0)}")
-                print(f"    Classifier Log Loss: {classifier.get('log_loss', 0)}")
-            
-            # Check regressor performance
-            for regressor_type in ['home_goals', 'away_goals', 'home_xg', 'away_xg']:
-                if regressor_type in results:
-                    regressor = results[regressor_type]
-                    print(f"    {regressor_type.replace('_', ' ').title()} R²: {regressor.get('r2_score', 0)}")
-                    print(f"    {regressor_type.replace('_', ' ').title()} RMSE: {regressor.get('rmse', 0)}")
-        
-        # Check training time
-        training_time = data.get('training_time_seconds', 0)
-        print(f"\nTraining Time: {training_time} seconds")
-        
-        return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_predict_match_ensemble():
-    """Test the /api/predict-match-ensemble endpoint with test teams"""
-    print("\n=== Testing Ensemble Match Prediction Endpoint ===")
-    
-    # Use specific test teams as mentioned in the review request
-    home_team = "Arsenal"
-    away_team = "Chelsea"
-    referee = "Michael Oliver"
-    
-    print(f"Testing ensemble prediction for {home_team} vs {away_team} with referee {referee}")
-    
-    request_data = {
-        "home_team": home_team,
-        "away_team": away_team,
-        "referee_name": referee
-    }
-    
-    response = requests.post(f"{BASE_URL}/predict-match-ensemble", json=request_data)
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        if data.get('success'):
-            print(f"Home Team: {data.get('home_team')}")
-            print(f"Away Team: {data.get('away_team')}")
-            print(f"Referee: {data.get('referee')}")
-            print(f"Predicted Home Goals: {data.get('predicted_home_goals')}")
-            print(f"Predicted Away Goals: {data.get('predicted_away_goals')}")
-            print(f"Home xG: {data.get('home_xg')}")
-            print(f"Away xG: {data.get('away_xg')}")
-            
-            # Check for probability fields
-            print(f"Home Win Probability: {data.get('home_win_probability')}%")
-            print(f"Draw Probability: {data.get('draw_probability')}%")
-            print(f"Away Win Probability: {data.get('away_win_probability')}%")
-            
-            # Check ensemble confidence metrics
-            ensemble_confidence = data.get('ensemble_confidence', {})
-            if ensemble_confidence:
-                print("\nEnsemble Confidence Metrics:")
-                print(f"  Overall Confidence: {ensemble_confidence.get('overall_confidence')}")
-                print(f"  Model Agreement: {ensemble_confidence.get('model_agreement')}%")
-                print(f"  Confidence Score: {ensemble_confidence.get('confidence_score')}")
-                
-                # Check model breakdown
-                model_breakdown = ensemble_confidence.get('model_breakdown', {})
-                if model_breakdown:
-                    print("\nModel Breakdown:")
-                    for model, details in model_breakdown.items():
-                        print(f"  - {model}:")
-                        print(f"    Confidence: {details.get('confidence')}")
-                        print(f"    Weight: {details.get('weight')}")
-                        print(f"    Prediction: Home {details.get('home_goals')} - {details.get('away_goals')} Away")
-            
-            # Check prediction breakdown
-            prediction_breakdown = data.get('prediction_breakdown', {})
-            if prediction_breakdown:
-                print("\nPrediction Breakdown:")
-                for key, value in list(prediction_breakdown.items())[:5]:
-                    print(f"  - {key}: {value}")
-                if len(prediction_breakdown) > 5:
-                    print("  ...")
-            
-            return data
-        else:
-            print(f"Prediction failed: {data.get('error', 'Unknown error')}")
-            return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_compare_prediction_methods():
-    """Test the /api/compare-prediction-methods endpoint to compare XGBoost vs Ensemble"""
-    print("\n=== Testing Compare Prediction Methods Endpoint ===")
-    
-    # Use specific test teams as mentioned in the review request
-    home_team = "Arsenal"
-    away_team = "Chelsea"
-    referee = "Michael Oliver"
-    
-    print(f"Testing prediction comparison for {home_team} vs {away_team} with referee {referee}")
-    
-    request_data = {
-        "home_team": home_team,
-        "away_team": away_team,
-        "referee_name": referee
-    }
-    
-    response = requests.post(f"{BASE_URL}/compare-prediction-methods", json=request_data)
-    
-    if response.status_code == 200:
-        print(f"Status: {response.status_code} OK")
-        data = response.json()
-        print(f"Success: {data.get('success', False)}")
-        
-        if data.get('success'):
-            # Check XGBoost prediction
-            xgboost_prediction = data.get('xgboost_prediction', {})
-            print("\nXGBoost Prediction:")
-            print(f"  Home Team: {xgboost_prediction.get('home_team')}")
-            print(f"  Away Team: {xgboost_prediction.get('away_team')}")
-            print(f"  Predicted Score: {xgboost_prediction.get('predicted_home_goals')} - {xgboost_prediction.get('predicted_away_goals')}")
-            print(f"  Home Win: {xgboost_prediction.get('home_win_probability')}%")
-            print(f"  Draw: {xgboost_prediction.get('draw_probability')}%")
-            print(f"  Away Win: {xgboost_prediction.get('away_win_probability')}%")
-            
-            # Check Ensemble prediction
-            ensemble_prediction = data.get('ensemble_prediction', {})
-            print("\nEnsemble Prediction:")
-            print(f"  Home Team: {ensemble_prediction.get('home_team')}")
-            print(f"  Away Team: {ensemble_prediction.get('away_team')}")
-            print(f"  Predicted Score: {ensemble_prediction.get('predicted_home_goals')} - {ensemble_prediction.get('predicted_away_goals')}")
-            print(f"  Home Win: {ensemble_prediction.get('home_win_probability')}%")
-            print(f"  Draw: {ensemble_prediction.get('draw_probability')}%")
-            print(f"  Away Win: {ensemble_prediction.get('away_win_probability')}%")
-            
-            # Check comparison metrics
-            print("\nComparison Metrics:")
-            print(f"  Home Win Probability Difference: {data.get('home_win_prob_diff')}%")
-            print(f"  Draw Probability Difference: {data.get('draw_prob_diff')}%")
-            print(f"  Away Win Probability Difference: {data.get('away_win_prob_diff')}%")
-            print(f"  Home Goals Difference: {data.get('home_goals_diff')}")
-            print(f"  Away Goals Difference: {data.get('away_goals_diff')}")
-            
-            # Check confidence comparison
-            print("\nConfidence Comparison:")
-            print(f"  XGBoost Max Confidence: {data.get('xgboost_max_confidence')}%")
-            print(f"  Ensemble Max Confidence: {data.get('ensemble_max_confidence')}%")
-            print(f"  More Confident Method: {data.get('more_confident_method')}")
-            print(f"  Confidence Difference: {data.get('confidence_difference')}%")
-            
-            # Check recommendation
-            print(f"\nRecommended Method: {data.get('suggested_method')}")
-            print(f"Ensemble Agreement: {data.get('ensemble_agreement')}%")
-            
-            return data
-        else:
-            print(f"Comparison failed: {data.get('error', 'Unknown error')}")
-            return data
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
-def test_ensemble_prediction_system():
-    """Test the Ensemble Prediction System"""
-    print("\n\n========== TESTING ENSEMBLE PREDICTION SYSTEM ==========\n")
-    
-    # Step 1: Check ensemble model status
-    print("\nStep 1: Checking ensemble model status")
-    status_data = test_ensemble_model_status()
-    
-    if not status_data or not status_data.get('success'):
-        print("❌ Ensemble model status check failed")
-    else:
-        print("✅ Ensemble model status check passed")
-    
-    # Step 2: Train ensemble models
-    print("\nStep 2: Training ensemble models")
-    training_data = test_train_ensemble_models()
-    
-    if not training_data or not training_data.get('success'):
-        print("❌ Ensemble model training failed")
-    else:
-        print("✅ Ensemble model training passed")
-    
-    # Step 3: Test ensemble prediction
-    print("\nStep 3: Testing ensemble prediction")
-    prediction_data = test_predict_match_ensemble()
-    
-    if not prediction_data or not prediction_data.get('success'):
-        print("❌ Ensemble prediction test failed")
-    else:
-        print("✅ Ensemble prediction test passed")
-    
-    # Step 4: Compare prediction methods
-    print("\nStep 4: Comparing prediction methods")
-    comparison_data = test_compare_prediction_methods()
-    
-    if not comparison_data or not comparison_data.get('success'):
-        print("❌ Prediction methods comparison test failed")
-    else:
-        print("✅ Prediction methods comparison test passed")
-    
-    # Final summary
-    print("\n========== ENSEMBLE PREDICTION SYSTEM TEST SUMMARY ==========")
-    
-    # Check if all endpoints exist
-    endpoint_check_results = {
-        "Ensemble Model Status": requests.get(f"{BASE_URL}/ensemble-model-status").status_code == 200,
-        "Train Ensemble Models": requests.post(f"{BASE_URL}/train-ensemble-models").status_code == 200,
-        "Predict Match Ensemble": requests.post(f"{BASE_URL}/predict-match-ensemble", 
-                                              json={"home_team": "Arsenal", "away_team": "Chelsea", "referee_name": "Michael Oliver"}).status_code == 200,
-        "Compare Prediction Methods": requests.post(f"{BASE_URL}/compare-prediction-methods", 
-                                                 json={"home_team": "Arsenal", "away_team": "Chelsea", "referee_name": "Michael Oliver"}).status_code == 200
-    }
-    
-    for endpoint, exists in endpoint_check_results.items():
-        if exists:
-            print(f"✅ {endpoint} endpoint exists and is accessible")
-        else:
-            print(f"❌ {endpoint} endpoint does not exist or is not accessible")
-    
-    if all(endpoint_check_results.values()):
-        print("\n✅ All ensemble prediction system endpoints exist and are accessible!")
-        return True
-    else:
-        print("\n❌ Some ensemble prediction system endpoints failed the existence check")
+        print("❌ Some RBS functionality endpoints failed the existence check")
         return False
 
 if __name__ == "__main__":
-    # Test the ensemble prediction system
-    test_ensemble_prediction_system()
+    # Test Referee Bias functionality
+    test_referee_bias_functionality()
