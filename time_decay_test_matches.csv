@@ -1,0 +1,9 @@
+match_id,referee,home_team,away_team,home_score,away_score,result,season,competition,match_date
+TD1,Michael Oliver,Arsenal,Chelsea,2,1,Home Win,2021/22,Premier League,2021-08-15
+TD2,Michael Oliver,Arsenal,Manchester United,3,1,Home Win,2021/22,Premier League,2021-12-05
+TD3,Anthony Taylor,Arsenal,Chelsea,1,2,Away Win,2022/23,Premier League,2022-08-20
+TD4,Anthony Taylor,Arsenal,Manchester United,2,3,Away Win,2022/23,Premier League,2023-01-22
+TD5,Andrew Kitchen,Arsenal,Chelsea,4,0,Home Win,2023/24,Premier League,2023-08-25
+TD6,Andrew Kitchen,Arsenal,Manchester United,3,2,Home Win,2023/24,Premier League,2024-01-15
+TD7,Stuart Attwell,Arsenal,Chelsea,2,1,Home Win,2024/25,Premier League,2024-08-30
+TD8,Stuart Attwell,Arsenal,Manchester United,1,1,Draw,2024/25,Premier League,2025-01-10
