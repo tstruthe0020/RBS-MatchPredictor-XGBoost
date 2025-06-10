@@ -196,8 +196,10 @@ const StandardPredict = ({
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Model Confidence:</span>
-                    <span className="font-medium" style={{color: getConfidenceColor(predictionResult.confidence || 0)}}>
-                      {predictionResult.confidence || 'N/A'}%
+                    <span className="font-medium" style={{color: getConfidenceColor((predictionResult.prediction_breakdown?.xgboost_confidence?.classifier_confidence || 0) * 100)}}>
+                      {predictionResult.prediction_breakdown?.xgboost_confidence?.classifier_confidence 
+                        ? (predictionResult.prediction_breakdown.xgboost_confidence.classifier_confidence * 100).toFixed(1)
+                        : 'N/A'}%
                     </span>
                   </div>
                   <div className="flex justify-between">
