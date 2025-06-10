@@ -2238,6 +2238,11 @@ function App() {
                   </p>
                 </div>
                 <button
+                    Advanced prediction system combining multiple machine learning models for improved accuracy and reliability.
+                    Uses XGBoost, Random Forest, Gradient Boosting, Neural Networks, and Logistic Regression.
+                  </p>
+                </div>
+                <button
                   onClick={async () => {
                     setLoadingEnsembleTraining(true);
                     try {
