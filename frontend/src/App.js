@@ -191,6 +191,79 @@ function App() {
     }
   };
 
+  // Model Performance API Functions
+  const fetchModelPerformance = async (days = 30) => {
+    try {
+      const response = await axios.get(`${API}/model-performance/${days}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching model performance:', error);
+      return null;
+    }
+  };
+
+  const fetchOptimizationHistory = async () => {
+    try {
+      const response = await axios.get(`${API}/optimization-history`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching optimization history:', error);
+      return null;
+    }
+  };
+
+  const fetchPredictionAccuracyTrends = async () => {
+    try {
+      const response = await axios.get(`${API}/prediction-accuracy-trends`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching prediction accuracy trends:', error);
+      return null;
+    }
+  };
+
+  // Enhanced Referee Analysis API Functions
+  const fetchEnhancedRefereeAnalysis = async (teamName, refereeName) => {
+    try {
+      const response = await axios.get(`${API}/enhanced-rbs-analysis/${encodeURIComponent(teamName)}/${encodeURIComponent(refereeName)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching enhanced referee analysis:', error);
+      return null;
+    }
+  };
+
+  // Advanced Optimization API Functions
+  const fetchOptimizationSuggestions = async (type = 'prediction') => {
+    try {
+      const response = await axios.post(`${API}/suggest-prediction-config`, { optimization_type: type });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching optimization suggestions:', error);
+      return null;
+    }
+  };
+
+  const runRBSOptimizationAnalysis = async () => {
+    try {
+      const response = await axios.post(`${API}/analyze-rbs-optimization`);
+      return response.data;
+    } catch (error) {
+      console.error('Error running RBS optimization analysis:', error);
+      return null;
+    }
+  };
+
+  const runPredictorOptimizationAnalysis = async () => {
+    try {
+      const response = await axios.post(`${API}/analyze-predictor-optimization`);
+      return response.data;
+    } catch (error) {
+      console.error('Error running predictor optimization analysis:', error);
+      return null;
+    }
+  };
+
   const fetchReferees = async () => {
     try {
       const response = await axios.get(`${API}/referees`);
