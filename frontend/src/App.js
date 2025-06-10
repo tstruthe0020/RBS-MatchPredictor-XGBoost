@@ -2226,6 +2226,17 @@ function App() {
         )}
 
         {/* Ensemble Predictions Tab */}
+        {activeTab === 'ensemble' && (
+          <div className="space-y-6">
+            <div className="card">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="card-header">🤖 Ensemble Prediction System</h2>
+                  <p className="card-text mt-2">
+                    Advanced prediction system combining multiple machine learning models for improved accuracy and reliability.
+                    Uses XGBoost, Random Forest, Gradient Boosting, Neural Networks, and Logistic Regression.
+                  </p>
+                </div>
                 <button
                   onClick={async () => {
                     setLoadingEnsembleTraining(true);
