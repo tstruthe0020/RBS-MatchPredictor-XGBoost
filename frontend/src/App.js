@@ -345,7 +345,23 @@ function App() {
     }
   };
 
+  const fetchReferees = async () => {
+    try {
+      const response = await axios.get(`${API}/referees`);
+      setReferees(response.data.referees || []);
+    } catch (error) {
+      console.error('Error fetching referees:', error);
+    }
+  };
 
+  const fetchConfigs = async () => {
+    try {
+      const response = await axios.get(`${API}/prediction-configs`);
+      setConfigs(response.data.configs || []);
+    } catch (error) {
+      console.error('Error fetching configs:', error);
+    }
+  };
 
   const fetchDatasets = async () => {
     try {
