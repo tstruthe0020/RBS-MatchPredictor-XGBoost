@@ -476,6 +476,7 @@ test_plan:
     - "Confidence Values Display Fix"
     - "Time Decay in Ensemble Predictions"
     - "Referee Bias Functionality"
+    - "Configuration System Functionality"
   stuck_tasks:
   test_all: false
   test_priority: "high_first"
