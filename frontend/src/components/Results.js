@@ -227,16 +227,16 @@ const Results = ({
                 {/* Summary Statistics */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="stat-card">
-                    <div className="stat-card-number">{detailedRefereeAnalysis.total_matches}</div>
+                    <div className="stat-card-number">{detailedRefereeAnalysis.total_matches || 0}</div>
                     <div className="stat-card-label">Total Matches</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-card-number">{detailedRefereeAnalysis.teams_officiated}</div>
+                    <div className="stat-card-number">{detailedRefereeAnalysis.teams_officiated || 0}</div>
                     <div className="stat-card-label">Teams Officiated</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-card-number" style={{color: getRBSScoreColor(detailedRefereeAnalysis.avg_bias_score)}}>
-                      {detailedRefereeAnalysis.avg_bias_score?.toFixed(3) || 'N/A'}
+                    <div className="stat-card-number" style={{color: getRBSScoreColor(detailedRefereeAnalysis.avg_bias_score || 0)}}>
+                      {detailedRefereeAnalysis.avg_bias_score ? detailedRefereeAnalysis.avg_bias_score.toFixed(3) : 'N/A'}
                     </div>
                     <div className="stat-card-label">Avg Bias Score</div>
                   </div>
