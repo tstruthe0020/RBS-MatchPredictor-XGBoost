@@ -151,6 +151,12 @@ function App() {
   
   // XGBoost Optimization States
   const [optimizationStatus, setOptimizationStatus] = useState(null);
+  const [runningXGBoostOptimization, setRunningXGBoostOptimization] = useState(false);
+  const [modelPerformance, setModelPerformance] = useState(null);
+  const [simulationResults, setSimulationResults] = useState(null);
+  
+  // XGBoost Optimization States
+  const [optimizationStatus, setOptimizationStatus] = useState(null);
   const [optimizationResults, setOptimizationResults] = useState(null);
   const [runningXGBoostOptimization, setRunningXGBoostOptimization] = useState(false);
   const [modelPerformance, setModelPerformance] = useState(null);
