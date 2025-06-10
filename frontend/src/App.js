@@ -756,18 +756,6 @@ function App() {
     }
   };
 
-  // XGBoost Optimization Functions
-  const fetchOptimizationStatus = async () => {
-    try {
-      const response = await axios.get(`${API}/xgboost-optimization-status`);
-      setOptimizationStatus(response.data);
-      console.log('✅ Optimization status loaded:', response.data);
-    } catch (error) {
-      console.error('Error fetching optimization status:', error);
-      alert(`❌ Error fetching status: ${error.response?.data?.detail || error.message}`);
-    }
-  };
-
   const evaluateModelPerformance = async (days = 30) => {
     try {
       setLoadingResults(true);
