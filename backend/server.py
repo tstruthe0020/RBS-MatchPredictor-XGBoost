@@ -16,8 +16,9 @@ from contextlib import asynccontextmanager
 import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.metrics import accuracy_score, classification_report, r2_score, mean_squared_error, log_loss
 import warnings
 import os
