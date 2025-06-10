@@ -822,6 +822,90 @@ function App() {
               `Potential improvement: +${(response.data.simulated_improvements.moderate_improvement - response.data.current_accuracy).toFixed(1)}%\n` +
               `Additional correct predictions: ${response.data.potential_value.additional_correct_predictions_moderate}`);
       }
+    } catch (error) {
+      console.error('Error simulating optimization impact:', error);
+      alert(`❌ Error running simulation: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingResults(false);
+    }
+  };
+  const fetchOptimizationStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/xgboost-optimization-status`);
+      setOptimizationStatus(response.data);
+      console.log('✅ Optimization status loaded:', response.data);
+    } catch (error) {
+      console.error('Error fetching optimization status:', error);
+      alert(`❌ Error fetching status: ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const evaluateModelPerformance = async (days = 30) => {
+    try {
+      setLoadingResults(true);
+      const response = await axios.get(`${API}/model-performance/${days}`);
+      setModelPerformance(response.data);
+      console.log('✅ Model performance evaluated:', response.data);
+      
+      if (response.data.error) {
+        alert(`⚠️ ${response.data.error}`);
+      } else {
+        alert(`✅ Performance evaluated!\nAccuracy: ${response.data.outcome_accuracy}%\nGoals MAE: ${response.data.home_goals_mae?.toFixed(3)}`);
+      }
+    } catch (error) {
+      console.error('Error evaluating model performance:', error);
+      alert(`❌ Error evaluating performance: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setLoadingResults(false);
+    }
+  };
+
+  const runXGBoostOptimization = async (method = 'grid_search', retrain = true) => {
+    if (!window.confirm(`🔧 Run XGBoost optimization with ${method}?\nThis may take several minutes and will retrain your models.`)) {
+      return;
+    }
+    
+    setRunningXGBoostOptimization(true);
+    try {
+      console.log('🚀 Starting XGBoost optimization...');
+      const response = await axios.post(`${API}/optimize-xgboost-models?method=${method}&retrain=${retrain}`);
+      setOptimizationResults(response.data);
+      
+      if (response.data.error) {
+        alert(`❌ Optimization failed: ${response.data.error}`);
+      } else {
+        const improvement = response.data.improvement_summary;
+        alert(`✅ XGBoost optimization completed!\n` +
+              `Accuracy improved by: ${improvement?.accuracy_improvement?.toFixed(2)}%\n` +
+              `Goals MAE improved by: ${improvement?.goals_mae_improvement?.toFixed(3)}\n` +
+              `New model version: ${response.data.new_performance?.model_version}`);
+      }
+      
+      // Refresh status after optimization
+      await fetchOptimizationStatus();
+      
+    } catch (error) {
+      console.error('Error running XGBoost optimization:', error);
+      alert(`❌ Error optimizing models: ${error.response?.data?.detail || error.message}`);
+    } finally {
+      setRunningXGBoostOptimization(false);
+    }
+  };
+
+  const simulateOptimizationImpact = async (days = 30) => {
+    try {
+      setLoadingResults(true);
+      const response = await axios.post(`${API}/simulate-optimization-impact?days_back=${days}`);
+      setSimulationResults(response.data);
+      
+      if (response.data.error) {
+        alert(`⚠️ ${response.data.error}`);
+      } else {
+        alert(`🎯 Simulation completed!\n` +
+              `Current accuracy: ${response.data.current_accuracy}%\n` +
+              `Potential improvement: +${(response.data.simulated_improvements.moderate_improvement - response.data.current_accuracy).toFixed(1)}%\n` +
+              `Additional correct predictions: ${response.data.potential_value.additional_correct_predictions_moderate}`);
+      }
   const fetchOptimizationStatus = async () => {
     try {
       const response = await axios.get(`${API}/xgboost-optimization-status`);
