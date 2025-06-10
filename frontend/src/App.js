@@ -1055,6 +1055,136 @@ function App() {
             comparePredictionMethods={comparePredictionMethods}
           />
         );
+      case 'regression':
+        return (
+          <RegressionAnalysis
+            regressionData={regressionData}
+            setRegressionData={setRegressionData}
+            selectedVariables={selectedVariables}
+            setSelectedVariables={setSelectedVariables}
+            selectedTarget={selectedTarget}
+            setSelectedTarget={setSelectedTarget}
+            loadingRegression={loadingRegression}
+            setLoadingRegression={setLoadingRegression}
+            runRegressionAnalysis={runRegressionAnalysis}
+          />
+        );
+      case 'prediction-config':
+        return (
+          <PredictionConfig
+            predictionConfig={predictionConfig}
+            setPredictionConfig={setPredictionConfig}
+            configName={configName}
+            setConfigName={setConfigName}
+            allPredictionConfigs={allPredictionConfigs}
+            setAllPredictionConfigs={setAllPredictionConfigs}
+            loadingConfigs={loadingConfigs}
+            setLoadingConfigs={setLoadingConfigs}
+            savingConfig={savingConfig}
+            setSavingConfig={setSavingConfig}
+            savePredictionConfig={savePredictionConfig}
+            loadPredictionConfig={loadPredictionConfig}
+            deletePredictionConfig={deletePredictionConfig}
+            fetchAllPredictionConfigs={fetchAllPredictionConfigs}
+          />
+        );
+      case 'rbs-config':
+        return (
+          <RBSConfig
+            rbsConfig={rbsConfig}
+            setRbsConfig={setRbsConfig}
+            rbsConfigName={rbsConfigName}
+            setRbsConfigName={setRbsConfigName}
+            allRbsConfigs={allRbsConfigs}
+            setAllRbsConfigs={setAllRbsConfigs}
+            loadingRbsConfigs={loadingRbsConfigs}
+            setLoadingRbsConfigs={setLoadingRbsConfigs}
+            savingRbsConfig={savingRbsConfig}
+            setSavingRbsConfig={setSavingRbsConfig}
+            saveRBSConfig={saveRBSConfig}
+            loadRBSConfig={loadRBSConfig}
+            deleteRBSConfig={deleteRBSConfig}
+            fetchAllRBSConfigs={fetchAllRBSConfigs}
+          />
+        );
+      case 'optimization':
+        return (
+          <FormulaOptimization
+            optimizationResults={optimizationResults}
+            setOptimizationResults={setOptimizationResults}
+            loadingOptimization={loadingOptimization}
+            setLoadingOptimization={setLoadingOptimization}
+            optimizationHistory={optimizationHistory}
+            setOptimizationHistory={setOptimizationHistory}
+            selectedOptimizationType={selectedOptimizationType}
+            setSelectedOptimizationType={setSelectedOptimizationType}
+            runAdvancedOptimization={runAdvancedOptimization}
+            runRBSOptimizationAnalysis={runRBSOptimizationAnalysis}
+            runPredictorAnalysis={runPredictorAnalysis}
+            runXGBoostHyperparameterOptimization={runXGBoostHyperparameterOptimization}
+            fetchOptimizationHistory={fetchOptimizationHistory}
+          />
+        );
+      case 'results':
+        return (
+          <Results
+            refereeAnalysis={refereeAnalysis}
+            setRefereeAnalysis={setRefereeAnalysis}
+            selectedRefereeForDetails={selectedRefereeForDetails}
+            setSelectedRefereeForDetails={setSelectedRefereeForDetails}
+            detailedRefereeAnalysis={detailedRefereeAnalysis}
+            setDetailedRefereeAnalysis={setDetailedRefereeAnalysis}
+            enhancedRefereeAnalysis={enhancedRefereeAnalysis}
+            setEnhancedRefereeAnalysis={setEnhancedRefereeAnalysis}
+            selectedTeamForRefereeAnalysis={selectedTeamForRefereeAnalysis}
+            setSelectedTeamForRefereeAnalysis={setSelectedTeamForRefereeAnalysis}
+            loadingRefereeAnalysis={loadingRefereeAnalysis}
+            setLoadingRefereeAnalysis={setLoadingRefereeAnalysis}
+            loadingDetailedAnalysis={loadingDetailedAnalysis}
+            setLoadingDetailedAnalysis={setLoadingDetailedAnalysis}
+            loadingEnhancedAnalysis={loadingEnhancedAnalysis}
+            setLoadingEnhancedAnalysis={setLoadingEnhancedAnalysis}
+            teams={teams}
+            referees={referees}
+            fetchRefereeAnalysis={fetchRefereeAnalysis}
+            fetchDetailedRefereeAnalysis={fetchDetailedRefereeAnalysis}
+            fetchEnhancedRBSAnalysis={fetchEnhancedRBSAnalysis}
+            defaultDecayPreset={defaultDecayPreset}
+            setDefaultDecayPreset={setDefaultDecayPreset}
+            decayPresets={decayPresets}
+            saveSystemConfig={saveSystemConfig}
+          />
+        );
+      case 'config':
+        return (
+          <SystemConfig
+            mlStatus={mlStatus}
+            ensembleModelStatus={ensembleModelStatus}
+            trainingModels={trainingModels}
+            setTrainingModels={setTrainingModels}
+            trainingResults={trainingResults}
+            setTrainingResults={setTrainingResults}
+            reloadingModels={reloadingModels}
+            setReloadingModels={setReloadingModels}
+            checkMLStatus={checkMLStatus}
+            trainMLModels={trainMLModels}
+            reloadMLModels={reloadMLModels}
+            trainEnsembleModels={trainEnsembleModels}
+            getEnsembleModelStatus={getEnsembleModelStatus}
+            systemStatus={systemStatus}
+            setSystemStatus={setSystemStatus}
+            fetchSystemStatus={fetchSystemStatus}
+            defaultDecayPreset={defaultDecayPreset}
+            setDefaultDecayPreset={setDefaultDecayPreset}
+            defaultFormation={defaultFormation}
+            setDefaultFormation={setDefaultFormation}
+            decayPresets={decayPresets}
+            availableFormations={availableFormations}
+            saveSystemConfig={saveSystemConfig}
+            loadingSystemStatus={loadingSystemStatus}
+            setLoadingSystemStatus={setLoadingSystemStatus}
+          />
+        );
       default:
         return (
           <div className="space-y-6">
