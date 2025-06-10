@@ -222,6 +222,40 @@ const EnsemblePredictions = ({
           </div>
         </div>
 
+        {/* Time Decay Controls */}
+        <div className="mb-6">
+          <div className="p-4 rounded-lg border-2" style={{backgroundColor: '#F2E9E4', borderColor: '#12664F'}}>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-semibold" style={{color: '#002629'}}>⏰ Time Decay Weighting</h4>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={useTimeDecay}
+                  onChange={(e) => setUseTimeDecay(e.target.checked)}
+                  className="mr-2"
+                />
+                <span className="text-sm" style={{color: '#002629'}}>Enable</span>
+              </label>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{color: '#002629'}}>Decay Preset</label>
+              <select
+                value={decayPreset}
+                onChange={(e) => setDecayPreset(e.target.value)}
+                disabled={!useTimeDecay}
+                className="form-select w-full"
+              >
+                {decayPresets.map(preset => (
+                  <option key={preset.name} value={preset.name}>
+                    {preset.display_name} - {preset.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* Prediction Form */}
         <div className="mb-6">
           <h3 className="font-semibold mb-4" style={{color: '#002629'}}>🎯 Make Ensemble Prediction</h3>
