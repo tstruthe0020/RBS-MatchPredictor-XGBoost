@@ -742,6 +742,152 @@ function App() {
     }
   };
 
+  // Regression Analysis Functions
+  const runRegressionAnalysis = async (variables, target) => {
+    try {
+      const requestData = {
+        variables: variables,
+        target: target
+      };
+      const response = await axios.post(`${API}/regression-analysis`, requestData);
+      return response.data;
+    } catch (error) {
+      console.error('Error running regression analysis:', error);
+      throw error;
+    }
+  };
+
+  // Configuration Functions
+  const fetchAllPredictionConfigs = async () => {
+    try {
+      const response = await axios.get(`${API}/prediction-configs`);
+      setAllPredictionConfigs(response.data.configs || []);
+    } catch (error) {
+      console.error('Error fetching prediction configs:', error);
+    }
+  };
+
+  const loadPredictionConfig = async (configName) => {
+    try {
+      const response = await axios.get(`${API}/prediction-configs/${configName}`);
+      return response.data.config;
+    } catch (error) {
+      console.error('Error loading prediction config:', error);
+      throw error;
+    }
+  };
+
+  const deletePredictionConfig = async (configName) => {
+    try {
+      await axios.delete(`${API}/prediction-configs/${configName}`);
+    } catch (error) {
+      console.error('Error deleting prediction config:', error);
+      throw error;
+    }
+  };
+
+  // RBS Configuration Functions
+  const fetchAllRBSConfigs = async () => {
+    try {
+      const response = await axios.get(`${API}/rbs-configs`);
+      setAllRbsConfigs(response.data.configs || []);
+    } catch (error) {
+      console.error('Error fetching RBS configs:', error);
+    }
+  };
+
+  const loadRBSConfig = async (configName) => {
+    try {
+      const response = await axios.get(`${API}/rbs-configs/${configName}`);
+      return response.data.config;
+    } catch (error) {
+      console.error('Error loading RBS config:', error);
+      throw error;
+    }
+  };
+
+  const deleteRBSConfig = async (configName) => {
+    try {
+      await axios.delete(`${API}/rbs-configs/${configName}`);
+    } catch (error) {
+      console.error('Error deleting RBS config:', error);
+      throw error;
+    }
+  };
+
+  // Optimization Functions
+  const runRBSOptimizationAnalysis = async () => {
+    try {
+      const response = await axios.post(`${API}/analyze-rbs-optimization`);
+      return response.data;
+    } catch (error) {
+      console.error('Error running RBS optimization:', error);
+      throw error;
+    }
+  };
+
+  const runPredictorAnalysis = async () => {
+    try {
+      const response = await axios.post(`${API}/predictor-analysis`);
+      return response.data;
+    } catch (error) {
+      console.error('Error running predictor analysis:', error);
+      throw error;
+    }
+  };
+
+  const runXGBoostHyperparameterOptimization = async () => {
+    try {
+      const response = await axios.post(`${API}/xgboost-hyperparameter-optimization`);
+      return response.data;
+    } catch (error) {
+      console.error('Error running XGBoost optimization:', error);
+      throw error;
+    }
+  };
+
+  // Results Functions
+  const fetchRefereeAnalysis = async () => {
+    try {
+      const response = await axios.get(`${API}/referee-analysis`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching referee analysis:', error);
+      throw error;
+    }
+  };
+
+  const fetchDetailedRefereeAnalysis = async (refereeName) => {
+    try {
+      const response = await axios.get(`${API}/referee-analysis/${encodeURIComponent(refereeName)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching detailed referee analysis:', error);
+      throw error;
+    }
+  };
+
+  // System Config Functions
+  const fetchSystemStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/system-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching system status:', error);
+      throw error;
+    }
+  };
+
+  const saveSystemConfig = async (config) => {
+    try {
+      const response = await axios.post(`${API}/system-config`, config);
+      return response.data;
+    } catch (error) {
+      console.error('Error saving system config:', error);
+      throw error;
+    }
+  };
+
   // Model Performance API Functions
   const fetchModelPerformance = async (days = 30) => {
     try {
